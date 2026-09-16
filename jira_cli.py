@@ -173,6 +173,33 @@ class Jira:
     def comments(self, key):
         return self._req("GET", f"/rest/api/3/issue/{key}/comment")
 
+    # boards (Jira Software Agile API — no update/rename endpoint exists)
+    def boards(self, project=None, name=None):
+        params = {}
+        if project: params["projectKeyOrId"] = project
+        if name: params["name"] = name
+        return self._req("GET", "/rest/agile/1.0/board", params=params)
+
+    def board_issues(self, board_id, jql="", max_results=50):
+        params: dict = {"maxResults": max_results}
+        if jql: params["jql"] = jql
+        return self._req("GET", f"/rest/agile/1.0/board/{board_id}/issue",
+                         params=params)
+
+    def board_create(self, name, project, jql=None, filter_id=None,
+                     btype="scrum"):
+        if filter_id is None:
+            f = self._req("POST", "/rest/api/3/filter",
+                          json={"name": name,
+                                "jql": jql or f"project = {project} ORDER BY Rank ASC",
+                                "description": f"Filter for board {name}"})
+            filter_id = int(f["id"])
+        return self._req("POST", "/rest/agile/1.0/board",
+                         json={"name": name, "type": btype,
+                               "filterId": filter_id,
+                               "location": {"type": "project",
+                                            "projectKeyOrId": project}})
+
 
 # ---------- output ----------
 
@@ -261,6 +288,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = sub.add_parser("comment-list", help="list comments")
     c.add_argument("key")
+
+    c = sub.add_parser("board-list", help="list boards (Agile API)")
+    c.add_argument("--jql-project", help="filter by project key")
+
+    c = sub.add_parser("board-create", help="create filter + scrum/kanban board")
+    c.add_argument("--name", required=True)
+    c.add_argument("--jql", help="board filter JQL (default: project = KEY ORDER BY Rank)")
+    c.add_argument("--filter-id", type=int)
+    c.add_argument("--type", default="scrum", choices=["scrum", "kanban"])
+
+    c = sub.add_parser("board-issues", help="list issues on a board")
+    c.add_argument("board_id", type=int)
+    c.add_argument("--jql", default="")
+    c.add_argument("--max", type=int, default=50)
     return p
 
 
@@ -293,6 +334,16 @@ def main():
         out(j.comment_add(args.key, args.message), args.json)
     elif args.cmd == "comment-list":
         out(j.comments(args.key), args.json, fmt_comments)
+    elif args.cmd == "board-list":
+        out(j.boards(project=args.jql_project), args.json,
+            lambda d: [print(f"- {b['id']} [{b['type']}] {b['name']}")
+                       for b in d.get("values", [])])
+    elif args.cmd == "board-create":
+        out(j.board_create(args.name, proj(), args.jql, args.filter_id,
+                           args.type), args.json)
+    elif args.cmd == "board-issues":
+        out(j.board_issues(args.board_id, args.jql, args.max),
+            args.json, fmt_issues)
 
 
 if __name__ == "__main__":
