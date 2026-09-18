@@ -206,6 +206,14 @@ class Jira:
                          json={"boardId": int(board_id), "enabling": enabling,
                                "feature": feature})
 
+    def component_create(self, project, name, description=""):
+        return self._req("POST", "/rest/api/3/component",
+                         json={"name": name, "description": description,
+                               "project": project})
+
+    def components(self, project):
+        return self._req("GET", f"/rest/api/3/project/{project}/components")
+
 
 # ---------- output ----------
 
@@ -316,6 +324,12 @@ def build_parser() -> argparse.ArgumentParser:
     group = c.add_mutually_exclusive_group(required=True)
     group.add_argument("--enable", action="store_true")
     group.add_argument("--disable", action="store_true")
+
+    c = sub.add_parser("component-create", help="create a project component")
+    c.add_argument("--name", required=True)
+    c.add_argument("--desc", default="")
+
+    c = sub.add_parser("component-list", help="list project components")
     return p
 
 
@@ -361,6 +375,12 @@ def main():
     elif args.cmd == "board-feature":
         out(j.board_feature(args.board_id, args.feature, args.enable),
             args.json)
+    elif args.cmd == "component-create":
+        out(j.component_create(proj(), args.name, args.desc), args.json)
+    elif args.cmd == "component-list":
+        out(j.components(proj()), args.json,
+            lambda d: [print(f"- {c['name']}: {c.get('description','')}")
+                       for c in (d if isinstance(d, list) else [])])
 
 if __name__ == "__main__":
     main()
