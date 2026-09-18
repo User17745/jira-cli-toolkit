@@ -1,65 +1,58 @@
-# jira-support-cli
+# jsup — Jira support-ticket CLI with a friendly TUI
 
-Support tickets from the terminal using **official Jira Cloud REST APIs** (no third-party wrapper).
+Official Jira Cloud REST APIs only (platform v3 + Agile 1.0), Rich terminal UI.
+Built for the RTR workflow: **RP** support kanban + **RD** sprint board.
 
-Repo: private — `User17745/jira-support-cli`
-
-## Setup
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env  # fill in site, email, API token
-# API token: https://id.atlassian.com/manage-profile/security/api-tokens
-```
-
-Or export env directly:
+## Install
 
 ```bash
-export JIRA_SITE="https://YOUR-site.atlassian.net"
-export JIRA_EMAIL="you@example.com"
-export JIRA_API_TOKEN="xxxx"
-export JIRA_PROJECT="SUP"
+pipx install .
+jsup config init   # site, email, API token (https://id.atlassian.com/manage-profile/security/api-tokens), default project
+jsup me
 ```
 
-## Support workflow
+Config lives in `~/.config/jsup/config.json` (mode 600). Env vars
+`JIRA_SITE` / `JIRA_EMAIL` / `JIRA_API_TOKEN` / `JIRA_PROJECT` also work and
+override the file; `--site/--email/--token/-p` flags override everything.
+`--json` on any command gives raw JSON for scripts.
+
+## Daily use
 
 ```bash
-# 1. who am I (checks auth)
-python jira_cli.py me
-
-# 2. create the support project (once)
-python jira_cli.py project-create --key SUP --name "Support" --type software --lead-me
-
-# 3. create tickets
-python jira_cli.py issue-create -p SUP -s "Login fails on checkout" -d "steps to repro..." -t Task --priority High
-python jira_cli.py issue-create -p SUP -s "Refund request #123" -d "customer asked..." -t Task --label support --label billing
-
-# 4. track open items
-python jira_cli.py open -p SUP
-python jira_cli.py open -p SUP --jql "priority = High"
-python jira_cli.py open -p SUP --json | jq .
-
-# 5. review one
-python jira_cli.py issue-show SUP-123
-
-# 6. move through workflow
-python jira_cli.py transitions SUP-123
-python jira_cli.py issue-move SUP-123 --to "In Progress"
-python jira_cli.py issue-move SUP-123 --to Done
-
-# 7. comments
-python jira_cli.py comment-add SUP-123 -m "Looking into it, will update today"
-python jira_cli.py comment-list SUP-123
+jsup                        # dashboard: open counts per project
+jsup open -p RP             # open support tickets
+jsup open -p RP --jql "priority = Highest"
+jsup intake -p RP           # guided callback-task wizard (name, issue, callback time)
+jsup issue-show RP-21
+jsup issue-move RP-21       # interactive transition picker (or --to "In Progress")
+jsup comment-add RP-21 -m "On it, will update today"
+jsup comment-list RP-21
+jsup browse RP-21           # open in browser
 ```
 
-## APIs used (official)
+## Sprint planning (RD)
 
-- `GET /rest/api/3/myself`
-- `POST /rest/api/3/project` / `GET /rest/api/3/project/{key}`
-- `POST /rest/api/3/issue` / `GET /rest/api/3/issue/{key}`
-- `GET /rest/api/3/search/jql` (fallback: `/rest/api/3/search`)
-- `GET+POST /rest/api/3/issue/{key}/transitions`
-- `GET+POST /rest/api/3/issue/{key}/comment`
+```bash
+jsup sprint-list --board 1525
+jsup sprint-create --board 1525 --name "RD Sprint 2" --goal "Kill blocker B"
+jsup sprint-add 1612 RP-21 RP-22
+jsup sprint-state 1612 active   # active | closed | future
+```
 
-Boards (`/rest/agile/1.0/board`) are read/create/delete only — no rename endpoint, so this CLI intentionally skips board CRUD.
+## Boards & project setup
+
+```bash
+jsup board-list --jql-project RP
+jsup board-create -p RP --name "RTR Support" --type kanban
+jsup board-issues 1526
+jsup board-feature 1525 --feature jsw.agility.reports --enable  # team-managed only
+jsup component-list -p RP
+jsup project-list
+```
+
+## API limits (verified against Atlassian's OpenAPI spec)
+
+- **No rename-board endpoint** (`/board/{id}` = GET + DELETE only) — rename in UI.
+- **No column-write endpoint** (`/configuration` = GET only) — columns in UI.
+- Project/component creation needs project admin; project creation needs Jira admin.
+- RP `Bug` type requires the **Test Case Actual Result** (rich-text) field.

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jsup"
+version = "0.2.0"
+description = "Support-ticket CLI for Jira Cloud (official REST APIs) with a friendly terminal UI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.31", "rich>=13"]
+authors = [{ name = "Abhishek Aggarwal" }]
+
+[project.scripts]
+jsup = "jsup.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jsup"]
