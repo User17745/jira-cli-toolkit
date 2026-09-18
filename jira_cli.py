@@ -200,6 +200,12 @@ class Jira:
                                "location": {"type": "project",
                                             "projectKeyOrId": project}})
 
+    def board_feature(self, board_id, feature, enabling: bool):
+        # No official rename/columns write API exists; feature toggles do.
+        return self._req("PUT", f"/rest/agile/1.0/board/{board_id}/features",
+                         json={"boardId": int(board_id), "enabling": enabling,
+                               "feature": feature})
+
 
 # ---------- output ----------
 
@@ -302,6 +308,14 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("board_id", type=int)
     c.add_argument("--jql", default="")
     c.add_argument("--max", type=int, default=50)
+
+    c = sub.add_parser("board-feature", help="enable/disable a board feature (Agile API)")
+    c.add_argument("board_id", type=int)
+    c.add_argument("--feature", required=True,
+                   help="e.g. jsw.agility.reports, jsw.agility.sprints, jsw.agility.backlog")
+    group = c.add_mutually_exclusive_group(required=True)
+    group.add_argument("--enable", action="store_true")
+    group.add_argument("--disable", action="store_true")
     return p
 
 
@@ -344,7 +358,9 @@ def main():
     elif args.cmd == "board-issues":
         out(j.board_issues(args.board_id, args.jql, args.max),
             args.json, fmt_issues)
-
+    elif args.cmd == "board-feature":
+        out(j.board_feature(args.board_id, args.feature, args.enable),
+            args.json)
 
 if __name__ == "__main__":
     main()
