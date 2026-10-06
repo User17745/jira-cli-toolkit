@@ -25,7 +25,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 - [x] Foundation: regression tests and isolated package smoke checks; commit `8e0d8e6` pushed to `codex/v2-foundation` (draft PR #1).
 - [x] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
 - [x] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
-- [ ] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [x] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
@@ -70,7 +70,7 @@ Implementation references: [commands](../../../src/jsup/cli.py), [client](../../
 - Verification on 6 October 2026: 35 unit tests pass on Python 3.14.5, using mocked Jira calls. They cover nested flag placement, grouped/legacy commands and payloads, local help/context, project-neutral creation/dashboard, explicit callback intake, browser routing, no-input behavior, setup compatibility, and failures.
 - Wheel and source distribution build successfully. Both wheel-installed executables pass help/version checks from an isolated home/directory; new root/context JSON works without credentials. Source syntax was checked for Python 3.10 compatibility; runtime checks across the full advertised Python/OS matrix remain a release task.
 - Early Sprint 2 improvements include bounded request timeouts, quoted generated project JQL, session cleanup, consistent network/follow-up error handling, and stderr progress. Full pagination, retries, structured errors, and comprehensive transport verification remain unchecked.
-- OAuth/application ownership, atomic profile identity resolution, credentials migration, discovery, templates, CI/CD, updater, and v2 release publication remain unfinished. No real Jira issues were created or changed.
+- The historical foundation did not include profiles, discovery, templates, CI/CD, updater, or release publication. Current progress is recorded in the milestone evidence and checklist; OAuth is deferred by user decision. No real Jira issues were created or changed.
 
 ## Delivery sequence
 

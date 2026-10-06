@@ -12,6 +12,11 @@ from .commands import build_parser, help_parser
 
 
 def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> None:
+    raw = sys.argv[1:] if argv is None else argv
+    if raw and raw[0] == "--_apply-update":
+        from .update import apply_windows_update
+        apply_windows_update(raw[1:])
+        return
     parser = build_parser(prog)
     args = parser.parse_args(argv)
     def fail(code, kind, message, **details):

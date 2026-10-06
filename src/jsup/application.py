@@ -198,6 +198,14 @@ def _render(data, args, cfg: dict, prog: str) -> None:
 
 
 def run(args, prog: str) -> None:
+    if args.cmd == "update":
+        from . import update
+        data = update.handle(args)
+        if args.json:
+            ui.dump_json(data)
+        else:
+            ui.console.print(data, markup=False)
+        return
     if args.cmd in {"auth-login", "auth-status", "auth-logout", "config-migrate", "profile-list", "profile-use", "profile-remove", "context-use", "config-get", "config-set", "doctor"}:
         from . import auth
         data = auth.handle(args)
