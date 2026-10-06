@@ -18,10 +18,14 @@ def _keyring():
         module = type(backend).__module__
         # Accept only native OS stores; chained/plaintext third-party stores
         # are not an implicit downgrade from secure storage.
-        if module not in {"keyring.backends.macOS", "keyring.backends.Windows",
-                          "keyring.backends.SecretService", "keyring.backends.kwallet"}:
-            raise CredentialError("No native credential store available. Use JIRA_API_TOKEN for headless use, or explicitly choose --storage file.")
-        return keyring
+        trusted={"keyring.backends.macOS", "keyring.backends.Windows",
+                 "keyring.backends.SecretService", "keyring.backends.kwallet"}
+        if module in trusted:
+            return backend
+        for candidate in getattr(backend, "backends", []):
+            if type(candidate).__module__ in trusted and candidate.priority > 0:
+                return candidate
+        raise CredentialError("No native credential store available. Use JIRA_API_TOKEN for headless use, or explicitly choose --storage file.")
     except ImportError:
         raise CredentialError("Credential-store support is missing; reinstall the package or use environment authentication.") from None
 

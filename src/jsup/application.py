@@ -16,13 +16,15 @@ class CommandError(Exception):
 
 
 def require_input(args, message: str) -> None:
-    if args.no_input or not sys.stdin.isatty():
+    if args.no_input or args.json or not sys.stdin.isatty():
         raise CommandError(message)
 
 
 def show_context(args, prog: str, include_help: bool = False) -> None:
     cfg = config.resolve_config(args, read_secret=False)
     data = {"site": cfg["site"] or None, "project": cfg["project"] or None}
+    if cfg.get("profile"):
+        data.update(profile=cfg["profile"], board=cfg.get("board"))
     if args.json:
         ui.dump_json(data)
     else:
@@ -106,6 +108,10 @@ def _dashboard(j: Jira, args, cfg: dict) -> dict:
 def _fetch(j: Jira, args, cfg: dict):
     project = lambda key=None: _project(cfg, key)
     cmd = args.cmd
+    if cmd in {"sprint-list", "sprint-create"} and not args.board:
+        args.board = cfg.get("board")
+        if not args.board:
+            raise CommandError("Pass --board ID or select a default with context use --board ID.")
     pagination = {}
     if getattr(args, "all", False):
         pagination["all_results"] = True

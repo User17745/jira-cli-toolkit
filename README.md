@@ -2,7 +2,7 @@
 
 A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `jsup` executable. Repository: [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit).
 
-The current source is an unreleased v2 foundation (`0.3.0.dev0`). It adds project-neutral commands and help while preserving existing workflows. Authentication profiles, field discovery, templates, automatic updates, and binary releases are tracked in the [upgrade roadmap](docs/sprints/v2-upgrade/roadmap.md).
+The current source is the v2 release candidate (`2.0.0rc1`). It adds guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and remaining release gates are tracked in the [upgrade roadmap](docs/sprints/v2-upgrade/roadmap.md).
 
 ## Install from this checkout
 
@@ -20,7 +20,7 @@ If `jsup` is already installed, use `pipx install --force .` from the desired ch
 ## Setup and help
 
 ```bash
-jira-cli-toolkit config init
+jira-cli-toolkit auth login --profile work
 jira-cli-toolkit user me
 jira-cli-toolkit --help
 jira-cli-toolkit help issue create
@@ -59,7 +59,7 @@ jira-cli-toolkit issue comment list ENG-42
 
 `issue list` includes Done issues unless `--open` is supplied. Its `--jql` is a complete query: it ignores the configured default project and cannot be combined with explicit `--project` or `--open`. Legacy `open --jql` retains its original extra-filter behavior. `--limit` (alias `--max`) bounds total fetched results across pages; `--all` follows every page.
 
-Creation accepts type, priority, account-ID assignee, repeated labels/components, descriptions, and description files. Grouped creation discovers project/type fields. Pass `--type Bug` in scripts or choose interactively; `project issue-types` and `project fields --type Bug` show available values. Required custom fields accept `--field FIELD=VALUE`, `FIELD:=JSON`, or `--fields-file`. Legacy `issue-create` retains its Task default. Generic creation does not add support-specific metadata. The explicit legacy `jsup intake` wizard still creates callback issues with the `callback` label and `ops-runbook` component, pending migration to a template.
+Creation accepts type, priority, account-ID assignee, repeated labels/components, descriptions, and description files. Grouped creation discovers project/type fields. Pass `--type Bug` in scripts or choose interactively; `project issue-types` and `project fields --type Bug` show available values. Required custom fields accept `--field FIELD=VALUE`, `FIELD:=JSON`, or `--fields-file`. Legacy `issue-create` retains its Task default. Generic creation does not add support-specific metadata. The explicit legacy `jsup intake` wizard still creates callback issues with the `callback` label and `ops-runbook` component, using its explicit callback compatibility template.
 
 ## Boards, sprints, and components
 

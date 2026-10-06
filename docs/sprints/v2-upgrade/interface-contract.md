@@ -10,7 +10,7 @@ The repository/product is **Jira CLI Toolkit**, hosted at [User17745/jira-cli-to
 
 Do not install a `jira` executable: [JiraCLI](https://github.com/ankitpokhrel/jira-cli/wiki/Installation) and [go-jira](https://github.com/go-jira/jira) already use that name. Users may choose their own shell alias. No package-registry publication is part of this change.
 
-The source version is `0.3.0.dev0`, an unreleased foundation, not a complete v2 release. Keep the `jsup` executable and all existing command names throughout v2.x. Removal requires a separately announced major release and migration instructions. Both executables accept grouped and legacy command spellings, with shared application operations.
+The source version is `2.0.0rc1`, a v2 release candidate. Stable promotion awaits the recorded acceptance gates. Keep the `jsup` executable and all existing command names throughout v2.x. Removal requires a separately announced major release and migration instructions. Both executables accept grouped and legacy command spellings, with shared application operations.
 
 ## Product position and initial capability scope
 

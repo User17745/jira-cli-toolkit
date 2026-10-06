@@ -254,7 +254,7 @@ def handle(args):
             result={**installed,'available_version':str(version),'update_available':available,'release_url':release.get('html_url'),'updated':False}
             if args.check or not available: return result
             if installed['method']!='standalone':
-                instructions={'pipx': 'pipx upgrade jsup', 'uv':'uv tool upgrade jsup',
+                instructions={'pipx': 'pipx install --force /path/to/verified-release.whl', 'uv':'uv tool install --force /path/to/verified-release.whl',
                               'python':f'{sys.executable} -m pip install --upgrade /path/to/verified-release.whl'}
                 wheel=next((a for a in manifest['artifacts'] if a.get('kind')=='wheel'),None)
                 if not wheel: raise UpdateError('Release has no Python wheel for this installation.')

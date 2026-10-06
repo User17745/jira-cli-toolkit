@@ -139,6 +139,17 @@ class AuthTests(unittest.TestCase):
             with self.subTest(kw=kw), self.assertRaises(ValueError): self.login(**kw)
         self.validate.assert_not_called()
 
+    def test_context_project_change_clears_stale_board_after_access_check(self):
+        self.login(profile='work')
+        doc=json.loads(self.path.read_text()); doc['profiles']['work']['board']=7
+        config.atomic_json(self.path,doc)
+        client=Mock(); client.project_get.return_value={'key':'HR','projectTypeKey':'business'}
+        with patch.object(auth,'Jira',return_value=client):
+            auth.local(arguments(cmd='context-use',site=None,email=None,token=None,project='HR',board=None))
+        saved=json.loads(self.path.read_text())['profiles']['work']
+        self.assertEqual(saved['project'],'HR'); self.assertIsNone(saved['board'])
+        client.close.assert_called_once()
+
     def test_malformed_config_is_not_silently_discarded(self):
         for content in ('[]','{oops'):
             self.path.write_text(content)
@@ -146,6 +157,15 @@ class AuthTests(unittest.TestCase):
 
 
 class CredentialTests(unittest.TestCase):
+    def test_native_backend_is_selected_without_unsafe_chained_fallback(self):
+        import keyring
+        native_class=type('Native', (), {'__module__':'keyring.backends.macOS', 'priority':5})
+        native=native_class()
+        chain_class=type('Chain', (), {'__module__':'keyring.backends.chainer'})
+        chain=chain_class(); chain.backends=[native]
+        with patch.object(keyring,'get_keyring',return_value=chain):
+            self.assertIs(credentials._keyring(),native)
+
     def test_native_store_failure_does_not_use_plaintext(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(credentials,'_keyring',side_effect=credentials.CredentialError('locked')):
             path=Path(temp)/'config.json'

@@ -54,7 +54,12 @@ def choose(items,value,label):
 
 
 def normalize(meta):
-    if isinstance(meta,dict): return meta
+    if isinstance(meta,dict):
+        if any(not isinstance(value,dict) for value in meta.values()):
+            raise ValueError('Jira returned invalid field metadata.')
+        return meta
+    if not isinstance(meta,list) or any(not isinstance(item,dict) or not (item.get('fieldId') or item.get('key')) for item in meta):
+        raise ValueError('Jira returned invalid field metadata.')
     return {item.get('fieldId') or item['key']:item for item in meta}
 
 

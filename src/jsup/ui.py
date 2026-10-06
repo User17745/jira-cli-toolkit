@@ -8,6 +8,7 @@ import csv
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from .client import adf_to_text
 
@@ -17,10 +18,10 @@ err_console = Console(stderr=True)
 STATUS_STYLE = {"new": "cyan", "indeterminate": "yellow", "done": "green"}
 
 
-def status_text(status: dict) -> str:
+def status_text(status: dict) -> Text:
     name = (status or {}).get("name", "?")
     cat = ((status or {}).get("statusCategory") or {}).get("key", "")
-    return f"[{STATUS_STYLE.get(cat, '')}]{name}[/]"
+    return Text(name, style=STATUS_STYLE.get(cat, ""))
 
 
 def emit(data, render) -> None:

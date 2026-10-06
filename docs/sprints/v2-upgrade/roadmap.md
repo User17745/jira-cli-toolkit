@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: in progress. Command foundation, API reliability, and cross-platform CI are implemented. Guided API-token authentication and profiles are being verified. Discovery, issue maintenance, templates, release publication, updater, and live acceptance remain in progress or planned.
+Status: v2 release candidate preparation. Sprints 0–6 implementation is complete and tested. CI and native build checks pass after the Windows UTF-8 repair. Sprint 7 end-to-end publication/update validation is in progress; live Jira acceptance and stable promotion remain explicit release gates.
 
 ## Goal
 
@@ -28,7 +28,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 - [x] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
-- [ ] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [x] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
 - [ ] Sprint 8 acceptance: full release checks and migration validation; commit/push verified release documentation and record CI results.
 
@@ -36,7 +36,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 
 - [x] Rename `User17745/jira-support-cli` to `User17745/jira-cli-toolkit` on GitHub and verify the canonical repository URL.
 - [x] Update this checkout's `origin` after the rename succeeds; preserve GitHub's old-name redirect and verify repository access. Leave other local clones to their owners.
-- [ ] Review links, badges, installer URLs, release/updater endpoints, package metadata, and repository integrations for references to the old name as the related features are built; retain intentional legacy references in migration documentation.
+- [x] Review links, badges, installer URLs, release/updater endpoints, package metadata, and repository integrations for references to the old name as the related features are built; retain intentional legacy references in migration documentation.
 
 Verification on 6 October 2026: canonical and old-name API URLs resolve to repository ID `1372895342`; visibility and default branch are unchanged. This checkout's origin is `git@github.com:User17745/jira-cli-toolkit.git`. Authenticated HTTPS Git access succeeds; the current execution environment's SSH key is not accepted, so SSH access was not verified. The intermediate `jira-toolkit` name also redirects to the final repository name. No updater implementation, workflow files, or release publication is included in the foundation milestone.
 
@@ -126,7 +126,7 @@ Completion criteria:
 - [x] Add explicit connection/read timeouts and consistent handling for HTTP, network, malformed-response, and interruption errors across initial calls and interactive follow-ups.
 - [x] Add bounded retries for safe operations, honoring rate-limit guidance. Do not blindly retry mutations such as issue creation when the outcome is unknown.
 - [x] Support the current enhanced search API and cursor pagination; review the deprecated search fallback and document any retained compatibility path.
-- [ ] Implement endpoint-appropriate pagination for issue searches, projects, boards, sprints, comments, and metadata. Define a limit on total results separately from page size; add `--all`.
+- [x] Implement endpoint-appropriate pagination for issue searches, projects, boards, sprints, comments, and metadata. Define a limit on total results separately from page size; add `--all`.
 - [x] Use POST search for long JQL where appropriate, safely construct generated JQL, and distinguish complete user JQL from additional filters.
 - [x] Stop assuming enhanced search returns `total`; show fetched counts, remaining-page information, and clearly labeled approximate counts where used.
 - [x] Make `--json` consistent for every applicable new command; define stable result/error shapes while preserving legacy JSON as agreed in Sprint 0.
@@ -217,7 +217,7 @@ Maintenance evidence: 111 deterministic tests pass, covering edit restrictions/c
 - [x] Route legacy `intake` through the callback compatibility template; retain its documented arguments and explain migration to ordinary template creation.
 - [x] Add shell completion for the supported shells, using local/cached metadata where possible and avoiding unnecessary network calls.
 - [x] Add configurable list columns and optional CSV output; keep JSON and readable terminal output consistent with their contracts.
-- [ ] Improve project/board/sprint selection and the dashboard based on selected context; handle projects without applicable board or sprint capabilities.
+- [x] Improve project/board/sprint selection and the dashboard based on selected context; handle projects without applicable board or sprint capabilities.
 - [x] Verify template validation, override precedence, missing components, cross-project reuse, completion, and piped output.
 
 Completion criteria:
@@ -362,3 +362,7 @@ Reliability CI evidence: commit `fdc86ad`; [run 37487449923](https://github.com/
 Distribution CI evidence: commit `364ba76`; [run 37489313815](https://github.com/User17745/jira-cli-toolkit/actions/runs/37489313815) passed Python packaging and all four native builds/smoke checks, including the real Windows deferred update helper. No release tag has been published yet.
 
 Authentication CI evidence: commit `5bbde12`; [run 37488337845](https://github.com/User17745/jira-cli-toolkit/actions/runs/37488337845) passed the full Python/OS matrix.
+
+Release preparation evidence: 124 tests pass locally with locked dependencies. The original `origin/main` 0.2.0 source was built as a wheel, installed in an isolated environment, and upgraded to the candidate wheel: both entry points and legacy help/update discovery work, with the legacy config byte-identical. [Migration guide](migration.md) and root changelog describe bootstrap, profile migration, command/output changes and rollback.
+
+Windows repair evidence: commit `60a3a6b`; [CI run 37491800987](https://github.com/User17745/jira-cli-toolkit/actions/runs/37491800987) and [native run 37491801158](https://github.com/User17745/jira-cli-toolkit/actions/runs/37491801158) pass on all configured platforms. The prior failed template run published no assets.

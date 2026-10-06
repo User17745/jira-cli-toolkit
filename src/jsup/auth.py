@@ -214,8 +214,20 @@ def local(args):
         cfg=config.resolve_config(SimpleNamespace(profile=name,site=None,email=None,token=None,project=None))
         j=Jira(cfg.get('api_site',cfg['site']),cfg['email'],cfg['token'])
         try:
+            if getattr(args,'select',False):
+                if not interactive(args): raise ValueError('--select requires interactive input without --json.')
+                projects=j.projects(all_results=True)
+                if not projects: raise ValueError('No accessible projects.')
+                selected=projects[ui.pick('Project',[f"{p['key']} — {p['name']}" for p in projects])]
+                args.project=selected['key']
+                if selected.get('projectTypeKey')=='software':
+                    boards=j.boards(project=args.project,all_results=True).get('values',[])
+                    index=ui.pick('Default board',['No default board']+[f"{b['name']} [{b['id']}]" for b in boards])
+                    args.board=boards[index-1]['id'] if index else None
             if args.project:
                 p=j.project_get(args.project)
+                if profiles[name].get('project') != p['key']:
+                    profiles[name]['board']=None
                 profiles[name]['project']=p['key']
             if args.board:
                 if args.board<1: raise ValueError('Board IDs must be positive.')

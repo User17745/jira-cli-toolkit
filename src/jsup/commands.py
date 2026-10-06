@@ -154,7 +154,7 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
                 group.add_argument("--enable", action="store_true")
                 group.add_argument("--disable", action="store_true")
     elif operation in ("sprint-list", "sprint-create"):
-        parser.add_argument("--board", type=positive_int, required=True)
+        parser.add_argument("--board", type=positive_int, required=parser._defaults.get("legacy", False))
         if operation == "sprint-list":
             parser.add_argument("--state", default="active,future")
         else:
@@ -283,6 +283,7 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     command(context, "show", "context-show", "show site and project without contacting Jira")
     use = command(context, "use", "context-use", "select a profile/project/board after checking access")
     use.add_argument("--board", type=positive_int)
+    use.add_argument("--select", action="store_true", help="choose accessible projects and boards interactively")
     _, user = group(root, "user", "user identity")
     command(user, "me", "me", "show authenticated user")
     _, projects = group(root, "project", "projects")
