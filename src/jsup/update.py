@@ -31,10 +31,11 @@ def installation():
     if getattr(sys,'frozen',False):
         method='standalone'
     else:
-        executable=str(Path(sys.executable).absolute())
-        if 'pipx' in executable:
+        prefix=Path(sys.prefix)
+        executable=str(Path(sys.executable).absolute()).replace('\\','/')
+        if (prefix/'pipx_metadata.json').is_file() or '/pipx/venvs/' in executable:
             method='pipx'
-        elif '/uv/' in executable.replace('\\','/') or '/uv/tools/' in executable.replace('\\','/'):
+        elif (prefix/'uv-receipt.toml').is_file() or '/uv/tools/' in executable:
             method='uv'
         else:
             method='python'
@@ -261,6 +262,8 @@ def handle(args):
                 # Never mutate an unrelated Python or manager environment.
                 result.update(instructions=instructions[installed['method']], wheel=wheel['name'],
                               note='Download the wheel from this release; verify its manifest checksum. For private/unpublished PyPI packages, pass that wheel to the owning manager instead of a registry upgrade.')
+                if installed['method']=='pipx':
+                    result['backend_fallback']='If pipx force-install reports an existing venv under its uv backend, repeat with --backend pip on pipx versions that support that option.'
                 return result
             match=[a for a in manifest['artifacts'] if a.get('kind')=='binary' and a.get('os')==installed['os'] and a.get('arch')==installed['arch']]
             if len(match)!=1: raise UpdateError('No compatible binary for this platform/architecture.')

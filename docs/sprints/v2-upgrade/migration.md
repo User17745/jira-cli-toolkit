@@ -15,6 +15,8 @@ python -m pip install --upgrade /path/to/jsup-VERSION-py3-none-any.whl
 
 Choose the command for your installation. Releases are private; use repository-read GitHub authentication. Installing from a checked-out tag with `pipx install --force .` is another supported bootstrap. The package is not published to PyPI, so a bare registry upgrade is not the distribution path.
 
+If pipx’s uv backend reports that the environment already exists during force installation, repeat with `pipx install --force --backend pip /path/to/jsup-VERSION-py3-none-any.whl` on pipx versions supporting `--backend` (verified with pipx 1.14.0). Older pipx versions using the pip backend do not need that option. The manager owns the environment; do not manually delete it or overwrite its shims.
+
 Both commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases. A release candidate must be requested explicitly, for example `update --version 2.0.0rc1 --prerelease --check`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
 
 ## Credentials and contexts

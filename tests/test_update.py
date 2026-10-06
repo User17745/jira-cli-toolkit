@@ -144,3 +144,16 @@ class UpdateTests(unittest.TestCase):
     def test_github_credentials_never_borrow_jira_token(self):
         with patch.dict(os.environ,{'JIRA_API_TOKEN':'jira-secret'},clear=True),patch.object(update.shutil,'which',return_value=None):
             self.assertIsNone(update.github_token())
+
+
+class InstallationTests(unittest.TestCase):
+    def test_custom_manager_directories_use_receipts_and_do_not_guess_from_names(self):
+        with tempfile.TemporaryDirectory(prefix='looks-like-pipx-') as temp:
+            prefix=Path(temp)
+            with patch.object(update.sys,'prefix',str(prefix)),patch.object(update.sys,'executable',str(prefix/'bin/python')),patch.object(update.sys,'frozen',False,create=True):
+                self.assertEqual(update.installation()['method'],'python')
+                (prefix/'uv-receipt.toml').write_text('fixture')
+                self.assertEqual(update.installation()['method'],'uv')
+                (prefix/'uv-receipt.toml').unlink()
+                (prefix/'pipx_metadata.json').write_text('{}')
+                self.assertEqual(update.installation()['method'],'pipx')
