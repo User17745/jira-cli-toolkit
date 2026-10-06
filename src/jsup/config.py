@@ -77,7 +77,8 @@ def resolve_config(args, *, read_secret=True) -> dict:
                 raise ValueError(f"Unknown profile: {chosen}. Run profile list or auth login.")
             return dict(site="", email="", token="", project="", source="none", profile=None)
         site = validate_site(settings["site"])
-        result = dict(site=site, email=settings["email"], token=credentials.get(chosen, settings, CONFIG_PATH) if read_secret else "",
+        allow_ui = sys.stdin.isatty() and not getattr(args, "no_input", False) and not getattr(args, "json", False)
+        result = dict(site=site, email=settings["email"], token=credentials.get(chosen, settings, CONFIG_PATH, allow_ui=allow_ui) if read_secret else "",
                       project=getattr(args, "project", None) or os.getenv("JIRA_PROJECT") or settings.get("project", ""),
                       board=settings.get("board"), profile=chosen, source=settings["storage"])
         if settings.get("cloud_id"):

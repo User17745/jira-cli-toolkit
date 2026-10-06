@@ -35,7 +35,9 @@ manifest=dict(schema_version=1,repository='User17745/jira-cli-toolkit',version=_
               commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
               channel='prerelease' if version.is_prerelease or version.is_devrelease else 'stable',
               python='>=3.10',platform_requirements={'linux':'glibc >=2.39 (Ubuntu 24.04 build)','macos':'macOS >=15','windows':'Windows Server 2022/Windows 10 or later; native runners validated'},
-              publisher_verification='GitHub authenticated HTTPS; no signature/attestation verification implemented',artifacts=artifacts)
+              provenance={'github_attestations':os.getenv('RELEASE_ATTESTATIONS')=='true',
+                          'client_verification':'gh attestation verify ARTIFACT --repo User17745/jira-cli-toolkit'},
+              publisher_verification='GitHub authenticated HTTPS; updater verifies integrity, optional attestations require separate gh verification',artifacts=artifacts)
 (root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 (root/'SHA256SUMS').write_text(''.join(f"{a['sha256']}  {a['name']}\n" for a in artifacts)+hashlib.sha256((root/'manifest.json').read_bytes()).hexdigest()+'  manifest.json\n')
 print('Complete release manifest verified.')

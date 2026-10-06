@@ -234,65 +234,65 @@ GitHub Releases is the shared distribution source for installers and the update 
 
 ### Release contract and CI
 
-- [ ] Define the release manifest shared by the pipeline and updater: version, tag, commit, channel, artifact names, OS/architecture, supported runtime/platform requirements, size, checksum, and manifest schema version.
-- [ ] Select and pin the standalone-binary packaging tool and build dependencies; keep Python wheel/sdist distribution for existing pipx/uv/pip users. Make the packaged runtime report its version and installation method.
-- [ ] Define the supported binary matrix, starting with macOS arm64/x86_64, Linux x86_64, and Windows x86_64; validate runner availability and minimum OS requirements before promising additional architectures.
-- [ ] Add GitHub Actions CI on pull requests and default-branch pushes for meaningful tests, lint/static checks selected for the project, Python package builds, and installed-package smoke tests. Run PR checks without publishing privileges or production Jira credentials.
-- [ ] Add native binary build and smoke-test jobs for each supported platform, including `--version`, `--help`, and updater discovery without Jira configuration.
-- [ ] Pin workflow actions and build inputs, use minimal job-specific permissions, and configure concurrency so overlapping runs cannot publish inconsistent assets for the same version.
+- [x] Define the release manifest shared by the pipeline and updater: version, tag, commit, channel, artifact names, OS/architecture, supported runtime/platform requirements, size, checksum, and manifest schema version.
+- [x] Select and pin the standalone-binary packaging tool and build dependencies; keep Python wheel/sdist distribution for existing pipx/uv/pip users. Make the packaged runtime report its version and installation method.
+- [x] Define the supported binary matrix, starting with macOS arm64/x86_64, Linux x86_64, and Windows x86_64; validate runner availability and minimum OS requirements before promising additional architectures.
+- [x] Add GitHub Actions CI on pull requests and default-branch pushes for meaningful tests, lint/static checks selected for the project, Python package builds, and installed-package smoke tests. Run PR checks without publishing privileges or production Jira credentials.
+- [x] Add native binary build and smoke-test jobs for each supported platform, including `--version`, `--help`, and updater discovery without Jira configuration.
+- [x] Pin workflow actions and build inputs, use minimal job-specific permissions, and configure concurrency so overlapping runs cannot publish inconsistent assets for the same version.
 
 ### Automated publication
 
-- [ ] Add a tag-triggered release workflow for versioned tags such as `v2.0.0`; confirm tag/package/runtime versions agree and release only tested commits under the agreed release policy.
-- [ ] Build wheel/sdist and all supported binaries, assemble the manifest and SHA-256 checksums, and upload the complete asset set to a draft GitHub Release. Reuse the same built artifacts for testing and publication.
-- [ ] Generate release notes and migration links; publish the release only after every required artifact and smoke check succeeds. Make retries idempotent and preserve already published versioned assets.
-- [ ] Mark prerelease tags as prereleases and exclude them from stable updates; set the latest stable release explicitly so an older maintenance release or failed run cannot displace it.
-- [ ] Produce artifact provenance/attestations where repository capabilities support them and define client verification separately from checksum validation; checksums alone detect corruption, not publisher identity.
-- [ ] Decide whether release downloads are public or require GitHub authentication based on actual repository visibility; support private-release access if needed without changing repository visibility or reusing Jira credentials.
+- [x] Add a tag-triggered release workflow for versioned tags such as `v2.0.0`; confirm tag/package/runtime versions agree and release only tested commits under the agreed release policy.
+- [x] Build wheel/sdist and all supported binaries, assemble the manifest and SHA-256 checksums, and upload the complete asset set to a draft GitHub Release. Reuse the same built artifacts for testing and publication.
+- [x] Generate release notes and migration links; publish the release only after every required artifact and smoke check succeeds. Make retries idempotent and preserve already published versioned assets.
+- [x] Mark prerelease tags as prereleases and exclude them from stable updates; set the latest stable release explicitly so an older maintenance release or failed run cannot displace it.
+- [x] Produce artifact provenance/attestations where repository capabilities support them and define client verification separately from checksum validation; checksums alone detect corruption, not publisher identity.
+- [x] Decide whether release downloads are public or require GitHub authentication based on actual repository visibility; support private-release access if needed without changing repository visibility or reusing Jira credentials.
 - [ ] Verify an end-to-end release-candidate run on GitHub, including asset download, manifest consistency, failed-matrix handling, publication permissions, and stable/prerelease selection.
 
 ### Update command
 
-- [ ] Add `update`, `update --check`, and `update --version <version>`, keeping a legacy `jsup update` entry point. Support `--json`, `--no-input`, and explicit confirmation controls consistently with the CLI contract.
-- [ ] Discover the latest published stable release from the renamed repository's GitHub Releases API, or resolve a requested version. Compare semantic versions correctly; avoid accidental downgrades and require explicit opt-in to prereleases or rollback.
-- [ ] Detect the installed platform, architecture, version, and installation method. Select only compatible assets and explain unsupported platforms without changing the installation.
-- [ ] For standalone installations, download from the canonical GitHub release, verify manifest/size/checksum and any required provenance, and validate the candidate executable before installation.
-- [ ] Stage replacements beside the target where possible, preserve executable permissions, handle Windows running-executable replacement with an appropriate helper, and restore the previous executable if replacement or post-update validation fails.
-- [ ] For package-manager installations, upgrade through the owning manager/environment using the verified release wheel or its documented distribution channel; never overwrite pipx/uv/Homebrew shims or use an unrelated Python environment. Provide exact instructions when automated delegation is unsupported.
-- [ ] Preserve credentials, profiles, and contexts during binary/package replacement. Invoke versioned config migrations through the application and distinguish executable rollback from potentially irreversible config migration.
-- [ ] Handle offline operation, GitHub API rate limits, private-release authentication, missing/incomplete assets, unsupported manifests, unwritable destinations, and concurrent updates with actionable errors. `--check` must never modify the installation.
-- [ ] Verify update behavior for stable/prerelease/version selection, no-op updates, installation methods, platform matching, checksum mismatch, interrupted downloads, failed replacement, rollback, config preservation, and JSON/noninteractive operation.
+- [x] Add `update`, `update --check`, and `update --version <version>`, keeping a legacy `jsup update` entry point. Support `--json`, `--no-input`, and explicit confirmation controls consistently with the CLI contract.
+- [x] Discover the latest published stable release from the renamed repository's GitHub Releases API, or resolve a requested version. Compare semantic versions correctly; avoid accidental downgrades and require explicit opt-in to prereleases or rollback.
+- [x] Detect the installed platform, architecture, version, and installation method. Select only compatible assets and explain unsupported platforms without changing the installation.
+- [x] For standalone installations, download from the canonical GitHub release, verify manifest/size/checksum and any required provenance, and validate the candidate executable before installation.
+- [x] Stage replacements beside the target where possible, preserve executable permissions, handle Windows running-executable replacement with an appropriate helper, and restore the previous executable if replacement or post-update validation fails.
+- [x] For package-manager installations, upgrade through the owning manager/environment using the verified release wheel or its documented distribution channel; never overwrite pipx/uv/Homebrew shims or use an unrelated Python environment. Provide exact instructions when automated delegation is unsupported.
+- [x] Preserve credentials, profiles, and contexts during binary/package replacement. Invoke versioned config migrations through the application and distinguish executable rollback from potentially irreversible config migration.
+- [x] Handle offline operation, GitHub API rate limits, private-release authentication, missing/incomplete assets, unsupported manifests, unwritable destinations, and concurrent updates with actionable errors. `--check` must never modify the installation.
+- [x] Verify update behavior for stable/prerelease/version selection, no-op updates, installation methods, platform matching, checksum mismatch, interrupted downloads, failed replacement, rollback, config preservation, and JSON/noninteractive operation.
 
 ### Existing-user bridge to v2
 
 Version `0.2.0` does not contain an update command. A future command cannot appear in already installed copies without an initial upgrade.
 
-- [ ] Choose and document a bootstrap path: publish a small compatible pre-v2 release containing the updater, or give current users a one-time package-manager reinstall/upgrade command. Once bootstrap succeeds, `jsup update` can use GitHub Releases for subsequent upgrades.
-- [ ] Preserve the old executable and package identity through the bridge or provide an explicit migration mapping if the package name changes; test upgrades from the actual `0.2.0` distribution.
-- [ ] Document release channels, update checks, pinned-version installation, package-manager handling, GitHub authentication when necessary, and rollback limitations. Avoid hidden auto-updates during ordinary Jira commands.
+- [x] Choose and document a bootstrap path: publish a small compatible pre-v2 release containing the updater, or give current users a one-time package-manager reinstall/upgrade command. Once bootstrap succeeds, `jsup update` can use GitHub Releases for subsequent upgrades.
+- [x] Preserve the old executable and package identity through the bridge or provide an explicit migration mapping if the package name changes; test upgrades from the actual `0.2.0` distribution.
+- [x] Document release channels, update checks, pinned-version installation, package-manager handling, GitHub authentication when necessary, and rollback limitations. Avoid hidden auto-updates during ordinary Jira commands.
 
 Completion criteria:
 
 - [ ] A validated version tag automatically publishes complete, downloadable release assets on GitHub; failed builds and prereleases never replace latest stable.
 - [ ] A supported standalone installation can check for and install that exact published release, verifies the candidate, and retains credentials/configuration.
-- [ ] Existing pipx/uv/pip users have a tested bootstrap and upgrade path without breaking their managed environments; unsupported methods receive usable instructions.
+- [x] Existing pipx/uv/pip users have a tested bootstrap and upgrade path without breaking their managed environments; unsupported methods receive usable instructions.
 
 ## Sprint 8 — Validation, documentation, and release
 
-- [ ] Run a representative acceptance matrix covering team-managed/company-managed Cloud projects, non-software project capabilities, required custom fields, differing workflows, restricted permissions, and headless operation.
-- [ ] Exercise live integration smoke checks in a designated test project with authorized credentials; keep normal automated tests deterministic and independent of production Jira.
+- [x] Run a representative acceptance matrix covering team-managed/company-managed Cloud projects, non-software project capabilities, required custom fields, differing workflows, restricted permissions, and headless operation.
+- [x] Exercise live integration smoke checks in a designated test project with authorized credentials; keep normal automated tests deterministic and independent of production Jira.
 - [ ] Verify packaged installation in a clean environment, advertised Python versions, supported operating systems, credential-store behavior, completion, and uninstallation.
-- [ ] Extend Sprint 7 CI with the complete parser/config/client/operation acceptance suite; include checks that prevent reintroducing original-project defaults into the generic paths.
-- [ ] Rewrite the README and help examples around onboarding and common generic workflows; document field formats, profiles, credential storage, auth recovery, scripting, limitations, and troubleshooting.
-- [ ] Publish a migration guide with old/new command mappings, config migration, default-behavior changes, JSON compatibility, alias duration, and rollback steps.
+- [x] Extend Sprint 7 CI with the complete parser/config/client/operation acceptance suite; include checks that prevent reintroducing original-project defaults into the generic paths.
+- [x] Rewrite the README and help examples around onboarding and common generic workflows; document field formats, profiles, credential storage, auth recovery, scripting, limitations, and troubleshooting.
+- [x] Publish a migration guide with old/new command mappings, config migration, default-behavior changes, JSON compatibility, alias duration, and rollback steps.
 - [ ] Finalize package metadata, release version, installation channels, changelog, and executable names; publish a release candidate and record validation evidence before the stable release.
-- [ ] Confirm credential/token redaction across status/config/doctor/errors and confirm no secrets are included in shipped fixtures, templates, examples, or diagnostic reports.
+- [x] Confirm credential/token redaction across status/config/doctor/errors and confirm no secrets are included in shipped fixtures, templates, examples, or diagnostic reports.
 
 Completion criteria:
 
 - [ ] A fresh user can install, authenticate, select a project, create an issue with required fields, update it, and transition it using only public documentation.
 - [ ] An existing user can migrate and run the legacy examples without undocumented breakage.
-- [ ] Scripts receive documented JSON and exit codes and never unexpectedly request input.
+- [x] Scripts receive documented JSON and exit codes and never unexpectedly request input.
 - [ ] Record release acceptance evidence and remaining limitations, then publish the stable release.
 
 ## Command migration reference
@@ -366,3 +366,11 @@ Authentication CI evidence: commit `5bbde12`; [run 37488337845](https://github.c
 Release preparation evidence: 124 tests pass locally with locked dependencies. The original `origin/main` 0.2.0 source was built as a wheel, installed in an isolated environment, and upgraded to the candidate wheel: both entry points and legacy help/update discovery work, with the legacy config byte-identical. [Migration guide](migration.md) and root changelog describe bootstrap, profile migration, command/output changes and rollback.
 
 Windows repair evidence: commit `60a3a6b`; [CI run 37491800987](https://github.com/User17745/jira-cli-toolkit/actions/runs/37491800987) and [native run 37491801158](https://github.com/User17745/jira-cli-toolkit/actions/runs/37491801158) pass on all configured platforms. The prior failed template run published no assets.
+
+Live acceptance on 6 October 2026: authorized team-managed software project BUG passed create/view/edit, typed Start date, assignment/unassignment, comment add/list/edit/delete, transition, link/unlink, attachment upload/list/download/delete with byte comparison, paginated JSON search and CSV parsing. BUG-703 and BUG-704 remain labeled `jira-cli-v2-acceptance` for user-authorized manual cleanup because Delete Issues permission is absent; no other issues were modified.
+
+Live authentication: isolated explicit POSIX file storage passed login/status/context/doctor/logout and legacy migration; original user config was preserved. Native macOS storage required OS approval; scripted login now returns a redacted actionable error instead of blocking. Interactive native-store approval/happy-path validation remains a manual release gate. Linux native wallets are interactive only; scripted use requires environment authentication or explicit file storage. The regression suite now has 127 tests, including OS interaction suppression/restoration.
+
+Provenance: the workflow includes optional, pinned GitHub attestations gated by `RELEASE_ATTESTATIONS=true`; publication waits for successful attestation when enabled. This private repository’s plan eligibility is not confirmed, so attestations are disabled. The manifest declares availability; manual `gh attestation verify` is separate from the updater’s hash validation. No signature/notarization claim is made.
+
+Read-only live capability matrix: BUG (team-managed software), PRD (company-managed software), TEST (team-managed business), and LDSUP (company-managed service desk) returned their own issue-type catalogs. Write acceptance was limited to authorized BUG. Required-field/validator variations and denied operations are additionally covered by deterministic fixtures; customer request APIs remain outside this release.

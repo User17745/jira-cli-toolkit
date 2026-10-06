@@ -77,21 +77,21 @@ def validate(site, email, token):
         client.close()
 
 
-def persist(doc, name, settings, token):
+def persist(doc, name, settings, token, *, allow_ui=False):
     # New credential ID preserves the old credential on a failed config write.
     old=doc['profiles'].get(name)
     settings={**settings,'credential_id':str(uuid.uuid4())}
-    credentials.put(settings,token,config.CONFIG_PATH)
+    credentials.put(settings,token,config.CONFIG_PATH,allow_ui=allow_ui)
     doc['profiles'][name]=settings
     doc['active_profile']=name
     try:
         config.atomic_json(config.CONFIG_PATH,doc)
     except OSError:
-        credentials.delete(settings,config.CONFIG_PATH)
+        credentials.delete(settings,config.CONFIG_PATH,allow_ui=allow_ui)
         raise
     if old:
         try:
-            credentials.delete(old,config.CONFIG_PATH)
+            credentials.delete(old,config.CONFIG_PATH,allow_ui=allow_ui)
         except credentials.CredentialError:
             ui.err_console.print('The replaced credential could not be removed from its old store. Local config uses the new credential.')
 
@@ -141,7 +141,7 @@ def login(args, *, replace=False):
         raise ValueError('Replacement token belongs to a different account; create another profile explicitly.')
     if cloud_id:
         settings['cloud_id']=cloud_id
-    persist(doc,name,settings,token)
+    persist(doc,name,settings,token,allow_ui=can_prompt)
     return dict(authenticated=True,profile=name,site=site,account_id=identity['accountId'],
                 storage=settings['storage'],project=settings['project'],
                 expiry='unknown; API tokens cannot be refreshed')
@@ -160,7 +160,7 @@ def migrate(args):
     doc={'schema_version':2,'active_profile':name,'profiles':{}}
     settings=dict(site=site,email=email,account_id=identity['accountId'],project=old.get('JIRA_PROJECT',''),storage=args.storage)
     # Original plaintext remains intact until both secure storage and atomic config write succeed.
-    persist(doc,name,settings,token)
+    persist(doc,name,settings,token,allow_ui=interactive(args))
     return {'migrated':True,'profile':name,'schema_version':2,'storage':args.storage}
 
 
@@ -195,7 +195,7 @@ def local(args):
     if args.cmd=='profile-use':
         doc['active_profile']=name
     elif args.cmd in ('profile-remove','auth-logout'):
-        credentials.delete(profiles[name],config.CONFIG_PATH)
+        credentials.delete(profiles[name],config.CONFIG_PATH,allow_ui=interactive(args))
         if args.cmd=='profile-remove':
             del profiles[name]
             if doc.get('active_profile')==name:
@@ -211,7 +211,8 @@ def local(args):
         args.board=int(args.value) if args.key=='board' else None
         args.cmd='context-use'
     if args.cmd=='context-use':
-        cfg=config.resolve_config(SimpleNamespace(profile=name,site=None,email=None,token=None,project=None))
+        cfg=config.resolve_config(SimpleNamespace(profile=name,site=None,email=None,token=None,project=None,
+                                                no_input=args.no_input,json=args.json))
         j=Jira(cfg.get('api_site',cfg['site']),cfg['email'],cfg['token'])
         try:
             if getattr(args,'select',False):

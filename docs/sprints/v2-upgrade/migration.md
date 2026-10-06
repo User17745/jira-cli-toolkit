@@ -21,6 +21,8 @@ Both commands support `--version`, `help`, and `update --info`. `update --check`
 
 Existing `~/.config/jsup/config.json` files remain usable. Run `config migrate` to validate the old identity, store its token in the native OS credential store, and atomically replace preferences with schema-2 profiles. If storage fails, the original file remains intact. Headless users can use a complete `JIRA_SITE`, `JIRA_EMAIL`, `JIRA_API_TOKEN` identity; explicit `--storage file` migration is available on POSIX. File storage is plaintext and is never an automatic fallback.
 
+Approve native-store access through interactive login. Scripted macOS commands suppress Keychain dialogs; a locked or unapproved store fails explicitly. Linux native wallets are interactive only; choose environment authentication or `--storage file` for scripts. A failed native-store migration leaves the legacy config intact.
+
 New users run `auth login --profile work`; token entry is hidden, and setup explains creation, scopes and project permissions. Scoped tokens use `--scoped` and a cloud ID/API gateway. `auth status` validates credentials; `doctor` also checks the selected project. API tokens cannot refresh automatically. Interactive replacement retains the selected site/account and never replays the original write; scripts receive an actionable failure.
 
 Use `profile list/use/remove`, `context use --project ENG --board 123`, or interactive `context use --select`. Changing projects clears a stale default board. Root/context display works locally without opening the credential store. Logout removes the local credential; revoke the token separately at Atlassian if needed. Externally supplied credentials are unaffected.

@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from types import SimpleNamespace
+from types import SimpleNamespace, ModuleType
 import unittest
 from unittest.mock import Mock, patch
 
@@ -157,6 +157,35 @@ class AuthTests(unittest.TestCase):
 
 
 class CredentialTests(unittest.TestCase):
+    def test_scripted_macos_access_restores_interaction_flag_after_failure(self):
+        native_class=type('Native', (), {'__module__':'keyring.backends.macOS'})
+        backend=native_class(); backend.get_password=Mock(side_effect=RuntimeError('locked'))
+        get_ui=Mock(side_effect=lambda state: setattr(state._obj, 'value', 1) or 0)
+        set_ui=Mock(return_value=0)
+        module=ModuleType('keyring.backends.macOS')
+        module.api=SimpleNamespace(_sec=SimpleNamespace(SecKeychainGetUserInteractionAllowed=get_ui,
+            SecKeychainSetUserInteractionAllowed=set_ui),Error=SimpleNamespace(raise_for_status=Mock()))
+        with patch.dict('sys.modules', {'keyring.backends.macOS':module}), patch.object(credentials,'_keyring',return_value=backend):
+            with self.assertRaises(credentials.CredentialError):
+                credentials.get('work',{'storage':'keyring','credential_id':'1'},Path('config.json'))
+        self.assertEqual([call.args[0] for call in set_ui.call_args_list],[False,1])
+        backend.get_password.assert_called_once_with(credentials.SERVICE,'1')
+
+    def test_interactive_native_store_keeps_os_access_dialogs_available(self):
+        native_class=type('Native', (), {'__module__':'keyring.backends.macOS'})
+        backend=native_class(); backend.set_password=Mock()
+        with patch.object(credentials,'_keyring',return_value=backend):
+            credentials.put({'storage':'keyring','credential_id':'1'},'secret',Path('config.json'),allow_ui=True)
+        backend.set_password.assert_called_once_with(credentials.SERVICE,'1','secret')
+
+    def test_scripted_linux_wallet_cannot_trigger_unlock_prompt(self):
+        native_class=type('Native', (), {'__module__':'keyring.backends.SecretService'})
+        backend=native_class(); backend.get_password=Mock()
+        with patch.object(credentials,'_keyring',return_value=backend):
+            with self.assertRaisesRegex(credentials.CredentialError,'headless'):
+                credentials.get('work',{'storage':'keyring','credential_id':'1'},Path('config.json'))
+        backend.get_password.assert_not_called()
+
     def test_native_backend_is_selected_without_unsafe_chained_fallback(self):
         import keyring
         native_class=type('Native', (), {'__module__':'keyring.backends.macOS', 'priority':5})

@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
+from threading import RLock
 
 SERVICE = "jira-cli-toolkit"
+_STORE_LOCK = RLock()
 
 
 class CredentialError(ValueError):
@@ -30,15 +33,50 @@ def _keyring():
         raise CredentialError("Credential-store support is missing; reinstall the package or use environment authentication.") from None
 
 
-def get(profile, settings, config_path):
+@contextmanager
+def _store(allow_ui):
+    """Keep OS unlock dialogs out of scripted commands.
+
+    keyring 25 targets the macOS file-based Keychain, whose process-wide
+    interaction flag must be restored even if an operation fails.
+    """
+    backend = _keyring()
+    module = type(backend).__module__
+    if allow_ui or module == "keyring.backends.Windows":
+        yield backend
+        return
+    if module == "keyring.backends.macOS":
+        import ctypes
+        from keyring.backends.macOS import api
+        get_ui = api._sec.SecKeychainGetUserInteractionAllowed
+        set_ui = api._sec.SecKeychainSetUserInteractionAllowed
+        get_ui.argtypes = [ctypes.POINTER(ctypes.c_ubyte)]
+        set_ui.argtypes = [ctypes.c_ubyte]
+        get_ui.restype = set_ui.restype = ctypes.c_int32
+        with _STORE_LOCK:
+            previous = ctypes.c_ubyte()
+            api.Error.raise_for_status(get_ui(ctypes.byref(previous)))
+            api.Error.raise_for_status(set_ui(False))
+            try:
+                yield backend
+            finally:
+                api.Error.raise_for_status(set_ui(previous.value))
+        return
+    # Linux backends can create/unlock a wallet through an unbounded D-Bus
+    # prompt. Scripted use must choose an explicit noninteractive source.
+    raise CredentialError("This OS store can request an unlock dialog. Use environment authentication or explicitly choose --storage file for headless use; run auth login in a terminal for native storage.")
+
+
+def get(profile, settings, config_path, *, allow_ui=False):
     storage = settings.get("storage", "keyring")
     if storage == "keyring":
         try:
-            return _keyring().get_password(SERVICE, settings["credential_id"]) or ""
+            with _store(allow_ui) as backend:
+                return backend.get_password(SERVICE, settings["credential_id"]) or ""
         except CredentialError:
             raise
         except Exception:
-            raise CredentialError("Could not read the OS credential store. Unlock it or use environment authentication.") from None
+            raise CredentialError("Could not read the OS credential store without approved access. Run auth login interactively or use environment authentication.") from None
     path = Path(config_path).with_name("credentials.json")
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -51,15 +89,16 @@ def get(profile, settings, config_path):
         raise CredentialError("Invalid credential file.") from None
 
 
-def put(settings, token, config_path):
+def put(settings, token, config_path, *, allow_ui=False):
     if settings["storage"] == "keyring":
         try:
-            _keyring().set_password(SERVICE, settings["credential_id"], token)
+            with _store(allow_ui) as backend:
+                backend.set_password(SERVICE, settings["credential_id"], token)
             return
         except CredentialError:
             raise
         except Exception:
-            raise CredentialError("Could not save to the OS credential store. No plaintext fallback was written.") from None
+            raise CredentialError("Could not save to the OS credential store. Run auth login interactively to approve access, use environment authentication, or explicitly choose --storage file (POSIX only). No plaintext fallback was written.") from None
     import os
     if os.name == "nt":
         raise CredentialError("File storage on Windows is unsupported until ACL protection is implemented; use the Windows credential store or environment variables.")
@@ -70,10 +109,11 @@ def put(settings, token, config_path):
     atomic_json(path, data)
 
 
-def delete(settings, config_path):
+def delete(settings, config_path, *, allow_ui=False):
     if settings["storage"] == "keyring":
         try:
-            _keyring().delete_password(SERVICE, settings["credential_id"])
+            with _store(allow_ui) as backend:
+                backend.delete_password(SERVICE, settings["credential_id"])
         except Exception:
             raise CredentialError("Could not remove the OS credential. Unlock the store and retry logout.") from None
     else:
