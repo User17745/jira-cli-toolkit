@@ -69,7 +69,10 @@ def api_site(site, scoped=False, cloud_id=None):
 def validate(site, email, token):
     client=Jira(site,email,token)
     try:
-        return client.me()
+        identity=client.me()
+        if not isinstance(identity,dict) or not identity.get('accountId'):
+            raise ValueError('Jira returned an invalid account identity; no credentials were saved.')
+        return identity
     finally:
         client.close()
 
@@ -100,13 +103,13 @@ def login(args, *, replace=False):
     can_prompt=interactive(args)
     if can_prompt:
         explain()
-    site=(getattr(args,'site',None) or os.getenv('JIRA_SITE') or old.get('site',''))
-    email=(getattr(args,'email',None) or os.getenv('JIRA_EMAIL') or old.get('email',''))
+    site=(getattr(args,'site',None) or (None if replace else os.getenv('JIRA_SITE')) or old.get('site',''))
+    email=(getattr(args,'email',None) or (None if replace else os.getenv('JIRA_EMAIL')) or old.get('email',''))
     if can_prompt and not replace:
         site=input(f'Jira site [{site}]: ').strip() or site
         email=input(f'Account email [{email}]: ').strip() or email
     site=config.validate_site(site)
-    token=getattr(args,'token',None) or os.getenv('JIRA_API_TOKEN')
+    token=getattr(args,'token',None) or (None if replace else os.getenv('JIRA_API_TOKEN'))
     if getattr(args,'token_stdin',False):
         token=sys.stdin.readline().strip()
     if not token and can_prompt:

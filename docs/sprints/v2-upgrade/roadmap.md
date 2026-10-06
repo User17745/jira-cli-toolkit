@@ -27,7 +27,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 - [x] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
-- [ ] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [x] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
 - [ ] Sprint 8 acceptance: full release checks and migration validation; commit/push verified release documentation and record CI results.
@@ -211,19 +211,22 @@ Maintenance evidence: 111 deterministic tests pass, covering edit restrictions/c
 
 ## Sprint 6 — Templates and daily-use polish
 
-- [ ] Define a versioned declarative template format for prompts, summary/description patterns, defaults, and field mappings; keep secrets and executable hooks out of templates.
-- [ ] Add `template list/show/validate` and `issue create --template`; validate against the selected project/type and let explicit CLI input override template defaults.
-- [ ] Ship the current callback workflow as an optional example template. Keep `ops-runbook` explicit and validated, with a documented way to remove or replace it.
-- [ ] Route legacy `intake` through the callback compatibility template; retain its documented arguments and explain migration to ordinary template creation.
-- [ ] Add shell completion for the supported shells, using local/cached metadata where possible and avoiding unnecessary network calls.
-- [ ] Add configurable list columns and optional CSV output; keep JSON and readable terminal output consistent with their contracts.
+- [x] Define a versioned declarative template format for prompts, summary/description patterns, defaults, and field mappings; keep secrets and executable hooks out of templates.
+- [x] Add `template list/show/validate` and `issue create --template`; validate against the selected project/type and let explicit CLI input override template defaults.
+- [x] Ship the current callback workflow as an optional example template. Keep `ops-runbook` explicit and validated, with a documented way to remove or replace it.
+- [x] Route legacy `intake` through the callback compatibility template; retain its documented arguments and explain migration to ordinary template creation.
+- [x] Add shell completion for the supported shells, using local/cached metadata where possible and avoiding unnecessary network calls.
+- [x] Add configurable list columns and optional CSV output; keep JSON and readable terminal output consistent with their contracts.
 - [ ] Improve project/board/sprint selection and the dashboard based on selected context; handle projects without applicable board or sprint capabilities.
-- [ ] Verify template validation, override precedence, missing components, cross-project reuse, completion, and piped output.
+- [x] Verify template validation, override precedence, missing components, cross-project reuse, completion, and piped output.
 
 Completion criteria:
 
-- [ ] A team can share a template and use it on a compatible project without changing Python code; incompatible defaults are identified before submission.
-- [ ] The original support workflow remains available explicitly, while generic operations retain project-neutral behavior.
+- [x] A team can share a template and use it on a compatible project without changing Python code; incompatible defaults are identified before submission.
+- [x] The original support workflow remains available explicitly, while generic operations retain project-neutral behavior.
+
+
+Workflow evidence: 119 deterministic tests pass, covering template schema/expression restrictions, required variables, override precedence, incompatible components, local completion and parseable CSV. Package and binary smoke scripts verify bundled template resources.
 
 ## Sprint 7 — CI/CD, GitHub Releases, and update command
 
@@ -357,3 +360,5 @@ Use the current supported APIs during implementation; these links informed the p
 Reliability CI evidence: commit `fdc86ad`; [run 37487449923](https://github.com/User17745/jira-cli-toolkit/actions/runs/37487449923) passed every configured job.
 
 Distribution CI evidence: commit `364ba76`; [run 37489313815](https://github.com/User17745/jira-cli-toolkit/actions/runs/37489313815) passed Python packaging and all four native builds/smoke checks, including the real Windows deferred update helper. No release tag has been published yet.
+
+Authentication CI evidence: commit `5bbde12`; [run 37488337845](https://github.com/User17745/jira-cli-toolkit/actions/runs/37488337845) passed the full Python/OS matrix.

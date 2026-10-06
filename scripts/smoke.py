@@ -20,6 +20,9 @@ def main():
                                 timeout=30, check=True)
         data = json.loads(result.stdout)
         assert data["site"] is None and data["project"] is None, data
+        for args in (["template", "show", "callback", "--json"], ["update", "--info", "--json"], ["completion", "bash"]):
+            subprocess.run(["jira-cli-toolkit", *args], cwd=home, env=env,
+                           capture_output=True, text=True, timeout=30, check=True)
     print("Both installed CLI entry points passed clean-home smoke checks.")
 
 

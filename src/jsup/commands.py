@@ -13,7 +13,7 @@ class CLIParser(argparse.ArgumentParser):
         # Seed the root namespace rather than setting defaults on inherited
         # option actions, which argparse shares between parent/child parsers.
         defaults = dict(project=None, site=None, email=None, token=None,
-                        json=False, no_input=False, profile=None)
+                        json=False, no_input=False, profile=None, csv=False, columns=None)
         for name, value in defaults.items():
             if not hasattr(namespace, name):
                 setattr(namespace, name, value)
@@ -95,6 +95,8 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
             parser.add_argument("--fields-file")
             parser.add_argument("--editor", action="store_true")
             parser.add_argument("--refresh", action="store_true")
+            parser.add_argument("--template", help="built-in/local template name or JSON path")
+            parser.add_argument("--var", action="append", default=[], help="template variable NAME=VALUE")
     elif operation == "intake":
         parser.add_argument("--name", help="client name")
         parser.add_argument("--issue", help="issue as reported")
@@ -207,7 +209,10 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     common.add_argument("--token")
     common.add_argument("--project", "-p", help="project key")
     common.add_argument("--profile", help="named identity; never mixed with identity flags")
-    common.add_argument("--json", action="store_true", help="JSON output")
+    output = common.add_mutually_exclusive_group()
+    output.add_argument("--json", action="store_true", help="JSON output")
+    output.add_argument("--csv", action="store_true", help="CSV output for lists")
+    common.add_argument("--columns", help="comma-separated list columns")
     common.add_argument("--no-input", action="store_true", help="never prompt")
     parser = CLIParser(
         prog=prog, parents=[common], description="Jira CLI Toolkit — Jira Cloud from your terminal",
@@ -232,6 +237,17 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     helper.add_argument("path", nargs="*", help="for example: issue comment add")
     helper.set_defaults(cmd="help")
     command(root, "dashboard", "dashboard", "summarize selected projects")
+    completion = command(root, "completion", "completion", "generate local shell completion")
+    completion.add_argument("shell", choices=["bash", "zsh", "fish"])
+    _, templates = group(root, "template", "inspect and validate reusable JSON templates")
+    command(templates, "list", "template-list", "list built-in and local templates")
+    for action in ("show", "validate"):
+        item = command(templates, action, "template-" + action, action + " a declarative template")
+        item.add_argument("template")
+        if action == "validate":
+            item.add_argument("--type")
+            item.add_argument("--var", action="append", default=[])
+            item.add_argument("--refresh", action="store_true")
     updater = command(root, "update", "update", "check GitHub Releases or explicitly upgrade")
     updater.add_argument("--check", action="store_true")
     updater.add_argument("--info", action="store_true", help="local installation details, without network")

@@ -80,11 +80,11 @@ def _prepare_intake(args) -> None:
     issue = args.issue or input("Issue as reported: ").strip()
     if not (name and issue):
         raise CommandError("intake needs a name and an issue.")
-    args.summary = f"Callback: {name} — {issue}"
-    args.desc = (f"Client: {name}\nIssue as reported: {issue}\n"
-                 f"Requested callback: {args.callback}\n"
-                 "Source: jsup intake. Assumed open — team to review & update.")
-    args.label, args.component, args.assignee = ["callback"], ["ops-runbook"], None
+    from .templates import load, render
+    values = render(load("callback"), {"name": name, "issue": issue, "callback": args.callback})
+    args.summary, args.desc = values["summary"], values["description"]
+    args.label, args.component, args.assignee = values["labels"], values["components"], None
+
 
 
 def _dashboard(j: Jira, args, cfg: dict) -> dict:
@@ -127,6 +127,15 @@ def _fetch(j: Jira, args, cfg: dict):
     if cmd in {"issue-edit", "issue-assign", "issue-unassign", "issue-link", "issue-unlink", "comment-add", "comment-edit", "comment-delete", "attachment-list", "attachment-upload", "attachment-download", "attachment-delete"}:
         from .maintenance import handle
         return handle(j, args, cfg)
+    if cmd == "template-validate":
+        from . import fields, templates
+        from types import SimpleNamespace
+        creation = SimpleNamespace(**{**vars(args), "summary": None, "desc": None, "desc_file": None,
+            "editor": False, "priority": None, "assignee": None, "label": [], "component": [],
+            "parent": None, "field": [], "fields_file": None})
+        templates.apply(creation, validating=True)
+        fields.prepare_create(j, creation, cfg)
+        return {"valid": True, "template": args.template, "project": cfg["project"], "type": creation.type}
     if cmd == "issue-move":
         if not args.legacy:
             from .fields import transition
@@ -171,6 +180,9 @@ def _fetch(j: Jira, args, cfg: dict):
 
 
 def _render(data, args, cfg: dict, prog: str) -> None:
+    if args.csv:
+        ui.csv_data(data, args.columns)
+        return
     if args.json:
         ui.dump_json(data)
         return
@@ -184,11 +196,11 @@ def _render(data, args, cfg: dict, prog: str) -> None:
     elif cmd == "me":
         ui.console.print(f"✓ {data.get('displayName')} ({data.get('emailAddress')})", markup=False)
     elif cmd in ("open", "issue-list"):
-        ui.issues_table(data, "Open issues" if cmd == "open" or args.open else "Issues")
+        ui.issues_table(data, "Open issues" if cmd == "open" or args.open else "Issues", args.columns)
     elif cmd == "issue-show":
         ui.issue_panel(data)
     elif cmd == "board-issues":
-        ui.issues_table(data, f"Board {args.board_id}")
+        ui.issues_table(data, f"Board {args.board_id}", args.columns)
     elif cmd == "comment-list":
         ui.comments_table(data)
     elif cmd == "board-list":
@@ -210,6 +222,22 @@ def _render(data, args, cfg: dict, prog: str) -> None:
 
 
 def run(args, prog: str) -> None:
+    if args.json and args.csv:
+        raise CommandError("Choose --json or --csv, not both.")
+    if args.csv and args.cmd not in {"issue-list", "open", "board-list", "board-issues", "project-list", "comment-list", "sprint-list", "component-list", "project-types", "project-fields", "attachment-list"}:
+        raise CommandError("--csv is supported only for list commands.")
+    if args.cmd == "completion":
+        from .completion import script
+        print(script(args.shell, prog), end="")
+        return
+    if args.cmd in {"template-list", "template-show"}:
+        from . import templates
+        data = templates.list_templates() if args.cmd == "template-list" else templates.load(args.template)
+        if args.json:
+            ui.dump_json(data)
+        else:
+            ui.console.print(data, markup=False)
+        return
     if args.cmd == "update":
         from . import update
         data = update.handle(args)

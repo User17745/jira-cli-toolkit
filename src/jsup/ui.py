@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+import csv
 
 from rich.console import Console
 from rich.panel import Panel
@@ -31,8 +32,37 @@ def dump_json(data) -> None:
     print(json.dumps(data, indent=2))
 
 
-def issues_table(data, title="Issues") -> None:
+def list_rows(data):
+    items = data if isinstance(data, list) else next((data[k] for k in ("issues", "values", "comments", "projects") if isinstance(data.get(k), list)), [])
+    rows = []
+    for item in items:
+        if not isinstance(item, dict):
+            rows.append({"value": str(item)})
+            continue
+        row = {**item, **item.get("fields", {})}
+        row.pop("fields", None)
+        for key, value in row.items():
+            if isinstance(value, dict):
+                row[key] = value.get("displayName", value.get("name", value.get("value", json.dumps(value))))
+            elif isinstance(value, list):
+                row[key] = json.dumps(value, ensure_ascii=False)
+        rows.append(row)
+    return rows
+
+
+def csv_data(data, columns=None):
+    rows = list_rows(data)
+    names = columns.split(",") if columns else list(dict.fromkeys(k for row in rows for k in row))
+    writer = csv.DictWriter(sys.stdout, fieldnames=names, extrasaction="ignore", lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+
+
+def issues_table(data, title="Issues", columns=None) -> None:
     issues = data.get("issues", [])
+    if columns:
+        simple_table(f"{title} ({len(issues)} fetched)", list_rows(data), columns.split(","))
+        return
     remaining = " · more available" if data.get("isLast") is False or data.get("nextPageToken") else ""
     total = f", total={data['total']}" if "total" in data else ""
     t = Table(title=f"{title} ({len(issues)} fetched{total}{remaining})",

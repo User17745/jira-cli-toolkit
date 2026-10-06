@@ -42,6 +42,8 @@ def invalidate(cfg):
 
 
 def choose(items,value,label):
+    if not isinstance(items,list) or any(not isinstance(i,dict) or 'id' not in i for i in items):
+        raise ValueError('Jira returned invalid value metadata.')
     if value is None: raise ValueError(f'Pass {label}; available values: '+', '.join(f"{i['name']} [id:{i['id']}]" for i in items))
     raw=str(value).removeprefix('id:')
     exact=[i for i in items if str(i.get('id'))==raw]
@@ -145,7 +147,7 @@ def require_fields(args,meta,fields):
             if fields[key] in (None,'',[]): raise ValueError(f'Required field {key} cannot be empty.')
 
 
-def create(j,args,cfg):
+def prepare_create(j,args,cfg):
     project=cfg['project']
     if not project: raise ValueError('Select a project with --project or context use.')
     types=cached(cfg,project,'types',lambda:j.issue_types(project),args.refresh)
@@ -154,17 +156,33 @@ def create(j,args,cfg):
         issue_type=types[ui.pick('Issue type',[f"{i['name']} [{i['id']}]" for i in types])]['id']
     selected=choose(types,issue_type,'--type')
     meta=normalize(cached(cfg,project,'create:'+selected['id'],lambda:j.create_fields(project,selected['id']),args.refresh))
-    fields=supplied(args,meta)
-    if 'project' in fields or 'issuetype' in fields: raise ValueError('Select project/type with --project and --type, not --field.')
-    fields.update(project={'key':project},issuetype={'id':selected['id']})
+    provided=supplied(args,meta)
     explicit={'summary':args.summary,'description':description(args),'priority':args.priority,
               'assignee':args.assignee,'labels':args.label or None,'components':args.component or None,'parent':args.parent}
+    fields={}
+    for key,value in getattr(args,'template_fields',{}).items():
+        fid=field_key(meta,key)
+        if fid in provided or explicit.get(fid) is not None:
+            continue
+        if isinstance(value,list) and all(isinstance(v,str) for v in value): value=','.join(value)
+        fields[fid]=typed(meta[fid],value)
+    fields.update(provided)
+    if 'project' in fields or 'issuetype' in fields: raise ValueError('Select project/type with --project and --type, not --field.')
+    fields.update(project={'key':project},issuetype={'id':selected['id']})
     for key,value in explicit.items():
         if value is not None:
             if key not in meta: raise ValueError(f'Field {key} is not available for creation in this project/type.')
             if key in ('parent',): fields[key]={'key':value}
             else: fields[key]=typed(meta[key],','.join(value) if isinstance(value,list) else value)
     require_fields(args,meta,fields)
+    return fields
+
+
+def create(j,args,cfg):
+    if getattr(args,'template',None):
+        from .templates import apply
+        apply(args)
+    fields=prepare_create(j,args,cfg)
     try: return j.create_with_fields(fields)
     except JiraError as error:
         if error.status in (400,422): invalidate(cfg)
