@@ -18,6 +18,20 @@ The initial release targets standard issue operations across Jira Cloud project 
 
 The repository is [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit), renamed from `jira-support-cli` to reflect the broader product scope. It remains private; the release plan must account for authenticated downloads unless visibility is explicitly changed later. The executable is `jira-cli-toolkit`; the Python package and legacy executable remain `jsup` throughout v2.x. Command examples below use `jira` as shorthand for a user-chosen alias. See the [interface contract](interface-contract.md) for implemented behavior and migration decisions.
 
+## Tested delivery checkpoints
+
+Before every push: run the complete regression suite plus tests for the changed behavior, build the wheel/sdist, and smoke both installed entry points in an empty home. Push each substantial, reviewable milestone; record its commit and GitHub Actions result here. Failed checks must be fixed before the next milestone is marked complete. CI supplements local testing and does not replace it.
+
+- [x] Foundation: regression tests and isolated package smoke checks; commit `8e0d8e6` pushed to `codex/v2-foundation` (draft PR #1).
+- [ ] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
+- [ ] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [ ] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [ ] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [ ] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [ ] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [ ] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
+- [ ] Sprint 8 acceptance: full release checks and migration validation; commit/push verified release documentation and record CI results.
+
 ## Repository housekeeping
 
 - [x] Rename `User17745/jira-support-cli` to `User17745/jira-cli-toolkit` on GitHub and verify the canonical repository URL.
@@ -266,7 +280,7 @@ Completion criteria:
 
 ## Command migration reference
 
-`jira` is the illustrative executable name. Resource names and aliases remain subject to Sprint 0 decisions.
+`jira` is shorthand for an optional user alias of `jira-cli-toolkit`. The grouped interface and legacy compatibility policy are recorded in the interface contract.
 
 | Current command | Proposed interface |
 | --- | --- |

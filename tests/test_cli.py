@@ -235,7 +235,8 @@ class CLITests(unittest.TestCase):
         saved = json.loads(self.config_path.read_text())
         self.assertEqual(saved, {"JIRA_SITE": "https://setup.invalid", "JIRA_EMAIL": "new@example.invalid",
                                  "JIRA_API_TOKEN": "new-test-secret", "JIRA_PROJECT": "HR"})
-        self.assertEqual(self.config_path.stat().st_mode & 0o777, 0o600)
+        if os.name != "nt":  # Windows permissions are enforced through ACLs.
+            self.assertEqual(self.config_path.stat().st_mode & 0o777, 0o600)
         self.factory.assert_not_called()
 
     def test_scripted_commands_never_prompt_for_missing_input(self):
