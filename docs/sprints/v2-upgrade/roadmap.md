@@ -152,7 +152,7 @@ Reliability evidence: 51 deterministic tests pass locally, including cursor/offs
 - [x] Add named profiles and `profile list`, `profile use`, and `profile remove`; keep credentials scoped to the intended site and account.
 - [x] Add `context show` and `context use` for active profile/project/board; let setup select from accessible projects and boards rather than requiring memorized keys or IDs.
 - [x] Inspect existing credentials from this CLI's supported sources and report the selected source without exposing secrets; do not assume or import another tool's credentials automatically.
-- [ ] Validate selected credentials through an authenticated endpoint. Treat `401` as authentication failure, without claiming expiry is known; report token expiry as unknown unless independently provided and keep `403` permission failures separate.
+- [x] Validate selected credentials through an authenticated endpoint. Treat `401` as authentication failure, without claiming expiry is known; report token expiry as unknown unless independently provided and keep `403` permission failures separate.
 - [x] Offer explicit token replacement on interactive authentication failure; never replay uncertain writes. API tokens have no refresh mechanism; retain the selected identity and distinguish 401 from permission failures.
 - [x] Make noninteractive auth failures actionable and deterministic. Do not switch to a different saved identity after an explicitly supplied credential fails, and do not automatically replay an uncertain mutation.
 - [x] Migrate `~/.config/jsup/config.json` into the agreed profile/config format and credential store; make migration repeatable and preserve usable legacy credentials until the new storage succeeds.
@@ -171,21 +171,24 @@ Authentication evidence: 71 deterministic tests pass. Native-store calls are moc
 
 ## Sprint 4 — Project discovery and field handling
 
-- [ ] Add `project list/view`, `project issue-types`, `project fields --type <type>`, and `project statuses` using current supported metadata APIs.
-- [ ] Discover creation fields and edit/transition metadata in their appropriate contexts; inspect required values and available options without assuming every validator is discoverable.
+- [x] Add `project list/view`, `project issue-types`, `project fields --type <type>`, and `project statuses` using current supported metadata APIs.
+- [x] Discover creation fields and edit/transition metadata in their appropriate contexts; inspect required values and available options without assuming every validator is discoverable.
 - [ ] Resolve issue types, priorities, components, users, transitions, and field names to identifiers; offer unambiguous selection and an ID escape hatch for duplicate names.
-- [ ] Support repeatable `--field` values and structured JSON input for complex fields; handle supported text, rich text, number, date, selection, array, and user-reference formats correctly.
-- [ ] In guided creation, select a valid issue type and prompt for missing required fields; apply only valid explicit/configured defaults. Respect editor-based description entry and description files.
-- [ ] In script mode, reject missing or invalid required values with field-level diagnostics; accept complete input without prompting.
+- [x] Support repeatable `--field` values and structured JSON input for complex fields; handle supported text, rich text, number, date, selection, array, and user-reference formats correctly.
+- [x] In guided creation, select a valid issue type and prompt for missing required fields; apply only valid explicit/configured defaults. Respect editor-based description entry and description files.
+- [x] In script mode, reject missing or invalid required values with field-level diagnostics; accept complete input without prompting.
 - [ ] Support fields required during transitions and editable fields during updates; translate server validation errors into useful diagnostics instead of assuming metadata guarantees success.
-- [ ] Cache metadata with a TTL and explicit refresh, scoped to site/account/project/issue type and operation; invalidate affected entries when validation exposes stale configuration.
-- [ ] Document supported field formats and the structured-input escape hatch; identify unsupported app-specific field behavior explicitly rather than dropping supplied values.
-- [ ] Verify projects with different issue types, duplicate field names, required custom fields, rich-text requirements, stale metadata, and transition validators.
+- [x] Cache metadata with a TTL and explicit refresh, scoped to site/account/project/issue type and operation; invalidate affected entries when validation exposes stale configuration.
+- [x] Document supported field formats and the structured-input escape hatch; identify unsupported app-specific field behavior explicitly rather than dropping supplied values.
+- [x] Verify projects with different issue types, duplicate field names, required custom fields, rich-text requirements, stale metadata, and transition validators.
 
 Completion criteria:
 
-- [ ] An unfamiliar project's Bug issue can be created with its required custom fields in both interactive and scripted modes.
-- [ ] Available transitions come from Jira, and a transition requiring additional fields can be completed when its requirements are supported.
+- [x] An unfamiliar project's Bug issue can be created with its required custom fields in both interactive and scripted modes.
+- [x] Available transitions come from Jira, and a transition requiring additional fields can be completed when its requirements are supported.
+
+
+Discovery evidence: 98 deterministic tests cover project-specific required fields, custom options, typed/ADF/structured input, ambiguous names/IDs, cache scoping/refresh/invalidation, scripted guards and transition requirements. Live project validation remains Sprint 8.
 
 ## Sprint 5 — Essential issue maintenance and collaboration
 
@@ -349,3 +352,5 @@ Use the current supported APIs during implementation; these links informed the p
 - [GitHub repository rename behavior](https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository)
 
 Reliability CI evidence: commit `fdc86ad`; [run 37487449923](https://github.com/User17745/jira-cli-toolkit/actions/runs/37487449923) passed every configured job.
+
+Distribution CI evidence: commit `364ba76`; [run 37489313815](https://github.com/User17745/jira-cli-toolkit/actions/runs/37489313815) passed Python packaging and all four native builds/smoke checks, including the real Windows deferred update helper. No release tag has been published yet.

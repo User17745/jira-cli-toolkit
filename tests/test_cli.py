@@ -113,12 +113,14 @@ class CLITests(unittest.TestCase):
         self.jira.search.assert_not_called()
 
     def test_generic_create_has_no_support_metadata(self):
+        self.jira.issue_types.return_value = [{"id": "1", "name": "Task"}]
+        self.jira.create_fields.return_value = [{"fieldId": "summary", "name": "Summary", "required": True, "schema": {"type": "string"}}]
+        self.jira.create_with_fields.return_value = {"key": "ENG-1"}
+        self.assertEqual(self.invoke(["issue", "create", "--type", "Task", "-s", "Example", "--json"]), 0)
+        self.jira.create_with_fields.assert_called_once_with({"project": {"key": "ENG"}, "issuetype": {"id": "1"}, "summary": "Example"})
         self.jira.issue_create.return_value = {"key": "ENG-1"}
-        for argv in (["issue", "create"], ["issue-create"]):
-            with self.subTest(argv=argv):
-                self.jira.issue_create.reset_mock()
-                self.assertEqual(self.invoke([*argv, "-s", "Example", "--json"]), 0)
-                self.jira.issue_create.assert_called_once_with("ENG", "Example", "", "Task", None, [], [], None)
+        self.assertEqual(self.invoke(["issue-create", "-s", "Example", "--json"]), 0)
+        self.jira.issue_create.assert_called_once_with("ENG", "Example", "", "Task", None, [], [], None)
 
     def test_legacy_intake_preserves_explicit_callback_workflow(self):
         self.jira.issue_create.return_value = {"key": "ENG-1"}
@@ -262,7 +264,8 @@ class CLITests(unittest.TestCase):
     def test_interactive_transition_errors_are_caught_and_session_closed(self):
         with patch("sys.stdin.isatty", return_value=True), patch.object(ui, "pick", return_value=0):
             self.jira.transitions.return_value = {"transitions": [{"id": "2", "name": "Done"}]}
-            self.jira.move.side_effect = JiraError("POST", "/transition", 403, "Forbidden")
+            self.jira.transition_fields.return_value = {"transitions": [{"id": "2", "name": "Done", "fields": {}}]}
+            self.jira.transition_with_fields.side_effect = JiraError("POST", "/transition", 403, "Forbidden")
             self.assertEqual(self.invoke(["issue", "transition", "ENG-1"]), 1)
         self.assertIn("permission denied", self.err.getvalue())
         self.jira.close.assert_called_once()

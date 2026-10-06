@@ -218,6 +218,65 @@ class Jira:
                          json={"name": name, "description": description,
                                "project": project})
 
+    # -- project-specific metadata and editable fields -------------------------
+    def issue_types(self, project):
+        return self._offset(f"/rest/api/3/issue/createmeta/{identifier(project)}/issuetypes",
+                            "issueTypes", all_results=True)["issueTypes"]
+
+    def create_fields(self, project, issue_type):
+        return self._offset(f"/rest/api/3/issue/createmeta/{identifier(project)}/issuetypes/{identifier(issue_type)}",
+                            "fields", all_results=True)["fields"]
+
+    def project_statuses(self, project):
+        return self._req("GET", f"/rest/api/3/project/{identifier(project)}/statuses")
+
+    def edit_fields(self, key):
+        return self._req("GET", f"/rest/api/3/issue/{identifier(key)}/editmeta").get("fields", {})
+
+    def transition_fields(self, key):
+        return self._req("GET", f"/rest/api/3/issue/{identifier(key)}/transitions", params={"expand": "transitions.fields"})
+
+    def create_with_fields(self, fields):
+        return self._req("POST", "/rest/api/3/issue", json={"fields": fields})
+
+    def edit_issue(self, key, fields, updates=None):
+        payload = {"fields": fields}
+        if updates:
+            payload["update"] = updates
+        self._req("PUT", f"/rest/api/3/issue/{identifier(key)}", json=payload)
+        return {"updated": key, "fields": sorted(fields), "operations": sorted(updates or {})}
+
+    def transition_with_fields(self, key, transition_id, fields):
+        self._req("POST", f"/rest/api/3/issue/{identifier(key)}/transitions",
+                  json={"transition": {"id": transition_id}, "fields": fields})
+        return {"moved": key, "transition_id": transition_id}
+
+    def assignable_users(self, key, query):
+        return self._req("GET", "/rest/api/3/user/assignable/search", params={"issueKey": key, "query": query, "maxResults": 100})
+
+    def assign(self, key, account_id):
+        self._req("PUT", f"/rest/api/3/issue/{identifier(key)}/assignee", json={"accountId": account_id})
+        return {"issue": key, "assignee": account_id}
+
+    def link_types(self):
+        return self._req("GET", "/rest/api/3/issueLinkType").get("issueLinkTypes", [])
+
+    def link(self, inward, outward, link_type):
+        self._req("POST", "/rest/api/3/issueLink", json={"type": {"id": link_type},
+                  "inwardIssue": {"key": inward}, "outwardIssue": {"key": outward}})
+        return {"inward": inward, "outward": outward, "type_id": link_type}
+
+    def unlink(self, link_id):
+        self._req("DELETE", f"/rest/api/3/issueLink/{identifier(link_id)}")
+        return {"deleted_link": str(link_id)}
+
+    def comment_edit(self, key, comment_id, body):
+        return self._req("PUT", f"/rest/api/3/issue/{identifier(key)}/comment/{identifier(comment_id)}", json={"body": adf(body)})
+
+    def comment_delete(self, key, comment_id):
+        self._req("DELETE", f"/rest/api/3/issue/{identifier(key)}/comment/{identifier(comment_id)}")
+        return {"deleted_comment": str(comment_id), "issue": key}
+
     # -- boards (Agile API; no rename/columns write endpoints exist) --------------
     def boards(self, project=None, name=None, limit=50, all_results=False):
         params = {}

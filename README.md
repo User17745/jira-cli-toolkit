@@ -15,7 +15,7 @@ jira-cli-toolkit --version
 jsup --version
 ```
 
-If `jsup` is already installed, use `pipx install --force .` from the desired checkout to replace the installation. No automated upgrade or release publication is provided yet. The Python package remains `jsup` for compatibility.
+If `jsup` is already installed, use `pipx install --force .` from the desired checkout to replace the installation. The explicit updater and tag-triggered release workflow are described below. The Python package remains `jsup` for compatibility.
 
 ## Setup and help
 
@@ -29,7 +29,7 @@ jira-cli-toolkit issue comment --help
 
 Help and version commands work without configuration or network access. An incomplete command group displays its help.
 
-`config init` currently asks for a site URL, email, API token, and optional default project. It writes `~/.config/jsup/config.json` with permissions `0600`; the token is plaintext. Flags override `JIRA_SITE`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_PROJECT`, which override saved settings. Configuration is retained when switching between executables. No OAuth, expiry tracking, refresh, keychain storage, or automatic reauthentication is implemented yet.
+New users should use the guided `auth login` flow below. Legacy `config init` remains compatible until credentials are migrated; it writes a plaintext token. `config migrate` moves that identity to a named profile and the selected credential store. API tokens cannot refresh automatically.
 
 ## Local context and dashboard
 
@@ -57,9 +57,9 @@ jira-cli-toolkit issue comment add ENG-42 -m "Review started"
 jira-cli-toolkit issue comment list ENG-42
 ```
 
-`issue list` includes Done issues unless `--open` is supplied. Its `--jql` is a complete query: it ignores the configured default project and cannot be combined with explicit `--project` or `--open`. Legacy `open --jql` retains its original extra-filter behavior. Lists currently fetch one page; `--limit` (alias `--max`) controls the requested result/page size. Complete pagination is a later milestone.
+`issue list` includes Done issues unless `--open` is supplied. Its `--jql` is a complete query: it ignores the configured default project and cannot be combined with explicit `--project` or `--open`. Legacy `open --jql` retains its original extra-filter behavior. `--limit` (alias `--max`) bounds total fetched results across pages; `--all` follows every page.
 
-Creation accepts type, priority, account-ID assignee, repeated labels/components, descriptions, and description files. `Task` remains the displayed default type; required custom fields are not yet discovered. Generic creation does not add support-specific metadata. The explicit legacy `jsup intake` wizard still creates callback issues with the `callback` label and `ops-runbook` component, pending migration to a template.
+Creation accepts type, priority, account-ID assignee, repeated labels/components, descriptions, and description files. Grouped creation discovers project/type fields. Pass `--type Bug` in scripts or choose interactively; `project issue-types` and `project fields --type Bug` show available values. Required custom fields accept `--field FIELD=VALUE`, `FIELD:=JSON`, or `--fields-file`. Legacy `issue-create` retains its Task default. Generic creation does not add support-specific metadata. The explicit legacy `jsup intake` wizard still creates callback issues with the `callback` label and `ops-runbook` component, pending migration to a template.
 
 ## Boards, sprints, and components
 
@@ -87,7 +87,7 @@ jira-cli-toolkit issue transition ENG-42 --to Done --json --no-input
 jira-cli-toolkit issue delete ENG-42 --yes --json --no-input
 ```
 
-Global flags work before, between, or after subcommands; the last explicitly supplied value wins. `--no-input`, or nonterminal input, prevents prompts and reports missing flags. `--json` does not bypass deletion confirmation. JSON results go to stdout; progress and errors go to stderr. Successful API payloads retain their original shape. Exit codes are 0 for success/help, 1 for API/network failures, 2 for usage/configuration/input/file errors, and 130 for interruption.
+Global flags work before, between, or after subcommands; the last explicitly supplied value wins. `--no-input`, or nonterminal input, prevents prompts and reports missing flags. `--json` does not bypass deletion confirmation. JSON results and structured runtime errors go to stdout for new commands; progress and argparse usage errors go to stderr. Legacy aliases/jsup keep errors on stderr. Successful API payloads retain their original shape. Exit codes are 0 for success/help, 1 for API/network failures, 2 for usage/configuration/input/file errors, and 130 for interruption.
 
 Both executables accept legacy commands such as `issue-show`, `issue-create`, `comment-add`, `board-list`, and `sprint-add`. Existing names, configuration keys, and environment variables are retained through v2.x. Legacy `board-list` searches all accessible boards unless `--jql-project` is supplied, while grouped `board list` uses the selected project. See the [interface and migration contract](docs/sprints/v2-upgrade/interface-contract.md) for exact behavior and current limitations.
 

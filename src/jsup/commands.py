@@ -36,17 +36,28 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
             parser.add_argument("--limit", dest="max", type=positive_int, default=50)
     if operation == "dashboard":
         parser.add_argument("--projects", nargs="+", help="project keys to summarize")
-    elif operation == "project-show":
+    elif operation in {"project-show", "project-types", "project-fields", "project-statuses"}:
         parser.add_argument("key", nargs="?")
+        if operation in {"project-types", "project-fields"}:
+            parser.add_argument("--refresh", action="store_true")
+        if operation == "project-fields":
+            parser.add_argument("--type", required=True)
     elif operation == "issue-create":
-        parser.add_argument("--summary", "-s", required=True)
-        parser.add_argument("--description", "--desc", "-d", dest="desc", default="")
+        legacy = parser._defaults.get("legacy", False)
+        parser.add_argument("--summary", "-s", required=legacy)
+        parser.add_argument("--description", "--desc", "-d", dest="desc", default="" if legacy else None)
         parser.add_argument("--description-file", "--desc-file", dest="desc_file")
-        parser.add_argument("--type", "-t", default="Task", help="issue type (default: Task)")
+        parser.add_argument("--type", "-t", default="Task" if legacy else None, help="issue type name or id:<ID>; guided selection when omitted")
         parser.add_argument("--priority")
         parser.add_argument("--assignee", help="Jira account ID")
         parser.add_argument("--label", action="append", default=[])
         parser.add_argument("--component", action="append", default=[])
+        if not legacy:
+            parser.add_argument("--parent")
+            parser.add_argument("--field", action="append", default=[])
+            parser.add_argument("--fields-file")
+            parser.add_argument("--editor", action="store_true")
+            parser.add_argument("--refresh", action="store_true")
     elif operation == "intake":
         parser.add_argument("--name", help="client name")
         parser.add_argument("--issue", help="issue as reported")
@@ -66,6 +77,9 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
             parser.add_argument("--web", action="store_true")
         elif operation == "issue-move":
             parser.add_argument("--to", help="transition name or ID")
+            if not parser._defaults.get("legacy", False):
+                parser.add_argument("--field", action="append", default=[])
+                parser.add_argument("--fields-file")
         elif operation == "issue-delete":
             parser.add_argument("--yes", action="store_true", help="skip confirmation")
         elif operation == "comment-add":
@@ -211,6 +225,9 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     _, projects = group(root, "project", "projects")
     command(projects, "list", "project-list", "list accessible projects")
     command(projects, "view", "project-show", "view a project")
+    command(projects, "issue-types", "project-types", "discover available issue types")
+    command(projects, "fields", "project-fields", "discover creation fields and required values")
+    command(projects, "statuses", "project-statuses", "show workflow statuses by issue type")
     _, issues = group(root, "issue", "issue operations")
     command(issues, "list", "issue-list", "search issues, optionally excluding Done")
     command(issues, "create", "issue-create", "create an issue")

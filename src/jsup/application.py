@@ -114,6 +114,9 @@ def _fetch(j: Jira, args, cfg: dict):
     if cmd == "dashboard":
         return _dashboard(j, args, cfg)
     if cmd in ("issue-create", "intake"):
+        if cmd == "issue-create" and not args.legacy:
+            from .fields import create
+            return create(j, args, cfg)
         desc = (Path(args.desc_file).read_text() if cmd == "issue-create" and args.desc_file
                 else args.desc)
         return j.issue_create(project(), args.summary, desc, args.type,
@@ -130,7 +133,21 @@ def _fetch(j: Jira, args, cfg: dict):
             jql += " ORDER BY updated DESC"
         return j.search(jql, args.max, **pagination)
     if cmd == "issue-move":
+        if not args.legacy:
+            from .fields import transition
+            return transition(j, args, cfg)
         return j.move(args.key, args.to)
+    if cmd in {"project-types", "project-fields", "project-statuses"}:
+        from .fields import cached, choose
+        selected = project(args.key)
+        if cmd == "project-statuses":
+            return j.project_statuses(selected)
+        types = cached(cfg, selected, "types", lambda: j.issue_types(selected), args.refresh)
+        if cmd == "project-types":
+            return types
+        issue_type = choose(types, args.type, "--type")
+        return cached(cfg, selected, "create:" + issue_type["id"],
+                      lambda: j.create_fields(selected, issue_type["id"]), args.refresh)
     if cmd == "issue-delete":
         return j.issue_delete(args.key)
     operations = {
