@@ -33,7 +33,9 @@ def dump_json(data) -> None:
 
 def issues_table(data, title="Issues") -> None:
     issues = data.get("issues", [])
-    t = Table(title=f"{title} ({len(issues)} shown, total={data.get('total', '?')})",
+    remaining = " · more available" if data.get("isLast") is False or data.get("nextPageToken") else ""
+    total = f", total={data['total']}" if "total" in data else ""
+    t = Table(title=f"{title} ({len(issues)} fetched{total}{remaining})",
               show_lines=False)
     t.add_column("Key", style="bold", no_wrap=True)
     t.add_column("Status")

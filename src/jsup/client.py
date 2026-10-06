@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import time
+from urllib.parse import quote
 
 import requests
 
@@ -10,6 +12,14 @@ class JiraError(Exception):
     def __init__(self, method: str, path: str, status: int, body: str):
         self.method, self.path, self.status, self.body = method, path, status, body
         super().__init__(f"{method} {path} -> {status}: {body[:500]}")
+
+
+class UncertainOutcome(requests.RequestException):
+    """A mutation may have reached Jira; it must not be replayed automatically."""
+
+
+def identifier(value):
+    return quote(str(value), safe="")
 
 
 def project_jql(project: str) -> str:
@@ -49,21 +59,72 @@ class Jira:
                                "Content-Type": "application/json"})
 
     def _req(self, method: str, path: str, **kw):
+        safe = kw.pop("retry_safe", method in ("GET", "HEAD"))
         kw.setdefault("timeout", (10, 30))
-        r = self.s.request(method, self.site + path, **kw)
-        if r.status_code in (200, 201):
-            return r.json() if r.text else {}
-        if r.status_code == 204:
-            return {}
-        raise JiraError(method, path, r.status_code, r.text)
+        for attempt in range(3):
+            try:
+                r = self.s.request(method, self.site + path, **kw)
+            except (requests.Timeout, requests.ConnectionError):
+                if not safe:
+                    raise UncertainOutcome(
+                        "Connection lost during a write. The outcome is unknown; inspect Jira before retrying.") from None
+                if attempt == 2:
+                    raise
+                time.sleep(2 ** attempt)
+                continue
+            if safe and r.status_code in (429, 502, 503, 504) and attempt < 2:
+                try:
+                    delay = float(r.headers.get("Retry-After", 2 ** attempt))
+                except (TypeError, ValueError):
+                    delay = 2 ** attempt
+                # Do not retry earlier than a long server-requested wait.
+                if 0 <= delay <= 30:
+                    time.sleep(delay)
+                    continue
+            if r.status_code == 204 or (200 <= r.status_code < 300 and not r.text):
+                return {}
+            if 200 <= r.status_code < 300:
+                try:
+                    data = r.json()
+                except ValueError:
+                    raise JiraError(method, path, 502, "Jira returned malformed JSON.") from None
+                if not isinstance(data, (dict, list)):
+                    raise JiraError(method, path, 502, "Jira returned an unexpected response shape.")
+                return data
+            raise JiraError(method, path, r.status_code, r.text)
+
+    def _offset(self, path, key="values", *, params=None, limit=50, all_results=False):
+        """Collect offset pages with a total-result limit, honoring server caps."""
+        collected, offset, last = [], 0, {}
+        for _ in range(10000):
+            size = 100 if all_results else min(100, limit - len(collected))
+            page = self._req("GET", path, params={**(params or {}), "startAt": offset, "maxResults": size})
+            if not isinstance(page, dict) or not isinstance(page.get(key), list):
+                raise JiraError("GET", path, 502, "Invalid paginated response.")
+            batch = page[key]
+            collected.extend(batch if all_results else batch[:size])
+            last = page
+            offset += len(batch)
+            done = page.get("isLast") is True or (isinstance(page.get("total"), int) and offset >= page["total"])
+            if not batch or done or (not all_results and len(collected) >= limit):
+                break
+            if "total" not in page and "isLast" not in page and len(batch) < size:
+                break
+        else:
+            raise JiraError("GET", path, 502, "Pagination exceeded the safety limit.")
+        last = {**last, key: collected, "startAt": 0, "fetched": len(collected)}
+        if "total" in last:
+            last["isLast"] = offset >= last["total"]
+        return last
 
     def close(self):
         self.s.close()
 
     # -- identity / projects -------------------------------------------------
     def me(self): return self._req("GET", "/rest/api/3/myself")
-    def projects(self): return self._req("GET", "/rest/api/3/project")
-    def project_get(self, key): return self._req("GET", f"/rest/api/3/project/{key}")
+    def projects(self, limit=50, all_results=False):
+        return self._offset("/rest/api/3/project/search", limit=limit, all_results=all_results)["values"]
+    def project_get(self, key): return self._req("GET", f"/rest/api/3/project/{identifier(key)}")
 
     # -- issues ---------------------------------------------------------------
     def issue_create(self, project, summary, desc="", itype="Task",
@@ -86,26 +147,42 @@ class Jira:
         return self._req("DELETE", f"/rest/api/3/issue/{key}", params=params)
 
     def search(self, jql, max_results=50,
-               fields="summary,status,assignee,priority,updated,components,labels"):
-        try:
-            return self._req("GET", "/rest/api/3/search/jql",
-                             params={"jql": jql, "maxResults": max_results,
-                                     "fields": fields})
-        except JiraError as e:
-            if e.status not in (404, 410):
-                raise
-            return self._req("GET", "/rest/api/3/search",
-                             params={"jql": jql, "maxResults": max_results,
-                                     "fields": fields})
+               fields="summary,status,assignee,priority,updated,components,labels", all_results=False):
+        collected, token, seen, page = [], None, set(), {}
+        path = "/rest/api/3/search/jql"
+        for _ in range(10000):
+            size = 100 if all_results else min(100, max_results - len(collected))
+            payload = {"jql": jql, "maxResults": size, "fields": fields.split(",") if isinstance(fields, str) else fields}
+            if token:
+                payload["nextPageToken"] = token
+            # POST search is read-only and avoids URL-length limits.
+            page = self._req("POST", path, json=payload, retry_safe=True)
+            if not isinstance(page, dict) or not isinstance(page.get("issues"), list):
+                raise JiraError("POST", path, 502, "Invalid search response.")
+            batch = page["issues"]
+            collected.extend(batch if all_results else batch[:size])
+            token = page.get("nextPageToken")
+            if page.get("isLast") is True or (not all_results and len(collected) >= max_results):
+                break
+            if not token:
+                if page.get("isLast") is False:
+                    raise JiraError("POST", path, 502, "Search indicated another page without a cursor.")
+                break
+            if token in seen or not batch:
+                raise JiraError("POST", path, 502, "Search pagination did not advance.")
+            seen.add(token)
+        else:
+            raise JiraError("POST", path, 502, "Pagination exceeded the safety limit.")
+        return {**page, "issues": collected, "fetched": len(collected)}
 
-    def open_tickets(self, project, extra="", max_results=50):
+    def open_tickets(self, project, extra="", max_results=50, **options):
         jql = project_jql(project) + " AND statusCategory != Done"
         if extra:
             jql += f" AND ({extra})"
-        return self.search(jql + " ORDER BY updated DESC", max_results)
+        return self.search(jql + " ORDER BY updated DESC", max_results, **options)
 
     def count_issues(self, jql):
-        return self._req("POST", "/rest/api/3/search/approximate-count", json={"jql": jql})
+        return self._req("POST", "/rest/api/3/search/approximate-count", json={"jql": jql}, retry_safe=True)
 
     # -- workflow --------------------------------------------------------------
     def transitions(self, key):
@@ -128,8 +205,8 @@ class Jira:
         return self._req("POST", f"/rest/api/3/issue/{key}/comment",
                          json={"body": adf(body)})
 
-    def comments(self, key):
-        return self._req("GET", f"/rest/api/3/issue/{key}/comment")
+    def comments(self, key, limit=50, all_results=False):
+        return self._offset(f"/rest/api/3/issue/{identifier(key)}/comment", "comments", limit=limit, all_results=all_results)
 
     # -- components ---------------------------------------------------------------
     def components(self, project):
@@ -141,23 +218,23 @@ class Jira:
                                "project": project})
 
     # -- boards (Agile API; no rename/columns write endpoints exist) --------------
-    def boards(self, project=None, name=None):
+    def boards(self, project=None, name=None, limit=50, all_results=False):
         params = {}
         if project:
             params["projectKeyOrId"] = project
         if name:
             params["name"] = name
-        return self._req("GET", "/rest/agile/1.0/board", params=params)
+        return self._offset("/rest/agile/1.0/board", params=params, limit=limit, all_results=all_results)
 
     def board_get(self, board_id):
         return self._req("GET", f"/rest/agile/1.0/board/{board_id}")
 
-    def board_issues(self, board_id, jql="", max_results=50):
+    def board_issues(self, board_id, jql="", max_results=50, all_results=False):
         params: dict = {"maxResults": max_results}
         if jql:
             params["jql"] = jql
-        return self._req("GET", f"/rest/agile/1.0/board/{board_id}/issue",
-                         params=params)
+        return self._offset(f"/rest/agile/1.0/board/{board_id}/issue", "issues", params=params,
+                            limit=max_results, all_results=all_results)
 
     def board_create(self, name, project, jql=None, filter_id=None, btype="scrum"):
         if filter_id is None:
@@ -177,9 +254,9 @@ class Jira:
                                "feature": feature})
 
     # -- sprints ------------------------------------------------------------------
-    def sprints(self, board_id, state="active,future"):
-        return self._req("GET", f"/rest/agile/1.0/board/{board_id}/sprint",
-                         params={"state": state, "maxResults": 50})
+    def sprints(self, board_id, state="active,future", limit=50, all_results=False):
+        return self._offset(f"/rest/agile/1.0/board/{board_id}/sprint", params={"state": state},
+                            limit=limit, all_results=all_results)
 
     def sprint_create(self, board_id, name, goal=""):
         return self._req("POST", "/rest/agile/1.0/sprint",

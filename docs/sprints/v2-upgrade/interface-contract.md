@@ -42,7 +42,7 @@ The new root command shows only resolved site/project context and common command
 
 For API operations, configuration continues to resolve each existing setting from CLI flags, then environment variables, then `~/.config/jsup/config.json`. No configuration or credential migration occurs in this milestone. Profile-scoped identity selection and rejection of ambiguous credential combinations require Sprint 3.
 
-`issue list` defaults to the selected project's issues, including Done, ordered by update time. `--open` adds `statusCategory != Done`. `--jql` is a complete query: it ignores the saved/environment default project and cannot be combined with explicit `--project` or `--open`. This avoids silently rewriting user queries. `--limit`/`--max` currently sets the requested result/page limit; full pagination is still Sprint 2.
+`issue list` defaults to the selected project's issues, including Done, ordered by update time. `--open` adds `statusCategory != Done`. `--jql` is a complete query: it ignores the saved/environment default project and cannot be combined with explicit `--project` or `--open`. This avoids silently rewriting user queries. `--limit`/`--max` bounds total fetched results across pages; `--all` retrieves every page. Search uses the supported enhanced POST endpoint and cursor tokens; the deprecated search fallback has been removed.
 
 Legacy `open --jql` keeps its original meaning: append an additional condition to the project's unfinished-issue query. Generated project conditions quote the supplied identifier.
 
@@ -70,9 +70,9 @@ Successful API output retains the returned payload rather than introducing a new
 {"url": "https://example.atlassian.net/browse/ENG-1", "opened": true}
 ```
 
-New dashboard output contains `site` and `projects`; each result contains its `project`, approximate `count`, and `approximate: true`. Per-project non-auth API failures may instead contain a null count and an error message. Legacy `jsup dashboard --json` and `jsup --json` retain the original project/hint payload and do not fetch counts. A structured error schema and stable versioned output envelope remain Sprint 2 decisions.
+New dashboard output contains `site` and `projects`; each result contains its `project`, approximate `count`, and `approximate: true`. Per-project non-auth API failures may instead contain a null count and an error message. Legacy `jsup dashboard --json` and `jsup --json` retain the original project/hint payload and do not fetch counts. New grouped commands under `jira-cli-toolkit --json` report runtime errors as `{"error":{"code":"jira_error","message":"...","status":401}}` (status is present for HTTP errors). Successful API objects retain their payload shape; paged objects add `fetched`. Legacy aliases and the `jsup` executable keep errors on stderr. Argparse usage errors remain on stderr with exit 2.
 
-Progress and errors go to stderr; JSON stdout contains only a successful JSON result. `config show --json` reports whether a saved token exists without printing it. Human `config show` retains the existing masked token suffix. Interactive `config init` rejects `--json` rather than producing mixed JSON/prompt output.
+Progress goes to stderr; JSON stdout contains a result or the documented runtime error object. `config show --json` reports whether a saved token exists without printing it. Human `config show` retains the existing masked token suffix. Interactive `config init` rejects `--json` rather than producing mixed JSON/prompt output.
 
 | Exit code | Meaning |
 | --- | --- |
@@ -85,7 +85,7 @@ Progress and errors go to stderr; JSON stdout contains only a successful JSON re
 
 Existing email/API-token authentication remains in place. The foundation adds an actionable `401` hint and consistent error handling; it does not implement login/status/logout, token refresh, named profiles, OS credential storage, or automatic fallback to another identity. Those remain unchecked in the roadmap.
 
-Public distribution will require a supported Atlassian 3LO design. A desktop client must not ship a reusable client secret; the design needs an owned application, approved callback strategy, credential storage, and refresh handling. Those external requirements and the complete OAuth flow must be resolved before Sprint 3 implementation, not inferred from the existence of a login command. [Atlassian integration authentication guidance](https://developer.atlassian.com/cloud/jira/platform/security-for-other-integrations/), [3LO documentation](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/).
+The user selected API-token login instead of OAuth for v2 (6 October 2026). Token setup must explain how to create a personal token, respect its scopes and the account's project permissions, and support the scoped-token API gateway. API tokens cannot be refreshed automatically. A 401 means authentication failed; it does not prove expiration. OAuth application ownership and refresh support are deferred. [Atlassian API-token instructions](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
 
 ## Verification and next milestones
 

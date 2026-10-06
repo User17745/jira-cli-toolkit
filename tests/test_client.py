@@ -25,7 +25,7 @@ class ClientTests(unittest.TestCase):
     def test_count_and_board_view_use_supported_endpoints(self):
         with patch.object(self.jira, "_req", return_value={}) as request:
             self.jira.count_issues('project = "ENG"')
-            request.assert_called_with("POST", "/rest/api/3/search/approximate-count", json={"jql": 'project = "ENG"'})
+            request.assert_called_with("POST", "/rest/api/3/search/approximate-count", json={"jql": 'project = "ENG"'}, retry_safe=True)
             self.jira.board_get(12)
             request.assert_called_with("GET", "/rest/agile/1.0/board/12")
 

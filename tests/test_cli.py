@@ -270,15 +270,34 @@ class CLITests(unittest.TestCase):
     def test_auth_failure_is_not_a_successful_dashboard(self):
         self.jira.count_issues.side_effect = JiraError("POST", "/count", 401, "Unauthorized")
         self.assertEqual(self.invoke(["dashboard", "--json"]), 1)
-        self.assertEqual(self.out.getvalue(), "")
-        self.assertIn("authentication failed", self.err.getvalue())
+        self.assertEqual(json.loads(self.out.getvalue())["error"]["status"], 401)
+        self.assertIn("authentication failed", self.out.getvalue())
 
     def test_network_errors_do_not_print_tracebacks_or_credentials(self):
         self.jira.me.side_effect = requests.ConnectionError("test-secret")
         self.assertEqual(self.invoke(["user", "me", "--json"]), 1)
+        self.assertEqual(json.loads(self.out.getvalue())["error"]["code"], "network_error")
+        self.assertNotIn("test-secret", self.out.getvalue() + self.err.getvalue())
+        self.jira.close.assert_called_once()
+
+    def test_all_pagination_reaches_client(self):
+        self.jira.search.return_value = {"issues": [], "isLast": True}
+        self.assertEqual(self.invoke(["issue", "list", "--all", "--json"]), 0)
+        self.jira.search.assert_called_once_with('project = "ENG" ORDER BY updated DESC', 50, all_results=True)
+
+    def test_json_errors_redact_server_echoed_credentials(self):
+        self.jira.me.side_effect = JiraError("GET", "/myself", 401, "test-secret invalid")
+        self.assertEqual(self.invoke(["user", "me", "--json"]), 1)
+        error = json.loads(self.out.getvalue())["error"]
+        self.assertEqual(error["code"], "jira_error")
+        self.assertNotIn("test-secret", error["message"])
+        self.assertIn("[redacted]", error["message"])
+
+    def test_legacy_json_errors_keep_stderr_contract(self):
+        self.jira.me.side_effect = JiraError("GET", "/myself", 401, "test-secret invalid")
+        self.assertEqual(self.invoke(["me", "--json"], legacy=True), 1)
         self.assertEqual(self.out.getvalue(), "")
         self.assertNotIn("test-secret", self.err.getvalue())
-        self.jira.close.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -99,13 +99,18 @@ def _dashboard(j: Jira, args, cfg: dict) -> dict:
         except JiraError as error:
             if error.status in (401, 403):
                 raise
-            rows.append({"project": key, "count": None, "error": str(error)})
+            rows.append({"project": key, "count": None, "error": f"Jira returned HTTP {error.status}"})
     return {"site": cfg["site"], "projects": rows}
 
 
 def _fetch(j: Jira, args, cfg: dict):
     project = lambda key=None: _project(cfg, key)
     cmd = args.cmd
+    pagination = {}
+    if getattr(args, "all", False):
+        pagination["all_results"] = True
+    if cmd in {"project-list", "board-list", "sprint-list", "comment-list"} and args.max != 50:
+        pagination["limit"] = args.max
     if cmd == "dashboard":
         return _dashboard(j, args, cfg)
     if cmd in ("issue-create", "intake"):
@@ -123,27 +128,27 @@ def _fetch(j: Jira, args, cfg: dict):
             if args.open:
                 jql += " AND statusCategory != Done"
             jql += " ORDER BY updated DESC"
-        return j.search(jql, args.max)
+        return j.search(jql, args.max, **pagination)
     if cmd == "issue-move":
         return j.move(args.key, args.to)
     if cmd == "issue-delete":
         return j.issue_delete(args.key)
     operations = {
         "me": lambda: j.me(),
-        "project-list": lambda: j.projects(),
+        "project-list": lambda: j.projects(**pagination),
         "project-show": lambda: j.project_get(project(args.key)),
-        "open": lambda: j.open_tickets(project(), args.jql, args.max),
+        "open": lambda: j.open_tickets(project(), args.jql, args.max, **pagination),
         "issue-show": lambda: j.issue_get(args.key),
         "transitions": lambda: j.transitions(args.key),
         "comment-add": lambda: j.comment_add(args.key, args.message),
-        "comment-list": lambda: j.comments(args.key),
+        "comment-list": lambda: j.comments(args.key, **pagination),
         "board-list": lambda: j.boards(project=(args.jql_project or
-                                    (None if args.legacy else cfg["project"] or None))),
+                                    (None if args.legacy else cfg["project"] or None)), **pagination),
         "board-show": lambda: j.board_get(args.board_id),
         "board-create": lambda: j.board_create(args.name, project(), args.jql, args.filter_id, args.type),
-        "board-issues": lambda: j.board_issues(args.board_id, args.jql, args.max),
+        "board-issues": lambda: j.board_issues(args.board_id, args.jql, args.max, **pagination),
         "board-feature": lambda: j.board_feature(args.board_id, args.feature, args.enable),
-        "sprint-list": lambda: j.sprints(args.board, args.state),
+        "sprint-list": lambda: j.sprints(args.board, args.state, **pagination),
         "sprint-create": lambda: j.sprint_create(args.board, args.name, args.goal),
         "sprint-state": lambda: j.sprint_set_state(args.sprint_id, args.state),
         "sprint-add": lambda: j.sprint_add_issues(args.sprint_id, args.keys),

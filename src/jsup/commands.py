@@ -29,6 +29,11 @@ def positive_int(value: str) -> int:
 
 def _options(parser: argparse.ArgumentParser, operation: str) -> None:
     """Define each operation once, including options shared by legacy aliases."""
+    lists = {"project-list", "board-list", "sprint-list", "comment-list", "open", "issue-list", "board-issues"}
+    if operation in lists:
+        parser.add_argument("--all", action="store_true", help="fetch every page; overrides --limit")
+        if operation not in {"open", "issue-list", "board-issues"}:
+            parser.add_argument("--limit", dest="max", type=positive_int, default=50)
     if operation == "dashboard":
         parser.add_argument("--projects", nargs="+", help="project keys to summarize")
     elif operation == "project-show":

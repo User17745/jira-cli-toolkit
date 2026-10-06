@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: in progress. Sprint 1 is implemented and verified; Sprint 0 contract decisions are recorded, with OAuth and identity design still pending. Later sprints remain planned.
+Status: in progress. Sprint 1 is implemented and verified; Sprint 0 contract decisions are recorded, with identity implementation still pending; API-token login selected. Later sprints remain planned.
 
 ## Goal
 
@@ -23,7 +23,7 @@ The repository is [User17745/jira-cli-toolkit](https://github.com/User17745/jira
 Before every push: run the complete regression suite plus tests for the changed behavior, build the wheel/sdist, and smoke both installed entry points in an empty home. Push each substantial, reviewable milestone; record its commit and GitHub Actions result here. Failed checks must be fixed before the next milestone is marked complete. CI supplements local testing and does not replace it.
 
 - [x] Foundation: regression tests and isolated package smoke checks; commit `8e0d8e6` pushed to `codex/v2-foundation` (draft PR #1).
-- [ ] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
+- [x] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
 - [ ] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
@@ -97,7 +97,7 @@ These are ordered work packages, not calendar or effort commitments. Each sprint
 - [x] Define the compatibility window for old commands, config keys, environment variables, argument names, and JSON behavior. Record how users opt into the new defaults.
 - [ ] Define credential and context precedence, distinguishing an explicitly selected identity from per-command project/board overrides; reject ambiguous identity combinations.
 - [x] Define interactive behavior, root-command behavior, noninteractive behavior, output schemas, pagination controls, and exit codes.
-- [ ] Design a distributable OAuth login flow using supported Atlassian 3LO capabilities and registered callbacks; resolve application ownership, distribution requirements, and refresh-token handling before implementation.
+- [x] Select API-token login for v2 per user direction on 6 October 2026. Provide guided token creation, permission guidance, secure storage, status checks, and explicit replacement. OAuth is deferred; no app is available.
 
 Completion criteria:
 
@@ -123,43 +123,48 @@ Completion criteria:
 
 ## Sprint 2 — Reliable client and scripting contract
 
-- [ ] Add explicit connection/read timeouts and consistent handling for HTTP, network, malformed-response, and interruption errors across initial calls and interactive follow-ups.
-- [ ] Add bounded retries for safe operations, honoring rate-limit guidance. Do not blindly retry mutations such as issue creation when the outcome is unknown.
-- [ ] Support the current enhanced search API and cursor pagination; review the deprecated search fallback and document any retained compatibility path.
+- [x] Add explicit connection/read timeouts and consistent handling for HTTP, network, malformed-response, and interruption errors across initial calls and interactive follow-ups.
+- [x] Add bounded retries for safe operations, honoring rate-limit guidance. Do not blindly retry mutations such as issue creation when the outcome is unknown.
+- [x] Support the current enhanced search API and cursor pagination; review the deprecated search fallback and document any retained compatibility path.
 - [ ] Implement endpoint-appropriate pagination for issue searches, projects, boards, sprints, comments, and metadata. Define a limit on total results separately from page size; add `--all`.
-- [ ] Use POST search for long JQL where appropriate, safely construct generated JQL, and distinguish complete user JQL from additional filters.
-- [ ] Stop assuming enhanced search returns `total`; show fetched counts, remaining-page information, and clearly labeled approximate counts where used.
-- [ ] Make `--json` consistent for every applicable new command; define stable result/error shapes while preserving legacy JSON as agreed in Sprint 0.
-- [ ] Send progress, warnings, and diagnostics to stderr; keep stdout machine-readable and redact credentials from all diagnostic output.
-- [ ] Add strict `--no-input`; never prompt in that mode or on unavailable input, and report missing values. Keep destructive-operation confirmation separate from output format.
-- [ ] Verify pagination, rate limits, timeouts, malformed responses, uncertain mutation outcomes, JSON output, and exit codes using controlled responses.
+- [x] Use POST search for long JQL where appropriate, safely construct generated JQL, and distinguish complete user JQL from additional filters.
+- [x] Stop assuming enhanced search returns `total`; show fetched counts, remaining-page information, and clearly labeled approximate counts where used.
+- [x] Make `--json` consistent for every applicable new command; define stable result/error shapes while preserving legacy JSON as agreed in Sprint 0.
+- [x] Send progress, warnings, and diagnostics to stderr; keep stdout machine-readable and redact credentials from all diagnostic output.
+- [x] Add strict `--no-input`; never prompt in that mode or on unavailable input, and report missing values. Keep destructive-operation confirmation separate from output format.
+- [x] Verify pagination, rate limits, timeouts, malformed responses, uncertain mutation outcomes, JSON output, and exit codes using controlled responses.
 
 Completion criteria:
 
-- [ ] A scripted list operation can retrieve more than one page without prompts or non-JSON stdout.
-- [ ] A timed-out create operation reports an uncertain outcome instead of silently creating a second issue.
+- [x] A scripted list operation can retrieve more than one page without prompts or non-JSON stdout.
+- [x] A timed-out create operation reports an uncertain outcome instead of silently creating a second issue.
+
+CI evidence: commit `92c8e04`; [GitHub run 37486855132](https://github.com/User17745/jira-cli-toolkit/actions/runs/37486855132) passed all four Python/OS jobs, builds, and installed command smoke tests.
+
+
+Reliability evidence: 51 deterministic tests pass locally, including cursor/offset pages, total limits, malformed JSON, bounded read retries, Retry-After, uncertain mutation timeouts, structured JSON errors, legacy error behavior, and redaction. Wheel/sdist and both clean-home installed entry points pass. Pagination of metadata is tracked in Sprint 4.
 
 ## Sprint 3 — Authentication, profiles, and contexts
 
 - [ ] Add `auth login`, `auth status`, `auth logout`, and `user me`; validate authentication before persisting a new credential set.
-- [ ] Implement the OAuth flow selected in Sprint 0, including supported token refresh and rotated refresh-token storage. Keep API-token authentication available for explicitly supported personal/script use.
+- [ ] Implement guided API-token login, supporting unscoped tokens at the site URL and scoped tokens through the Atlassian API gateway with a cloud ID. Explain token creation, scopes, project permissions, expiration, and replacement.
 - [ ] Store credentials through an OS credential-store abstraction; keep profile/context preferences separate from secrets. Define an explicit fallback for headless environments or unavailable credential stores without silently writing plaintext tokens.
 - [ ] Add named profiles and `profile list`, `profile use`, and `profile remove`; keep credentials scoped to the intended site and account.
 - [ ] Add `context show` and `context use` for active profile/project/board; let setup select from accessible projects and boards rather than requiring memorized keys or IDs.
 - [ ] Inspect existing credentials from this CLI's supported sources and report the selected source without exposing secrets; do not assume or import another tool's credentials automatically.
 - [ ] Validate selected credentials through an authenticated endpoint. Treat `401` as authentication failure, without claiming expiry is known; track OAuth expiry when supplied and keep `403` permission failures separate.
-- [ ] Refresh recoverable OAuth credentials with a bounded recovery attempt. Offer explicit reauthentication on interactive failure; require reauthentication for invalid/revoked API tokens.
+- [ ] Offer explicit token replacement on interactive authentication failure; never replay uncertain writes. API tokens have no refresh mechanism; retain the selected identity and distinguish 401 from permission failures.
 - [ ] Make noninteractive auth failures actionable and deterministic. Do not switch to a different saved identity after an explicitly supplied credential fails, and do not automatically replay an uncertain mutation.
 - [ ] Migrate `~/.config/jsup/config.json` into the agreed profile/config format and credential store; make migration repeatable and preserve usable legacy credentials until the new storage succeeds.
 - [ ] Define logout behavior for local credentials, upstream revocation where supported, and externally supplied environment/flag credentials; make those effects visible to the user.
 - [ ] Add `config show/get/set` for nonsecret preferences and `doctor` for redacted diagnostics covering credential source, connectivity, current identity, and project access.
-- [ ] Verify missing, valid, invalid, expired, and revoked credentials; refresh success/failure; profile isolation; migration failure; permission denial; and noninteractive recovery.
+- [ ] Verify missing, valid, invalid, expired, and revoked credentials; token replacement success/failure; profile isolation; migration failure; permission denial; and noninteractive recovery.
 
 Completion criteria:
 
 - [ ] A new user can authenticate, choose an accessible project, inspect auth status, and sign out without manually editing files.
 - [ ] An existing user can migrate safely and continue operating under the same site/account; auth recovery never silently changes that identity.
-- [ ] Expired OAuth credentials recover when refresh is supported; invalid API tokens produce a clear replacement path without blocking scripts on prompts.
+- [ ] Invalid, expired, or revoked API tokens produce a clear replacement path; scripts never block on prompts and credentials are never silently changed.
 
 ## Sprint 4 — Project discovery and field handling
 
