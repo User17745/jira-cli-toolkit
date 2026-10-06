@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: in progress. Sprint 1 is implemented and verified; Sprint 0 contract decisions are recorded, with identity implementation still pending; API-token login selected. Later sprints remain planned.
+Status: in progress. Command foundation, API reliability, and cross-platform CI are implemented. Guided API-token authentication and profiles are being verified. Discovery, issue maintenance, templates, release publication, updater, and live acceptance remain in progress or planned.
 
 ## Goal
 
@@ -24,7 +24,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 
 - [x] Foundation: regression tests and isolated package smoke checks; commit `8e0d8e6` pushed to `codex/v2-foundation` (draft PR #1).
 - [x] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
-- [ ] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [x] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
@@ -52,7 +52,7 @@ At planning time the package was `jsup` version `0.2.0`, with an argparse comman
 | Help | Root and per-command `--help` | Retain `--help`; add `help` and completion |
 | Credentials | Plaintext token in `~/.config/jsup/config.json`, mode `0600` | Named identities and OS credential storage |
 | Auth fallback | Flags, then environment, then config; checks presence | Explicit credential selection, validation, and recovery |
-| Auth lifecycle | Manual `me` check; no refresh or login recovery | Login/status/logout, OAuth refresh, clear failure handling |
+| Auth lifecycle | Manual `me` check; no refresh or login recovery | Login/status/logout, guided token replacement, clear failure handling |
 | Issue fields | Fixed flags; no creation metadata discovery | Project/type metadata, typed values, required-field prompts |
 | Issue maintenance | Create, view, transition, delete, comments | Editing, assignment, relationships, attachments |
 | Lists | One response page | Explicit limits and complete pagination |
@@ -95,13 +95,13 @@ These are ordered work packages, not calendar or effort commitments. Each sprint
 - [x] Choose the public product, package, and executable names after checking relevant registries and executable collisions; decide whether `jira` is an optional alias. Keep `jsup` available during migration.
 - [x] Finalize the resource/action command grammar and flag conventions; use `view`, `edit`, `list`, and `transition` consistently. Reserve `move` for a future cross-project operation.
 - [x] Define the compatibility window for old commands, config keys, environment variables, argument names, and JSON behavior. Record how users opt into the new defaults.
-- [ ] Define credential and context precedence, distinguishing an explicitly selected identity from per-command project/board overrides; reject ambiguous identity combinations.
+- [x] Define credential and context precedence, distinguishing an explicitly selected identity from per-command project/board overrides; reject ambiguous identity combinations.
 - [x] Define interactive behavior, root-command behavior, noninteractive behavior, output schemas, pagination controls, and exit codes.
 - [x] Select API-token login for v2 per user direction on 6 October 2026. Provide guided token creation, permission guidance, secure storage, status checks, and explicit replacement. OAuth is deferred; no app is available.
 
 Completion criteria:
 
-- [ ] Record the chosen scope, naming decision, command contract, auth design, and migration policy in this directory before implementation depends on them.
+- [x] Record the chosen scope, naming decision, command contract, auth design, and migration policy in this directory before implementation depends on them.
 
 ## Sprint 1 — Command structure and project-neutral defaults
 
@@ -146,25 +146,28 @@ Reliability evidence: 51 deterministic tests pass locally, including cursor/offs
 
 ## Sprint 3 — Authentication, profiles, and contexts
 
-- [ ] Add `auth login`, `auth status`, `auth logout`, and `user me`; validate authentication before persisting a new credential set.
-- [ ] Implement guided API-token login, supporting unscoped tokens at the site URL and scoped tokens through the Atlassian API gateway with a cloud ID. Explain token creation, scopes, project permissions, expiration, and replacement.
-- [ ] Store credentials through an OS credential-store abstraction; keep profile/context preferences separate from secrets. Define an explicit fallback for headless environments or unavailable credential stores without silently writing plaintext tokens.
-- [ ] Add named profiles and `profile list`, `profile use`, and `profile remove`; keep credentials scoped to the intended site and account.
-- [ ] Add `context show` and `context use` for active profile/project/board; let setup select from accessible projects and boards rather than requiring memorized keys or IDs.
-- [ ] Inspect existing credentials from this CLI's supported sources and report the selected source without exposing secrets; do not assume or import another tool's credentials automatically.
-- [ ] Validate selected credentials through an authenticated endpoint. Treat `401` as authentication failure, without claiming expiry is known; track OAuth expiry when supplied and keep `403` permission failures separate.
-- [ ] Offer explicit token replacement on interactive authentication failure; never replay uncertain writes. API tokens have no refresh mechanism; retain the selected identity and distinguish 401 from permission failures.
-- [ ] Make noninteractive auth failures actionable and deterministic. Do not switch to a different saved identity after an explicitly supplied credential fails, and do not automatically replay an uncertain mutation.
-- [ ] Migrate `~/.config/jsup/config.json` into the agreed profile/config format and credential store; make migration repeatable and preserve usable legacy credentials until the new storage succeeds.
-- [ ] Define logout behavior for local credentials, upstream revocation where supported, and externally supplied environment/flag credentials; make those effects visible to the user.
-- [ ] Add `config show/get/set` for nonsecret preferences and `doctor` for redacted diagnostics covering credential source, connectivity, current identity, and project access.
-- [ ] Verify missing, valid, invalid, expired, and revoked credentials; token replacement success/failure; profile isolation; migration failure; permission denial; and noninteractive recovery.
+- [x] Add `auth login`, `auth status`, `auth logout`, and `user me`; validate authentication before persisting a new credential set.
+- [x] Implement guided API-token login, supporting unscoped tokens at the site URL and scoped tokens through the Atlassian API gateway with a cloud ID. Explain token creation, scopes, project permissions, expiration, and replacement.
+- [x] Store credentials through an OS credential-store abstraction; keep profile/context preferences separate from secrets. Define an explicit fallback for headless environments or unavailable credential stores without silently writing plaintext tokens.
+- [x] Add named profiles and `profile list`, `profile use`, and `profile remove`; keep credentials scoped to the intended site and account.
+- [x] Add `context show` and `context use` for active profile/project/board; let setup select from accessible projects and boards rather than requiring memorized keys or IDs.
+- [x] Inspect existing credentials from this CLI's supported sources and report the selected source without exposing secrets; do not assume or import another tool's credentials automatically.
+- [ ] Validate selected credentials through an authenticated endpoint. Treat `401` as authentication failure, without claiming expiry is known; report token expiry as unknown unless independently provided and keep `403` permission failures separate.
+- [x] Offer explicit token replacement on interactive authentication failure; never replay uncertain writes. API tokens have no refresh mechanism; retain the selected identity and distinguish 401 from permission failures.
+- [x] Make noninteractive auth failures actionable and deterministic. Do not switch to a different saved identity after an explicitly supplied credential fails, and do not automatically replay an uncertain mutation.
+- [x] Migrate `~/.config/jsup/config.json` into the agreed profile/config format and credential store; make migration repeatable and preserve usable legacy credentials until the new storage succeeds.
+- [x] Define logout behavior for local credentials, upstream revocation where supported, and externally supplied environment/flag credentials; make those effects visible to the user.
+- [x] Add `config show/get/set` for nonsecret preferences and `doctor` for redacted diagnostics covering credential source, connectivity, current identity, and project access.
+- [x] Verify missing, valid, invalid, expired, and revoked credentials; token replacement success/failure; profile isolation; migration failure; permission denial; and noninteractive recovery.
 
 Completion criteria:
 
-- [ ] A new user can authenticate, choose an accessible project, inspect auth status, and sign out without manually editing files.
-- [ ] An existing user can migrate safely and continue operating under the same site/account; auth recovery never silently changes that identity.
-- [ ] Invalid, expired, or revoked API tokens produce a clear replacement path; scripts never block on prompts and credentials are never silently changed.
+- [x] A new user can authenticate, choose an accessible project, inspect auth status, and sign out without manually editing files.
+- [x] An existing user can migrate safely and continue operating under the same site/account; auth recovery never silently changes that identity.
+- [x] Invalid, expired, or revoked API tokens produce a clear replacement path; scripts never block on prompts and credentials are never silently changed.
+
+
+Authentication evidence: 71 deterministic tests pass. Native-store calls are mocked; actual OS credential-store/live Jira acceptance remains Sprint 8. Explicit file storage is verified on POSIX; Windows rejects it until ACL protection is implemented. No OAuth app or refresh mechanism is assumed.
 
 ## Sprint 4 — Project discovery and field handling
 
@@ -344,3 +347,5 @@ Use the current supported APIs during implementation; these links informed the p
 - [GitHub Actions workflow artifacts](https://docs.github.com/en/actions/concepts/workflows-and-actions/workflow-artifacts)
 - [GitHub artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations)
 - [GitHub repository rename behavior](https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository)
+
+Reliability CI evidence: commit `fdc86ad`; [run 37487449923](https://github.com/User17745/jira-cli-toolkit/actions/runs/37487449923) passed every configured job.

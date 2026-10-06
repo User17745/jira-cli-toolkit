@@ -100,3 +100,13 @@ python -m venv .venv
 ```
 
 Tests use local fixtures and mocked Jira calls. They do not require real Jira credentials or modify tickets. On Windows use the corresponding `.venv\Scripts\python` executable.
+
+## Guided authentication and profiles
+
+For a new installation, run `jira-cli-toolkit auth login --profile work`. The guided screen links to [Atlassian token creation](https://id.atlassian.com/manage-profile/security/api-tokens), hides token input, validates your account, and lets you choose a project. A token inherits your account's permissions; scoped tokens also need scopes for the operations you use. For a scoped personal token, add `--scoped` (and `--cloud-id ID` if automatic site discovery is unavailable).
+
+Tokens are stored in your native OS credential store. Preferences remain at `~/.config/jsup/config.json`; the v2 schema contains profile references and no tokens. If no native store is available, supply a complete `JIRA_SITE`, `JIRA_EMAIL`, and `JIRA_API_TOKEN` identity for scripts. Explicit `--storage file` is a POSIX-only plaintext opt-in with a separate mode-0600 credentials file. The CLI never silently falls back to it.
+
+Existing users run `jira-cli-toolkit config migrate` to validate and migrate their saved identity safely. Then use `profile list`, `profile use work`, `context use --project ENG`, `auth status`, and `doctor`. Local `auth logout` does not revoke the token at Atlassian or clear externally supplied credentials. API tokens cannot refresh; an invalid/expired/revoked token must be replaced with `auth login`. Recovery never replays a write automatically.
+
+A selected `--profile` owns its full site/account identity. Complete identity flags or environment variables can supply another identity when no profile is explicitly selected; partial identities are rejected for schema-2 users. A project override does not change accounts.

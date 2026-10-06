@@ -13,7 +13,7 @@ class CLIParser(argparse.ArgumentParser):
         # Seed the root namespace rather than setting defaults on inherited
         # option actions, which argparse shares between parent/child parsers.
         defaults = dict(project=None, site=None, email=None, token=None,
-                        json=False, no_input=False)
+                        json=False, no_input=False, profile=None)
         for name, value in defaults.items():
             if not hasattr(namespace, name):
                 setattr(namespace, name, value)
@@ -145,6 +145,7 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     common.add_argument("--email")
     common.add_argument("--token")
     common.add_argument("--project", "-p", help="project key")
+    common.add_argument("--profile", help="named identity; never mixed with identity flags")
     common.add_argument("--json", action="store_true", help="JSON output")
     common.add_argument("--no-input", action="store_true", help="never prompt")
     parser = CLIParser(
@@ -173,8 +174,31 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     _, config = group(root, "config", "set up and inspect local configuration")
     command(config, "init", "config-init", "legacy credential setup")
     command(config, "show", "config-show", "show saved configuration with token masked")
+    migrate = command(config, "migrate", "config-migrate", "migrate legacy credentials to a named profile")
+    migrate.add_argument("--storage", choices=["keyring", "file"], default="keyring")
+    for action in ("get", "set"):
+        pref = command(config, action, "config-"+action, "inspect or change a nonsecret preference")
+        pref.add_argument("key", choices=["project", "board"])
+        if action == "set":
+            pref.add_argument("value")
+    _, auth = group(root, "auth", "guided API-token login and credential health")
+    login = command(auth, "login", "auth-login", "validate and store an API token")
+    login.add_argument("--storage", choices=["keyring", "file"], default="keyring")
+    login.add_argument("--token-stdin", action="store_true")
+    login.add_argument("--scoped", action="store_true", help="token uses API scopes and the Atlassian gateway")
+    login.add_argument("--cloud-id", help="cloud ID for a scoped token")
+    command(auth, "status", "auth-status", "validate the selected identity with Jira")
+    command(auth, "logout", "auth-logout", "delete selected local credential; upstream tokens are not revoked")
+    _, profiles = group(root, "profile", "named site/account identities")
+    command(profiles, "list", "profile-list", "list saved profiles without reading secrets")
+    for action in ("use", "remove"):
+        item = command(profiles, action, "profile-"+action, "select or remove a profile")
+        item.add_argument("name")
+    command(root, "doctor", "doctor", "redacted connectivity, identity and project diagnostics")
     _, context = group(root, "context", "inspect resolved local context")
     command(context, "show", "context-show", "show site and project without contacting Jira")
+    use = command(context, "use", "context-use", "select a profile/project/board after checking access")
+    use.add_argument("--board", type=positive_int)
     _, user = group(root, "user", "user identity")
     command(user, "me", "me", "show authenticated user")
     _, projects = group(root, "project", "projects")

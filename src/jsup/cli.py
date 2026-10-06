@@ -43,10 +43,10 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
                 return
             args.cmd, args.projects = "dashboard", None
         run(args, prog)
-    except CommandError as error:
+    except (CommandError, ValueError) as error:
         fail(2, "invalid_input", str(error))
     except JiraError as error:
-        hint = {401: " (authentication failed; check credentials with user me)",
+        hint = {401: " (authentication failed; replace the token with auth login, or migrate legacy credentials with config migrate)",
                 403: " (permission denied for this operation)",
                 404: " (not found; check the key or ID)"}.get(error.status, "")
         fail(1, "jira_error", f"Error: {error}{hint}", status=error.status)

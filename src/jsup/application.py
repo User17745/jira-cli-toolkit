@@ -21,7 +21,7 @@ def require_input(args, message: str) -> None:
 
 
 def show_context(args, prog: str, include_help: bool = False) -> None:
-    cfg = config.resolve_config(args)
+    cfg = config.resolve_config(args, read_secret=False)
     data = {"site": cfg["site"] or None, "project": cfg["project"] or None}
     if args.json:
         ui.dump_json(data)
@@ -60,7 +60,7 @@ def _open_browser(args) -> bool:
         path = f"/secure/RapidBoard.jspa?rapidView={args.board_id}"
     else:
         return False
-    site = config.resolve_config(args)["site"]
+    site = config.resolve_config(args, read_secret=False)["site"]
     if not site:
         raise CommandError("Set JIRA_SITE or pass --site to open Jira in a browser.")
     url = site + path
@@ -198,6 +198,14 @@ def _render(data, args, cfg: dict, prog: str) -> None:
 
 
 def run(args, prog: str) -> None:
+    if args.cmd in {"auth-login", "auth-status", "auth-logout", "config-migrate", "profile-list", "profile-use", "profile-remove", "context-use", "config-get", "config-set", "doctor"}:
+        from . import auth
+        data = auth.handle(args)
+        if args.json:
+            ui.dump_json(data)
+        else:
+            ui.console.print(data, markup=False)
+        return
     if args.cmd == "config-init":
         require_input(args, "config init requires interactive input; use environment variables for scripts.")
         if args.json:
@@ -227,7 +235,7 @@ def run(args, prog: str) -> None:
     cfg = config.resolve_config(args)
     if not (cfg["site"] and cfg["email"] and cfg["token"]):
         raise CommandError(f"Not configured yet. Run: {prog} config init")
-    j = Jira(cfg["site"], cfg["email"], cfg["token"])
+    j = Jira(cfg.get("api_site", cfg["site"]), cfg["email"], cfg["token"])
     try:
         if args.cmd == "issue-move" and not args.to:
             transitions = j.transitions(args.key).get("transitions", [])
@@ -238,5 +246,15 @@ def run(args, prog: str) -> None:
         with ui.err_console.status("Talking to Jira…", spinner="dots") if not args.json else nullcontext():
             data = _fetch(j, args, cfg)
         _render(data, args, cfg, prog)
+    except JiraError as error:
+        if error.status == 401 and cfg.get("profile") and not args.no_input and not args.json and sys.stdin.isatty():
+            if ui.confirm("Authentication failed. Replace this profile's API token now?"):
+                from . import auth
+                from types import SimpleNamespace
+                recovery = SimpleNamespace(profile=cfg["profile"], site=None, email=None, token=None,
+                                           project=None, json=False, no_input=False)
+                auth.login(recovery, replace=True)
+                ui.err_console.print("Token replaced. Run the command again after checking the previous operation's outcome.")
+        raise
     finally:
         j.close()

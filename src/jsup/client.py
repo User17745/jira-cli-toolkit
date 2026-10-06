@@ -61,6 +61,7 @@ class Jira:
     def _req(self, method: str, path: str, **kw):
         safe = kw.pop("retry_safe", method in ("GET", "HEAD"))
         kw.setdefault("timeout", (10, 30))
+        kw.setdefault("allow_redirects", False)
         for attempt in range(3):
             try:
                 r = self.s.request(method, self.site + path, **kw)

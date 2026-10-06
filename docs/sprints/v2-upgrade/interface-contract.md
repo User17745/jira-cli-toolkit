@@ -40,7 +40,8 @@ The new root command shows only resolved site/project context and common command
 
 ## Project selection and queries
 
-For API operations, configuration continues to resolve each existing setting from CLI flags, then environment variables, then `~/.config/jsup/config.json`. No configuration or credential migration occurs in this milestone. Profile-scoped identity selection and rejection of ambiguous credential combinations require Sprint 3.
+Schema 2 profiles select one site/account identity atomically. Explicit `--profile` (or `JIRA_PROFILE`) uses that profile and ignores identity environment variables; identity flags cannot be combined with profile selection. Complete identity flags override a complete environment identity, which otherwise overrides the active profile. Partial flag/environment identities are rejected rather than borrowing another profile's token. Project overrides remain independent: flag, environment, selected profile. The legacy file remains usable until `config migrate` succeeds.
+
 
 `issue list` defaults to the selected project's issues, including Done, ordered by update time. `--open` adds `statusCategory != Done`. `--jql` is a complete query: it ignores the saved/environment default project and cannot be combined with explicit `--project` or `--open`. This avoids silently rewriting user queries. `--limit`/`--max` bounds total fetched results across pages; `--all` retrieves every page. Search uses the supported enhanced POST endpoint and cursor tokens; the deprecated search fallback has been removed.
 
@@ -83,7 +84,11 @@ Progress goes to stderr; JSON stdout contains a result or the documented runtime
 
 ## Authentication boundary
 
-Existing email/API-token authentication remains in place. The foundation adds an actionable `401` hint and consistent error handling; it does not implement login/status/logout, token refresh, named profiles, OS credential storage, or automatic fallback to another identity. Those remain unchecked in the roadmap.
+`auth login` validates the token through `/myself` before saving a profile. Interactive setup explains token creation and permissions, hides token input, and offers accessible projects. `--token-stdin` and complete environment credentials support scripts. Native macOS Keychain, Windows Credential Manager, Secret Service, or KWallet stores hold tokens; preferences contain credential references only. No implicit plaintext fallback is allowed. Explicit `--storage file` writes a separate POSIX mode-0600 credential file; Windows users use the native store or environment authentication.
+
+`auth status` validates the selected identity and reports its source without printing the token. `auth logout` deletes the selected local credential, does not revoke the upstream token, and does not clear externally provided credentials. Profile removal never silently selects another identity. `context show` and browser routing inspect local preferences without opening the keychain. `doctor` checks identity and configured project access. `config migrate` validates the legacy identity, stores its token, then atomically replaces preferences; failed storage leaves the old file intact.
+
+A 401 from a selected profile offers interactive token replacement when input is available. Recovery checks that site/account stay unchanged, and the original operation is never automatically replayed. Scripts return a deterministic error with an `auth login` instruction. Scoped personal tokens route API requests through `api.atlassian.com/ex/jira/<cloud-id>` while browser links retain the site URL. API-token expiry remains unknown; there is no automatic refresh.
 
 The user selected API-token login instead of OAuth for v2 (6 October 2026). Token setup must explain how to create a personal token, respect its scopes and the account's project permissions, and support the scoped-token API gateway. API tokens cannot be refreshed automatically. A 401 means authentication failed; it does not prove expiration. OAuth application ownership and refresh support are deferred. [Atlassian API-token instructions](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
 
