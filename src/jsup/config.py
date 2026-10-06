@@ -17,7 +17,8 @@ def _read_file() -> dict:
         return {}
 
 
-def get_config(args) -> dict:
+def resolve_config(args) -> dict:
+    """Resolve existing settings without requiring authentication or printing secrets."""
     file_cfg = _read_file()
     cfg = {
         "site": (getattr(args, "site", None) or os.getenv("JIRA_SITE")
@@ -29,6 +30,11 @@ def get_config(args) -> dict:
         "project": (getattr(args, "project", None) or os.getenv("JIRA_PROJECT")
                     or file_cfg.get("JIRA_PROJECT", "")),
     }
+    return cfg
+
+
+def get_config(args) -> dict:
+    cfg = resolve_config(args)
     if not (cfg["site"] and cfg["email"] and cfg["token"]):
         print("Not configured yet. Run: jsup config init", file=sys.stderr)
         sys.exit(2)
@@ -59,8 +65,14 @@ def init_config() -> None:
     print(f"Saved to {CONFIG_PATH} (mode 600). Try: jsup me")
 
 
-def show_config() -> None:
+def show_config(as_json: bool = False) -> None:
     cfg = _read_file()
+    if as_json:
+        print(json.dumps({"file": str(CONFIG_PATH), "site": cfg.get("JIRA_SITE") or None,
+                          "email": cfg.get("JIRA_EMAIL") or None,
+                          "project": cfg.get("JIRA_PROJECT") or None,
+                          "token_configured": bool(cfg.get("JIRA_API_TOKEN"))}, indent=2))
+        return
     if not cfg:
         print("No config file. Run: jsup config init")
         return

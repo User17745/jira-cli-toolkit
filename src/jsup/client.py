@@ -1,6 +1,8 @@
 """Thin wrapper over the official Jira Cloud REST APIs (v3 + Agile 1.0)."""
 from __future__ import annotations
 
+import json
+
 import requests
 
 
@@ -8,6 +10,11 @@ class JiraError(Exception):
     def __init__(self, method: str, path: str, status: int, body: str):
         self.method, self.path, self.status, self.body = method, path, status, body
         super().__init__(f"{method} {path} -> {status}: {body[:500]}")
+
+
+def project_jql(project: str) -> str:
+    """Quote project identifiers in generated JQL."""
+    return f"project = {json.dumps(project, ensure_ascii=False)}"
 
 
 def adf(text: str) -> dict:
@@ -42,12 +49,16 @@ class Jira:
                                "Content-Type": "application/json"})
 
     def _req(self, method: str, path: str, **kw):
+        kw.setdefault("timeout", (10, 30))
         r = self.s.request(method, self.site + path, **kw)
         if r.status_code in (200, 201):
             return r.json() if r.text else {}
         if r.status_code == 204:
             return {}
         raise JiraError(method, path, r.status_code, r.text)
+
+    def close(self):
+        self.s.close()
 
     # -- identity / projects -------------------------------------------------
     def me(self): return self._req("GET", "/rest/api/3/myself")
@@ -88,10 +99,13 @@ class Jira:
                                      "fields": fields})
 
     def open_tickets(self, project, extra="", max_results=50):
-        jql = f"project = {project} AND statusCategory != Done"
+        jql = project_jql(project) + " AND statusCategory != Done"
         if extra:
             jql += f" AND ({extra})"
         return self.search(jql + " ORDER BY updated DESC", max_results)
+
+    def count_issues(self, jql):
+        return self._req("POST", "/rest/api/3/search/approximate-count", json={"jql": jql})
 
     # -- workflow --------------------------------------------------------------
     def transitions(self, key):
@@ -135,6 +149,9 @@ class Jira:
             params["name"] = name
         return self._req("GET", "/rest/agile/1.0/board", params=params)
 
+    def board_get(self, board_id):
+        return self._req("GET", f"/rest/agile/1.0/board/{board_id}")
+
     def board_issues(self, board_id, jql="", max_results=50):
         params: dict = {"maxResults": max_results}
         if jql:
@@ -146,7 +163,7 @@ class Jira:
         if filter_id is None:
             f = self._req("POST", "/rest/api/3/filter",
                           json={"name": name,
-                                "jql": jql or f"project = {project} ORDER BY Rank ASC",
+                                "jql": jql or project_jql(project) + " ORDER BY Rank ASC",
                                 "description": f"Filter for board {name}"})
             filter_id = int(f["id"])
         return self._req("POST", "/rest/agile/1.0/board",
