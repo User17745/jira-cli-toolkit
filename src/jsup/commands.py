@@ -34,6 +34,43 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         parser.add_argument("--all", action="store_true", help="fetch every page; overrides --limit")
         if operation not in {"open", "issue-list", "board-issues"}:
             parser.add_argument("--limit", dest="max", type=positive_int, default=50)
+    if operation == "issue-edit":
+        parser.add_argument("key")
+        for name in ("summary", "priority", "due-date", "parent"):
+            parser.add_argument("--" + name)
+        parser.add_argument("--description", "--desc", dest="desc")
+        parser.add_argument("--description-file", dest="desc_file")
+        parser.add_argument("--editor", action="store_true")
+        parser.add_argument("--field", action="append", default=[])
+        parser.add_argument("--fields-file")
+        for collection in ("label", "component"):
+            for prefix in ("", "add-", "remove-"):
+                parser.add_argument("--" + prefix + collection, action="append", default=[])
+        return
+    if operation in {"issue-assign", "issue-unassign", "issue-link", "issue-unlink", "attachment-list", "attachment-upload", "attachment-download", "attachment-delete", "comment-edit", "comment-delete"}:
+        if operation in {"issue-unlink", "attachment-download", "attachment-delete"}:
+            parser.add_argument("id", type=positive_int)
+        else:
+            parser.add_argument("key")
+        if operation == "issue-assign":
+            parser.add_argument("--user", required=True, help="me, id:<account ID>, or unambiguous display name/email")
+        if operation == "issue-link":
+            parser.add_argument("other")
+            parser.add_argument("--type", required=True)
+            parser.add_argument("--direction", choices=["inward", "outward"], required=True)
+        if operation == "attachment-upload":
+            parser.add_argument("files", nargs="+")
+        if operation == "attachment-download":
+            parser.add_argument("--output", required=True, help="new file path or existing directory")
+        if operation in {"comment-edit", "comment-delete"}:
+            parser.add_argument("comment_id", type=positive_int)
+        if operation == "comment-edit":
+            parser.add_argument("--message", "-m")
+            parser.add_argument("--message-file")
+            parser.add_argument("--editor", action="store_true")
+        if operation in {"issue-unlink", "attachment-delete", "comment-delete"}:
+            parser.add_argument("--yes", action="store_true")
+        return
     if operation == "dashboard":
         parser.add_argument("--projects", nargs="+", help="project keys to summarize")
     elif operation in {"project-show", "project-types", "project-fields", "project-statuses"}:
@@ -71,6 +108,14 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         parser.add_argument("--limit", "--max", dest="max", type=positive_int, default=50)
         if operation == "issue-list":
             parser.add_argument("--open", action="store_true", help="exclude the Done status category")
+            parser.add_argument("--assignee", help="account ID or me")
+            parser.add_argument("--status", action="append", default=[])
+            parser.add_argument("--type")
+            parser.add_argument("--label", action="append", default=[])
+            parser.add_argument("--board", type=positive_int)
+            parser.add_argument("--order-by", choices=["updated", "created", "priority", "key"], default="updated")
+            parser.add_argument("--order", choices=["asc", "desc"], default="desc")
+            parser.add_argument("--fields", help="comma-separated Jira field IDs")
     elif operation in ("issue-show", "issue-move", "transitions", "issue-delete", "comment-add", "comment-list"):
         parser.add_argument("key")
         if operation == "issue-show":
@@ -83,7 +128,9 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         elif operation == "issue-delete":
             parser.add_argument("--yes", action="store_true", help="skip confirmation")
         elif operation == "comment-add":
-            parser.add_argument("--message", "-m", required=True)
+            parser.add_argument("--message", "-m", required=parser._defaults.get("legacy", False))
+            parser.add_argument("--message-file")
+            parser.add_argument("--editor", action="store_true")
     elif operation == "board-list":
         parser.add_argument("--jql-project", help="legacy project-filter override")
     elif operation == "board-create":
@@ -235,9 +282,19 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     command(issues, "transition", "issue-move", "choose or apply an available transition")
     command(issues, "transitions", "transitions", "list available transitions")
     command(issues, "delete", "issue-delete", "delete an issue after confirmation")
+    command(issues, "edit", "issue-edit", "update editable fields and collection values")
+    command(issues, "assign", "issue-assign", "assign an issue")
+    command(issues, "unassign", "issue-unassign", "clear the assignee")
+    command(issues, "link", "issue-link", "link two issues with explicit direction")
+    command(issues, "unlink", "issue-unlink", "delete a link after confirmation")
     _, comments = group(issues, "comment", "issue comments")
     command(comments, "add", "comment-add", "add a comment")
     command(comments, "list", "comment-list", "list comments")
+    command(comments, "edit", "comment-edit", "edit a comment")
+    command(comments, "delete", "comment-delete", "delete a comment after confirmation")
+    _, attachments = group(issues, "attachment", "issue attachments")
+    for action in ("list", "upload", "download", "delete"):
+        command(attachments, action, "attachment-" + action, action + " attachments")
     _, boards = group(root, "board", "board operations")
     command(boards, "list", "board-list", "list boards")
     command(boards, "create", "board-create", "create a filter and board")

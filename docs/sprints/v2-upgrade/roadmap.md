@@ -26,7 +26,7 @@ Before every push: run the complete regression suite plus tests for the changed 
 - [x] CI foundation: test/build/install smoke jobs pass locally and on GitHub; push and record the run.
 - [x] Sprint 2 reliability: new transport/pagination/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 3 authentication: credential/config/recovery tests plus regressions and installed smoke checks; commit/push and verify CI.
-- [ ] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
+- [x] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [ ] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
@@ -173,11 +173,11 @@ Authentication evidence: 71 deterministic tests pass. Native-store calls are moc
 
 - [x] Add `project list/view`, `project issue-types`, `project fields --type <type>`, and `project statuses` using current supported metadata APIs.
 - [x] Discover creation fields and edit/transition metadata in their appropriate contexts; inspect required values and available options without assuming every validator is discoverable.
-- [ ] Resolve issue types, priorities, components, users, transitions, and field names to identifiers; offer unambiguous selection and an ID escape hatch for duplicate names.
+- [x] Resolve issue types, priorities, components, users, transitions, and field names to identifiers; offer unambiguous selection and an ID escape hatch for duplicate names.
 - [x] Support repeatable `--field` values and structured JSON input for complex fields; handle supported text, rich text, number, date, selection, array, and user-reference formats correctly.
 - [x] In guided creation, select a valid issue type and prompt for missing required fields; apply only valid explicit/configured defaults. Respect editor-based description entry and description files.
 - [x] In script mode, reject missing or invalid required values with field-level diagnostics; accept complete input without prompting.
-- [ ] Support fields required during transitions and editable fields during updates; translate server validation errors into useful diagnostics instead of assuming metadata guarantees success.
+- [x] Support fields required during transitions and editable fields during updates; translate server validation errors into useful diagnostics instead of assuming metadata guarantees success.
 - [x] Cache metadata with a TTL and explicit refresh, scoped to site/account/project/issue type and operation; invalidate affected entries when validation exposes stale configuration.
 - [x] Document supported field formats and the structured-input escape hatch; identify unsupported app-specific field behavior explicitly rather than dropping supplied values.
 - [x] Verify projects with different issue types, duplicate field names, required custom fields, rich-text requirements, stale metadata, and transition validators.
@@ -192,19 +192,22 @@ Discovery evidence: 98 deterministic tests cover project-specific required field
 
 ## Sprint 5 — Essential issue maintenance and collaboration
 
-- [ ] Add `issue edit` for supported editable fields, including summary, description, priority, due date, labels, and components; distinguish replace/add/remove behavior for collection fields.
-- [ ] Add `issue assign` and `issue unassign`, including current-user selection and permission-aware user resolution.
-- [ ] Extend `issue list` with assignee, status, issue-type, label, board, full JQL, ordering, field selection, and pagination controls; document filter precedence.
-- [ ] Add `issue create --parent` and supported parent edits, using project metadata and capabilities rather than a fixed Epic/Story hierarchy.
-- [ ] Add `issue link` and `issue unlink` with available link-type discovery and explicit direction.
-- [ ] Add attachment upload/list/download/delete, including multipart transport, safe download filenames, and file/size errors.
-- [ ] Add comment edit/delete and editor/file input for comments; preserve permission and visibility behavior supported by the API.
-- [ ] Verify maintenance operations against field restrictions, unresolved identities, disallowed parents, link direction, attachment failures, and comment ownership/permissions.
+- [x] Add `issue edit` for supported editable fields, including summary, description, priority, due date, labels, and components; distinguish replace/add/remove behavior for collection fields.
+- [x] Add `issue assign` and `issue unassign`, including current-user selection and permission-aware user resolution.
+- [x] Extend `issue list` with assignee, status, issue-type, label, board, full JQL, ordering, field selection, and pagination controls; document filter precedence.
+- [x] Add `issue create --parent` and supported parent edits, using project metadata and capabilities rather than a fixed Epic/Story hierarchy.
+- [x] Add `issue link` and `issue unlink` with available link-type discovery and explicit direction.
+- [x] Add attachment upload/list/download/delete, including multipart transport, safe download filenames, and file/size errors.
+- [x] Add comment edit/delete and editor/file input for comments; preserve permission and visibility behavior supported by the API.
+- [x] Verify maintenance operations against field restrictions, unresolved identities, disallowed parents, link direction, attachment failures, and comment ownership/permissions.
 
 Completion criteria:
 
-- [ ] A user can find, view, assign, update, transition, comment on, link, and attach evidence to an issue through the CLI.
-- [ ] Unsupported or unauthorized updates fail with actionable errors and do not imply success.
+- [x] A user can find, view, assign, update, transition, comment on, link, and attach evidence to an issue through the CLI.
+- [x] Unsupported or unauthorized updates fail with actionable errors and do not imply success.
+
+
+Maintenance evidence: 111 deterministic tests pass, covering edit restrictions/collections, assignment ambiguity, explicit link direction, comment file input, multipart uploads, safe downloads/partial cleanup, quoted filters, and confirmation guards. Live permission/ownership acceptance remains Sprint 8.
 
 ## Sprint 6 — Templates and daily-use polish
 

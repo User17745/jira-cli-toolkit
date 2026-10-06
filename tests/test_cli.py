@@ -302,6 +302,13 @@ class CLITests(unittest.TestCase):
         self.assertEqual(self.out.getvalue(), "")
         self.assertNotIn("test-secret", self.err.getvalue())
 
+    def test_new_destructive_commands_require_explicit_confirmation(self):
+        for argv in (["issue", "unlink", "1"], ["issue", "comment", "delete", "ENG-1", "1"], ["issue", "attachment", "delete", "1"]):
+            with self.subTest(argv=argv):
+                self.assertEqual(self.invoke([*argv, "--json", "--no-input"]), 2)
+                self.assertIn("--yes", json.loads(self.out.getvalue())["error"]["message"])
+        self.factory.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

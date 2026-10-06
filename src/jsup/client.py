@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import json
 import time
+from contextlib import ExitStack
+from pathlib import Path
+import os
+import tempfile
 from urllib.parse import quote
 
 import requests
@@ -277,6 +281,69 @@ class Jira:
         self._req("DELETE", f"/rest/api/3/issue/{identifier(key)}/comment/{identifier(comment_id)}")
         return {"deleted_comment": str(comment_id), "issue": key}
 
+    def attachment_info(self, attachment_id):
+        return self._req("GET", f"/rest/api/3/attachment/{identifier(attachment_id)}")
+
+    def attachment_upload(self, key, paths):
+        settings = self._req("GET", "/rest/api/3/attachment/meta")
+        if not settings.get("enabled"):
+            raise ValueError("Attachments are disabled on this Jira site.")
+        limit = min(settings.get("uploadLimit", 50 * 1024 * 1024), 50 * 1024 * 1024)
+        with ExitStack() as stack:
+            files = []
+            total_size = 0
+            for name in paths:
+                path = Path(name)
+                if not path.is_file() or not 0 < path.stat().st_size <= limit:
+                    raise ValueError(f"Attachment must be a nonempty file no larger than {limit} bytes: {path}")
+                total_size += path.stat().st_size
+                if total_size > 50 * 1024 * 1024:
+                    raise ValueError("A single upload is limited to 50 MiB across all files.")
+                files.append(("file", (path.name, stack.enter_context(path.open("rb")), "application/octet-stream")))
+            return self._req("POST", f"/rest/api/3/issue/{identifier(key)}/attachments", files=files,
+                             headers={"X-Atlassian-Token": "no-check", "Content-Type": None})
+
+    def attachment_download(self, attachment_id, destination):
+        metadata = self.attachment_info(attachment_id)
+        size = metadata.get("size")
+        if not isinstance(size, int) or not 0 <= size <= 250 * 1024 * 1024:
+            raise ValueError("Invalid attachment size or attachment exceeds the 250 MiB download limit.")
+        name = Path(metadata.get("filename", "attachment").replace("\\", "/")).name
+        if name in ("", ".", ".."):
+            raise ValueError("Jira returned an unsafe attachment filename.")
+        output = Path(destination)
+        if output.is_dir():
+            output = output / name
+        if output.exists():
+            raise ValueError(f"Destination already exists: {output}")
+        response = self.s.get(self.site + f"/rest/api/3/attachment/content/{identifier(attachment_id)}",
+                              params={"redirect": "false"}, stream=True, timeout=(10, 60), allow_redirects=False)
+        temporary = None
+        try:
+            if response.status_code != 200:
+                raise JiraError("GET", "/attachment/content", response.status_code, "Attachment download failed.")
+            fd, temporary = tempfile.mkstemp(prefix=".jira-attachment-", dir=output.parent)
+            received = 0
+            with os.fdopen(fd, "wb") as stream:
+                for chunk in response.iter_content(1024 * 1024):
+                    received += len(chunk)
+                    if received > size:
+                        raise ValueError("Attachment exceeds its declared size.")
+                    stream.write(chunk)
+            if received != size:
+                raise ValueError("Attachment download was interrupted; no partial destination was retained.")
+            # Hard-link creation fails atomically if another download created the destination.
+            os.link(temporary, output)
+            return {"attachment_id": str(attachment_id), "file": str(output.absolute()), "bytes": received}
+        finally:
+            response.close()
+            if temporary is not None:
+                os.unlink(temporary)
+
+    def attachment_delete(self, attachment_id):
+        self._req("DELETE", f"/rest/api/3/attachment/{identifier(attachment_id)}")
+        return {"deleted_attachment": str(attachment_id)}
+
     # -- boards (Agile API; no rename/columns write endpoints exist) --------------
     def boards(self, project=None, name=None, limit=50, all_results=False):
         params = {}
@@ -289,10 +356,12 @@ class Jira:
     def board_get(self, board_id):
         return self._req("GET", f"/rest/agile/1.0/board/{board_id}")
 
-    def board_issues(self, board_id, jql="", max_results=50, all_results=False):
+    def board_issues(self, board_id, jql="", max_results=50, all_results=False, fields=None):
         params: dict = {"maxResults": max_results}
         if jql:
             params["jql"] = jql
+        if fields:
+            params["fields"] = fields
         return self._offset(f"/rest/agile/1.0/board/{board_id}/issue", "issues", params=params,
                             limit=max_results, all_results=all_results)
 

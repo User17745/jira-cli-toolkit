@@ -122,16 +122,11 @@ def _fetch(j: Jira, args, cfg: dict):
         return j.issue_create(project(), args.summary, desc, args.type,
                               args.priority, args.label, args.component, args.assignee)
     if cmd == "issue-list":
-        if args.jql:
-            if args.open or args.project:
-                raise CommandError("--jql is a complete query; omit --open and --project.")
-            jql = args.jql
-        else:
-            jql = project_jql(project())
-            if args.open:
-                jql += " AND statusCategory != Done"
-            jql += " ORDER BY updated DESC"
-        return j.search(jql, args.max, **pagination)
+        from .maintenance import issue_list
+        return issue_list(j, args, cfg)
+    if cmd in {"issue-edit", "issue-assign", "issue-unassign", "issue-link", "issue-unlink", "comment-add", "comment-edit", "comment-delete", "attachment-list", "attachment-upload", "attachment-download", "attachment-delete"}:
+        from .maintenance import handle
+        return handle(j, args, cfg)
     if cmd == "issue-move":
         if not args.legacy:
             from .fields import transition
@@ -254,6 +249,10 @@ def run(args, prog: str) -> None:
     if args.cmd == "issue-delete" and not args.yes:
         require_input(args, "Pass --yes to confirm deletion when input is unavailable.")
         if not ui.confirm(f"Permanently delete {args.key}?"):
+            raise CommandError("Aborted.")
+    if args.cmd in {"issue-unlink", "comment-delete", "attachment-delete"} and not args.yes:
+        require_input(args, "Pass --yes to confirm deletion when input is unavailable.")
+        if not ui.confirm("Permanently delete the selected item?"):
             raise CommandError("Aborted.")
     if args.cmd == "intake":
         _prepare_intake(args)
