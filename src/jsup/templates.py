@@ -16,13 +16,13 @@ ALLOWED={'schema_version','name','type','summary','description','fields','variab
 
 def load(name):
     if name=='callback':
-        data=json.loads(files('jsup').joinpath('data/callback.json').read_text())
+        data=json.loads(files('jsup').joinpath('data/callback.json').read_text(encoding="utf-8"))
     else:
         path=Path(name)
         if path.suffix!='.json' and len(path.parts)==1:
             if not re.fullmatch(r'[a-zA-Z0-9_-]+',name): raise ValueError('Invalid template name.')
             path=config.CONFIG_PATH.parent/'templates'/(name+'.json')
-        data=json.loads(path.read_text())
+        data=json.loads(path.read_text(encoding="utf-8"))
     validate(data)
     return data
 

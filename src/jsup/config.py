@@ -14,7 +14,7 @@ KEYS = ("JIRA_SITE", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROJECT")
 
 def _read_file() -> dict:
     try:
-        data = json.loads(CONFIG_PATH.read_text())
+        data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError("Configuration must be a JSON object.")
         return data

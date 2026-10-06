@@ -24,7 +24,7 @@ def cached(cfg,project,kind,fetch,refresh=False):
     path=config.CONFIG_PATH.parent/'cache'/(key+'.json')
     if not refresh:
         try:
-            entry=json.loads(path.read_text())
+            entry=json.loads(path.read_text(encoding="utf-8"))
             if 0<=time.time()-entry['saved_at']<TTL:
                 return entry['data']
         except (OSError,ValueError,KeyError,TypeError): pass
@@ -104,7 +104,7 @@ def typed(field,value):
 def supplied(args,meta):
     values={}
     if getattr(args,'fields_file',None):
-        values=json.loads(Path(args.fields_file).read_text())
+        values=json.loads(Path(args.fields_file).read_text(encoding="utf-8"))
         if not isinstance(values,dict): raise ValueError('--fields-file must contain a JSON object of field values.')
     for entry in getattr(args,'field',[]):
         separator=':=' if ':=' in entry else '='
@@ -120,16 +120,16 @@ def supplied(args,meta):
 
 
 def description(args):
-    if getattr(args,'desc_file',None): return Path(args.desc_file).read_text()
+    if getattr(args,'desc_file',None): return Path(args.desc_file).read_text(encoding="utf-8")
     if getattr(args,'editor',False):
         if args.no_input or args.json or not sys.stdin.isatty(): raise ValueError('--editor requires interactive input without --json.')
         editor=os.getenv('VISUAL') or os.getenv('EDITOR')
         if not editor: raise ValueError('Set VISUAL or EDITOR before using --editor.')
         with tempfile.TemporaryDirectory(prefix='jira-editor-') as temp:
-            path=Path(temp)/'description.txt'; path.write_text(getattr(args,'desc',None) or '')
+            path=Path(temp)/'description.txt'; path.write_text(getattr(args,'desc',None) or '', encoding='utf-8')
             try: subprocess.run([*shlex.split(editor),str(path)],check=True)
             except subprocess.SubprocessError: raise ValueError('Editor failed; no Jira operation was submitted.') from None
-            return path.read_text()
+            return path.read_text(encoding="utf-8")
     return getattr(args,'desc',None)
 
 

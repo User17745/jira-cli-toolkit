@@ -245,7 +245,7 @@ def handle(args):
         with tempfile.TemporaryDirectory(prefix='jira-update-') as temp:
             manifest_path=Path(temp)/'manifest.json'
             api.download(assets['manifest.json'],manifest_path,2*1024*1024)
-            try: manifest=json.loads(manifest_path.read_text())
+            try: manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
             except (ValueError,UnicodeError): raise UpdateError('Invalid release manifest.') from None
             version=verify_manifest(manifest,release)
             if version.is_prerelease and not args.prerelease: raise UpdateError('Prerelease requires --prerelease.')

@@ -20,6 +20,12 @@ class TemplateTests(unittest.TestCase):
         self.assertIn('Source: jsup intake.',values['description'])
         self.assertEqual(values['components'],['ops-runbook'])
 
+    def test_local_templates_are_always_utf8(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'unicode.json'
+            path.write_bytes(json.dumps({'schema_version':1,'name':'team','summary':'日本語 — résumé'},ensure_ascii=False).encode('utf-8'))
+            self.assertEqual(templates.load(str(path))['summary'],'日本語 — résumé')
+
     def test_undeclared_expression_hooks_and_invalid_versions_fail(self):
         for changed in ({'schema_version':2},{'hook':'run shell'},{'summary':'{name.__class__}'},{'summary':'{unknown}'},{'summary':'{name!r}'}):
             with self.subTest(changed=changed),self.assertRaises(ValueError): templates.validate({**templates.load('callback'),**changed})

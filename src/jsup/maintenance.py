@@ -43,7 +43,7 @@ def edit(j,args,cfg):
 
 def body(args):
     if args.message is not None: return args.message
-    if getattr(args,'message_file',None): return Path(args.message_file).read_text()
+    if getattr(args,'message_file',None): return Path(args.message_file).read_text(encoding="utf-8")
     if getattr(args,'editor',False):
         proxy=SimpleNamespace(desc=None,desc_file=None,editor=True,json=args.json,no_input=args.no_input)
         return fields.description(proxy)

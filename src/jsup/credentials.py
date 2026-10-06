@@ -37,7 +37,7 @@ def get(profile, settings, config_path):
             raise CredentialError("Could not read the OS credential store. Unlock it or use environment authentication.") from None
     path = Path(config_path).with_name("credentials.json")
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise CredentialError("Invalid credential file.")
         return data.get(settings["credential_id"], "")
@@ -61,7 +61,7 @@ def put(settings, token, config_path):
         raise CredentialError("File storage on Windows is unsupported until ACL protection is implemented; use the Windows credential store or environment variables.")
     from .config import atomic_json
     path = Path(config_path).with_name("credentials.json")
-    data = json.loads(path.read_text()) if path.exists() else {}
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     data[settings["credential_id"]] = token
     atomic_json(path, data)
 
@@ -76,6 +76,6 @@ def delete(settings, config_path):
         from .config import atomic_json
         path = Path(config_path).with_name("credentials.json")
         if path.exists():
-            data = json.loads(path.read_text())
+            data = json.loads(path.read_text(encoding="utf-8"))
             data.pop(settings["credential_id"], None)
             atomic_json(path, data)
