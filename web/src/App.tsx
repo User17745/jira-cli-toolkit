@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Apple, ArrowDown, ArrowUpRight, Check, CheckCheck, ChevronRight, Code2, Copy, GitPullRequest, KeyRound, Menu, Monitor, ShieldCheck, Terminal, X } from 'lucide-react'
+import { Laptop, ArrowDown, ArrowUpRight, Check, CheckCheck, ChevronRight, Code2, Copy, GitPullRequest, KeyRound, Menu, Monitor, ShieldCheck, Terminal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -11,8 +11,8 @@ const docs = `${repo}/blob/main/README.md`
 const latest = `${repo}/releases/latest`
 const raw = 'https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts'
 type OS = 'macos' | 'linux' | 'windows'
-const platforms: Record<OS, { name: string; icon: typeof Apple; command: string; note: string }> = {
-  macos: { name: 'macOS', icon: Apple, command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'macOS 15+ · Apple Silicon or Intel' },
+const platforms: Record<OS, { name: string; icon: typeof Laptop; command: string; note: string }> = {
+  macos: { name: 'macOS', icon: Laptop, command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'macOS 15+ · Apple Silicon or Intel' },
   linux: { name: 'Linux', icon: Terminal, command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'x86_64 · glibc 2.39+ (Ubuntu 24.04+)' },
   windows: { name: 'Windows', icon: Monitor, command: `irm ${raw}/install.ps1 | iex`, note: 'Windows 10+ x86_64 · PowerShell 5.1 or later' },
 }
@@ -60,7 +60,7 @@ function InstallPanel() {
 function Workbench() {
   const [demo, setDemo] = useState('issues')
   return <section className="workbench" id="workflows" aria-label="Jira command examples">
-    <div className="workbench-top"><span><Terminal size={17} /> Less switching. More shipping.</span><span className="example-label">Example workspace</span></div>
+    <div className="workbench-top"><span><Terminal size={17} /> Less switching. More shipping.</span><span className="example-label">Illustration with sample data</span></div>
     <div className="workbench-body">
       <div className="terminal-demo">
         <Tabs value={demo} onValueChange={(value) => setDemo(String(value))}>
@@ -74,11 +74,11 @@ function Workbench() {
           </TabsContent>)}
         </Tabs>
       </div>
-      <div className="mini-board" aria-label="Example project board">
-        <div className="board-heading"><span className="project-symbol">E</span><div><strong>Engineering</strong><span>Your project. Your workflow.</span></div><GitPullRequest size={19} /></div>
+      <div className="mini-board" aria-label="Illustrative project workflow with sample data">
+        <div className="board-heading"><span className="project-symbol">E</span><div><strong>Engineering</strong><span>Original workflow illustration.</span></div><GitPullRequest size={19} /></div>
         <div className="board-columns">
           <div className="board-lane"><h3>To do <span>2</span></h3><div className="issue-note"><span><span className="issue-kind bug" />ENG-43</span><p>Fix keyboard navigation</p><div className="issue-bottom"><Badge variant="secondary">Accessibility</Badge><span className="avatar">JL</span></div></div><div className="issue-note"><span><span className="issue-kind" />ENG-44</span><p>Update release notes</p><div className="issue-bottom"><Badge variant="secondary">Release</Badge><span className="avatar blue">AK</span></div></div></div>
-          <div className="board-lane"><h3>In progress <span>1</span></h3><div className="issue-note active-issue"><span><span className="issue-kind" />ENG-42</span><p>Ship the onboarding flow</p><div className="issue-bottom"><Badge variant="secondary">Onboarding</Badge><span className="avatar blue">AK</span></div></div><div className="board-hint"><CheckCheck size={17} /><span>Same Jira.<br />A faster way in.</span></div></div>
+          <div className="board-lane"><h3>In progress <span>1</span></h3><div className="issue-note active-issue"><span><span className="issue-kind" />ENG-42</span><p>Ship the onboarding flow</p><div className="issue-bottom"><Badge variant="secondary">Onboarding</Badge><span className="avatar blue">AK</span></div></div><div className="board-hint"><CheckCheck size={17} /><span>Your workflow.<br />In your terminal.</span></div></div>
         </div>
       </div>
     </div>
@@ -100,18 +100,20 @@ function App() {
           <div className="cloud-note"><span className="small-terminal">$ jira</span><span>Independent CLI for Jira Cloud</span></div>
           <h1 id="hero-title">Your work.<br />At your command.</h1>
           <p className="hero-description">Find issues, move work forward, and manage sprints. Right where you already work.</p>
+          <p className="hero-independence">Independently maintained. Not affiliated with Atlassian.</p>
           <div className="hero-actions"><a className="text-link" href="#workflows">See it in action <ArrowDown size={16} /></a><a className="release-link" href={latest}>Latest release <ArrowUpRight size={15} /></a></div>
-          <div className="hero-proof"><span><Check size={15} /> Any Jira Cloud project</span><span><KeyRound size={15} /> Your existing API token</span></div>
+          <div className="hero-proof"><span><Check size={15} /> Within your Jira permissions</span><span><KeyRound size={15} /> Your existing API token</span></div>
         </div><InstallPanel /></section>
         <Workbench />
         <section className="setup-strip" aria-label="Next steps"><div><span className="setup-number">1</span><p>Install <code>jira</code><span>Choose your OS above.</span></p></div><div><span className="setup-number">2</span><p>Connect your account<span><code>jira auth login --profile work</code></span></p></div><div><span className="setup-number">3</span><p>Pick your project<span><code>jira context use --project ENG</code></span></p></div></section>
       </div>
       <section className="capabilities" aria-labelledby="capabilities-title"><div className="page-shell"><div className="section-intro"><h2 id="capabilities-title">Fits the way<br />your team works.</h2><p>Keep your projects, permissions, and workflows.<br />Bring them into your terminal.</p></div>
         <div className="feature-row"><div className="feature-copy"><GitPullRequest className="feature-icon" /><h3>Work with your project’s fields.</h3><p>Create and edit issues, add comments and attachments, and follow the transitions your workflow allows. Field discovery helps you supply the right inputs.</p><a href={`${docs}#everyday-workflows`}>Explore the commands <ChevronRight size={16} /></a></div><div className="field-example"><div className="example-command"><code>jira project fields -p ENG --type Bug</code><Code2 size={18} /></div><div className="field-line"><span>Summary</span><Badge>Required</Badge></div><div className="field-line"><span>Issue type</span><strong>Bug</strong></div><div className="field-line"><span>Your custom fields</span><strong>Discovered from Jira</strong></div><div className="field-line"><span>Available transitions</span><strong>Your workflow</strong></div></div></div>
-        <div className="feature-row"><div className="feature-copy"><KeyRound className="feature-icon" /><h3>Connect once. Choose your context.</h3><p>Use named profiles for different accounts and sites. Native credential storage keeps tokens out of preferences, while guided login explains setup and permissions.</p><a href={`${docs}#authentication-and-profiles`}>Set up authentication <ChevronRight size={16} /></a></div><div className="profile-example"><div className="profile-top"><span className="profile-avatar">W</span><div><strong>work</strong><span>Selected profile</span></div><Badge className="profile-status"><Check size={12} /> Connected</Badge></div><div className="profile-detail"><span>Project</span><strong>ENG</strong></div><div className="profile-detail"><span>Token</span><strong><ShieldCheck size={15} /> OS credential store</strong></div><code>jira auth status --profile work</code></div></div>
+        <div className="feature-row"><div className="feature-copy"><KeyRound className="feature-icon" /><h3>Choose your account and context.</h3><p>Use named profiles for different accounts and sites. Login defaults to your OS credential store. For headless use, choose environment authentication or explicit POSIX plaintext file storage. Guided login explains setup and permissions.</p><a href={`${docs}#authentication-and-profiles`}>Set up authentication <ChevronRight size={16} /></a></div><div className="profile-example"><div className="profile-top"><span className="profile-avatar">W</span><div><strong>work</strong><span>Example profile · native storage</span></div><Badge className="profile-status"><Check size={12} /> Connected</Badge></div><div className="profile-detail"><span>Project</span><strong>ENG</strong></div><div className="profile-detail"><span>Token</span><strong><ShieldCheck size={15} /> OS credential store</strong></div><code>jira auth status --profile work</code></div></div>
         <div className="feature-row"><div className="feature-copy"><Code2 className="feature-icon" /><h3>Ready for scripts and agents.</h3><p>Use structured JSON, CSV, explicit exit codes, and noninteractive commands. Build repeatable workflows around the commands you use every day.</p><a href={`${docs}#automation-and-agents`}>Automate a workflow <ChevronRight size={16} /></a></div><div className="automation-example"><div className="automation-label"><Terminal size={17} /><span>Readable in a terminal. Useful in a script.</span></div><pre><code>{'jira issue list -p ENG --open \\\n  --csv --columns key,summary,status\n\njira issue view ENG-42 --json --no-input'}</code></pre><p>Generic API requests and <code>--spec</code> discovery are <a href={`${repo}/blob/main/docs/sprints/v2.5-api/roadmap.md`}>planned for v2.5</a>.</p></div></div>
       </div></section>
       <section className="help-section page-shell" aria-labelledby="help-title"><div><h2 id="help-title">A few things<br />before you start.</h2><p>Install it, connect it, make it yours.</p><a className="text-link" href={docs}>Read the documentation <ArrowUpRight size={15} /></a></div><Accordion className="faq">
+        <AccordionItem value="independent"><AccordionTrigger>Is this an official Atlassian tool?</AccordionTrigger><AccordionContent>No. CLI Toolkit for Jira is independently maintained by <a href="https://github.com/User17745">User17745</a> and is not affiliated with, endorsed by, or sponsored by Atlassian. The <code>jira</code> command runs this toolkit and connects to your Jira Cloud account.</AccordionContent></AccordionItem>
         <AccordionItem value="auth"><AccordionTrigger>Do I need a new Jira account?</AccordionTrigger><AccordionContent>No. Use your existing Jira Cloud site, email, and API token. The CLI uses your account’s Jira permissions. Guided login links to token creation and explains scopes; tokens cannot refresh automatically.</AccordionContent></AccordionItem>
         <AccordionItem value="platform"><AccordionTrigger>Which systems can run it?</AccordionTrigger><AccordionContent>Native releases support macOS 15+ on Apple Silicon and Intel, Linux x86_64 with glibc 2.39+, and Windows 10+ x86_64. For other compatible systems, install the verified Python wheel with Python 3.10 or later. <a href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>See installation options.</a></AccordionContent></AccordionItem>
         <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
@@ -119,8 +121,8 @@ function App() {
       </Accordion></section>
       <section className="bottom-cta page-shell"><div><h2>Your next issue is a command away.</h2><p>Get back to the work, without leaving your terminal.</p></div><a className="primary-link" href="#get-started"><Terminal size={18} /> Install the CLI</a></section>
     </main>
-    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Credits</a></div></footer>
-    <p className="independent-notice page-shell">Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira is a trademark of Atlassian.</p>
+    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party notices</a></div></footer>
+    <p className="independent-notice page-shell">Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira and Atlassian are trademarks of Atlassian.</p>
   </>
 }
 export default App
