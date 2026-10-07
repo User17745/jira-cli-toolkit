@@ -10,6 +10,8 @@ $repo = 'User17745/jira-cli-toolkit'
 $work = $null
 $stage = $null
 try {
+    $osMajor = (Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').CurrentMajorVersionNumber
+    if ($osMajor -lt 10) { throw 'Native binaries require Windows 10 or later. Use the Python wheel on older supported systems.' }
     if (-not [Environment]::Is64BitOperatingSystem -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') {
         throw 'Native Windows binaries support x86_64 only. Use the Python wheel on other architectures.'
     }

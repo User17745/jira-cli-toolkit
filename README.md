@@ -45,7 +45,7 @@ Run in PowerShell:
 irm https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts/install.ps1 | iex
 ```
 
-Windows **x86_64**, PowerShell **5.1+**. Installs to `%LOCALAPPDATA%\JiraCLI\bin\jira.exe` and adds that directory to your user PATH. Open a new terminal if needed.
+Windows **10+ x86_64**, PowerShell **5.1+**. Installs to `%LOCALAPPDATA%\JiraCLI\bin\jira.exe` and adds that directory to your user PATH. Open a new terminal if needed.
 
 **Prefer manual installation?** [Open the latest release](https://github.com/User17745/jira-cli-toolkit/releases/latest) and choose a matching binary or Python wheel. The [installation guide](docs/migration/upgrade-to-v2.md) explains verification and pipx/uv/Python installation. The Python distribution remains `jsup` and is not published to PyPI.
 

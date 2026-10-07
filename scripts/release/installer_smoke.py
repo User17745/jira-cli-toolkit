@@ -70,6 +70,9 @@ function Invoke-WebRequest {
 }
 try {
     $original = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ($env:JIRA_INSTALL_TEST_OLD_OS) {
+        function global:Get-ItemProperty { param([string]$LiteralPath); [pscustomobject]@{CurrentMajorVersionNumber=6} }
+    }
     if ($env:JIRA_INSTALL_TEST_LEGACY) {
         function global:jsup { 'old command' }
     }
@@ -101,6 +104,10 @@ try {
         destination = root/'legacy conflict'
         result = run(destination,JIRA_INSTALL_TEST_LEGACY='1')
         assert result.returncode != 0 and not destination.exists()
+        destination = root/'unsupported Windows'
+        result = run(destination,JIRA_INSTALL_TEST_OLD_OS='1')
+        assert result.returncode != 0 and 'require Windows 10' in result.stderr
+        assert not destination.exists()
         with candidate.open('ab') as stream:
             stream.write(b'corrupt')
         destination = root/'bad checksum'

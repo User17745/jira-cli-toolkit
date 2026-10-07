@@ -421,3 +421,5 @@ Local website/installer validation: 141 CLI regressions, wheel/sdist builds and 
 The real public latest-stable POSIX installer also passes an isolated macOS arm64 download/install/version/context/update-discovery check, matching the previously verified v2.1 binary byte for byte. Initial PR CI passes website, all compatibility jobs and three native targets; Windows exposed a fixture inheriting PowerShell 7 module paths into Windows PowerShell 5.1. The fixture now selects the tested shell’s own modules; checksum verification remains unchanged.
 
 Release compatibility review keeps RC/development builds available: fresh-installer native success checks apply to stable versions, while all existing native CLI/update checks remain active for prereleases. Installer fixtures explicitly reject RC/development version selections.
+
+Installer requirements match the published manifest, including Windows 10+. Windows native CI also rejects an older-OS fixture before any installation.

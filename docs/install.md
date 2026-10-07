@@ -8,7 +8,7 @@ The [README quick start](../README.md#get-started) installs the latest stable Gi
 | --- | --- | --- |
 | macOS | macOS 15+, arm64 or x86_64 | `~/.local/bin/jira` |
 | Linux | x86_64, glibc 2.39+, curl, sha256sum or shasum | `~/.local/bin/jira` |
-| Windows | x86_64, PowerShell 5.1+ | `%LOCALAPPDATA%\JiraCLI\bin\jira.exe` |
+| Windows | Windows 10+, x86_64, PowerShell 5.1+ | `%LOCALAPPDATA%\JiraCLI\bin\jira.exe` |
 
 The POSIX installer prints PATH instructions; the quick-start command adds the default directory to the current shell. To make that persistent, add the export to your own shell startup file. Windows adds its directory to the user PATH without administrator access. Reopen your terminal if necessary.
 
