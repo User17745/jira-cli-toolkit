@@ -1,5 +1,12 @@
 # Upgrading from jsup 0.2 to Jira CLI Toolkit v2
 
+Choose the guide for your migration:
+
+- [Install/upgrade from 0.2 or RC1 to stable v2](../../migration/upgrade-to-v2.md): identify the installer, download and verify the release, recover pipx upgrades, migrate credentials, verify access, and plan rollback.
+- [Migrate old commands and developer scripts](../../migration/legacy-commands.md): complete old/new command mapping, query and output changes, metadata-aware writes, identity precedence, and a script migration checklist.
+
+The sections below are a compact reference. The detailed guides use implemented v2.0.0 commands and portable download paths.
+
 The Python package remains `jsup`. Both `jsup` and `jira-cli-toolkit` executables ship throughout v2.x. The repository is now `User17745/jira-cli-toolkit`; old GitHub URLs redirect.
 
 ## One-time bootstrap
@@ -42,7 +49,7 @@ Schema-2 identity selection is atomic: an explicit profile selects the whole ide
 
 ## Command and behavior changes
 
-The [roadmap command table](roadmap.md#command-migration-reference) maps every original command to the grouped interface. Legacy spellings remain accepted.
+The [developer command table](../../migration/legacy-commands.md#old-to-new-command-reference) maps every original command to the grouped interface. Legacy spellings remain accepted.
 
 - New `jira-cli-toolkit` root shows local context; `jsup` root retains the dashboard. Dashboard projects must now be selected explicitly; RP/RD/BUG are never implicit.
 - Grouped `issue create` discovers project/type metadata. Scripts pass a type and required fields; interactive creation guides selection. Legacy `issue-create` retains Task/default payload behavior.
@@ -56,4 +63,4 @@ The [roadmap command table](roadmap.md#command-migration-reference) maps every o
 
 A successful standalone update retains `.previous`; POSIX replacement rolls back automatically if post-install validation fails. Windows reports a pending helper/log path and completes after the old process exits. Do not remove a pending lock or stage while its helper is active. Preserve/remove an old backup deliberately before another update. Executable rollback does not undo a completed config migration: schema-2 preferences require v2, so keep v2 for migrated profiles or restore an independently retained legacy config securely.
 
-Native requirements are in the manifest. CI validates its specific Linux/macOS/Windows runners; older OS versions, app-specific Jira validators, JSM customer requests, and Data Center are not certified by this candidate. Checksums detect corruption; publisher trust currently uses authenticated GitHub HTTPS, with no independent client-side signature/attestation verification. Stable promotion requires the live acceptance gates in the roadmap.
+Native requirements are in the manifest. CI validates its specific Linux/macOS/Windows runners; older OS versions, app-specific Jira validators, JSM customer requests, and Data Center are not certified by this release. Checksums detect corruption; publisher trust currently uses authenticated GitHub HTTPS, with no independent client-side signature/attestation verification. Stable v2.0.0 is published; [acceptance evidence](acceptance.md) records release/update checks and platform limitations.
