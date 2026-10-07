@@ -371,8 +371,10 @@ Stable completion on 7 October 2026: preparation commit `2222537` passes [CI](ht
 
 - [x] Final release evidence milestone: run regression/package/installed-CLI checks and documentation link checks, then commit/push the completed v2 acceptance and roadmap checkboxes.
 
-- [ ] Migration documentation milestone: publish separate user-upgrade and developer-command guides, verify all command examples/old-command coverage and local links, run regression/package/installed-CLI checks, then commit/push and verify CI.
+- [x] Migration documentation milestone: publish separate user-upgrade and developer-command guides, verify all command examples/old-command coverage and local links, run regression/package/installed-CLI checks, then commit/push and verify CI.
 
 Migration documentation preparation: all 25 original command names are covered; 85 documented invocations parse against the implemented v2 parser, 16 shell blocks pass Bash syntax checks, and local links/anchors resolve. The documented verifier accepts the published wheel/manifest and rejects a corrupted wheel. A temporary CLI fixture exercises the JSON consumer's success path and preserves exit codes 1, 2 and 130 on failure, without contacting Jira. Full regression remains 128 passing tests; wheel/sdist and both installed CLI smoke checks pass before push.
+
+Migration documentation evidence: initial guide commit `e07e994` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37573028179) and [all four native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37573028457). [PR #2](https://github.com/User17745/jira-cli-toolkit/pull/2) contains the requested guides and follow-up canonical-link corrections; its checks track the final head before merge.
 
 Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.

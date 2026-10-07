@@ -49,7 +49,7 @@ Schema-2 identity selection is atomic: an explicit profile selects the whole ide
 
 ## Command and behavior changes
 
-The [roadmap command table](roadmap.md#command-migration-reference) maps every original command to the grouped interface. Legacy spellings remain accepted.
+The [developer command table](../../migration/legacy-commands.md#old-to-new-command-reference) maps every original command to the grouped interface. Legacy spellings remain accepted.
 
 - New `jira-cli-toolkit` root shows local context; `jsup` root retains the dashboard. Dashboard projects must now be selected explicitly; RP/RD/BUG are never implicit.
 - Grouped `issue create` discovers project/type metadata. Scripts pass a type and required fields; interactive creation guides selection. Legacy `issue-create` retains Task/default payload behavior.

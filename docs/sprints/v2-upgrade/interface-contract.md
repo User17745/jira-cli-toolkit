@@ -30,7 +30,7 @@ There is no hardcoded set of valid project keys, issue statuses, or board IDs. T
 
 ## Command and help grammar
 
-Use `<executable> <resource> <action>`; comments and features use one additional resource level. Implement the grouped equivalents in the roadmap's migration table, including `sprint edit --state` for supported state changes. `issue transition` names a workflow action, not a move to another project.
+Use `<executable> <resource> <action>`; comments and features use one additional resource level. The [developer migration table](../../migration/legacy-commands.md#old-to-new-command-reference) lists implemented grouped equivalents, including `sprint edit --state` for supported state changes. `issue transition` names a workflow action, not a move to another project.
 
 `--help`, `help`, `help <resource> <action>`, and `--version` require neither credentials nor network access. An incomplete resource group prints its help without contacting Jira. Unknown help paths exit with a usage error.
 

@@ -70,7 +70,7 @@ print('Verified stable wheel and manifest.')
 PY
 ```
 
-On Windows PowerShell, use `Get-FileHash` for the wheel and manifest, compare the wheel's hash/size with its manifest entry, and compare both hashes with `SHA256SUMS`:
+On Windows PowerShell, use `Get-FileHash` for the wheel and manifest, compare the wheel's hash/size with its manifest entry, and compare both hashes with `SHA256SUMS` (hexadecimal letter case does not matter):
 
 ```powershell
 Get-FileHash ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl -Algorithm SHA256
