@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600" role="img" aria-labelledby="title desc">
+<title id="title">CLI Toolkit for Jira</title><desc id="desc">Independent terminal tools for Jira Cloud. A terminal shows example jira commands. This project is not affiliated with Atlassian.</desc>
+<rect width="1600" height="600" rx="24" fill="#f2f8f7"/>
+<rect x="74" y="76" width="76" height="76" rx="18" fill="#087f75"/>
+<path d="m96 99 14 15-14 15m23 0h14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<g font-family="Arial, sans-serif" fill="#151a25"><text x="74" y="252" font-size="76" font-weight="700">CLI Toolkit</text><text x="76" y="305" font-size="32" fill="#566478">for Jira</text><text x="76" y="388" font-size="25">Your work. At your command.</text><text x="76" y="430" font-size="21" fill="#566478">Independent terminal tools for Jira Cloud.</text></g>
+<rect x="740" y="96" width="788" height="402" rx="16" fill="#172336"/><path d="M740 149h788" stroke="#334258"/><g fill="#93a9c7"><circle cx="766" cy="122" r="5"/><circle cx="786" cy="122" r="5"/><circle cx="806" cy="122" r="5"/></g>
+<g font-family="monospace" font-size="24" fill="#e9f1fa"><text x="778" y="208"><tspan fill="#89edca">$ </tspan>jira --help</text><text x="778" y="262"><tspan fill="#89edca">$ </tspan>jira issue list -p ENG --open</text><text x="778" y="316"><tspan fill="#89edca">$ </tspan>jira auth login --profile work</text><text x="778" y="407" font-size="20" fill="#93a9c7">Issues. Sprints. Scripts. Your terminal.</text></g>
+<text x="76" y="548" font-family="Arial, sans-serif" font-size="17" fill="#566478">Not affiliated with Atlassian. Jira is a trademark of Atlassian.</text>
+</svg>
