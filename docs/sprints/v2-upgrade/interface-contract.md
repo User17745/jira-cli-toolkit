@@ -2,7 +2,7 @@
 
 Decision date: 6 October 2026
 
-Implementation milestone: command structure and project-neutral defaults, before the complete v2 release.
+This document records the foundation interface decisions. Current implemented features, migration guidance and validation are documented in the [migration guide](migration.md), [roadmap](roadmap.md), and [acceptance evidence](acceptance.md). Foundation-only descriptions below are historical.
 
 ## Product identity and compatibility
 

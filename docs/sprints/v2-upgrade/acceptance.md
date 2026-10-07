@@ -1,0 +1,70 @@
+# v2 release acceptance evidence
+
+Evidence collected: 6–7 October 2026. Candidate: `v2.0.0rc1`, commit `d0640607c7e58c99d804dedb54f7871ed2e21369`.
+
+## Automated and packaged checks
+
+- [x] 128 deterministic parser, config/auth, transport, metadata, maintenance, template and updater tests pass locally on Python 3.14.5.
+- [x] Candidate commit passes CI on Linux Python 3.10/3.14, macOS Python 3.12 and Windows Python 3.12.
+- [x] Candidate commit builds wheel/sdist and native macOS arm64/x86_64, Linux x86_64 and Windows x86_64 artifacts with locked dependencies.
+- [x] Native binaries pass local help/version/context/template/completion/update-discovery checks; Windows also exercises the deferred replacement helper.
+- [x] Wheel-installed `jsup` and `jira-cli-toolkit` pass clean-home smoke checks.
+- [x] Bash/zsh completion scripts pass shell syntax checks; fish generation is covered by deterministic tests.
+- [x] Actual original 0.2.0 source is built and installed, then upgraded to the candidate in an isolated Python environment; config remains byte-identical.
+- [x] Original-to-candidate pipx 1.14.0 and uv 0.11.11 upgrades, both executables, custom-directory manager discovery and manager uninstall pass in isolated homes.
+- [x] pipx uv-backend force-install failure is reproduced; explicit pip-backend fallback passes and is documented.
+
+CI: [package/compatibility](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642208), [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642748).
+
+## Live Jira checks
+
+Writes were authorized only in BUG. Discovery was read-only in other projects.
+
+| Project | Capability | Result |
+| --- | --- | --- |
+| BUG | Team-managed software | Issue-type/field discovery and issue-operation acceptance passed |
+| PRD | Company-managed software | Project-specific issue-type discovery passed |
+| TEST | Team-managed business | Project-specific issue-type discovery passed |
+| LDSUP | Company-managed service desk | Standard issue-type discovery passed; customer-request operations are outside scope |
+
+- [x] Scripted Bug creation with description file, UTF-8 content, label and typed custom Start date.
+- [x] View/edit summary and description; add label; assign current user and unassign.
+- [x] Comment add/list/edit/delete.
+- [x] Discover and apply a project workflow transition.
+- [x] Create and remove a directed issue relationship.
+- [x] Upload/list/download/delete attachment; compare downloaded bytes with source.
+- [x] Paginated search JSON and parseable selected-column CSV.
+- [x] Installed-wheel CLI updates cleanup descriptions on the two test issues.
+- [x] Permission preflight detects missing Delete Issues permission before creating anything; user explicitly authorizes leaving up to two issues.
+
+**Manual cleanup:** BUG-703 and BUG-704 remain labeled `jira-cli-v2-acceptance`, with descriptions explaining that they are temporary acceptance evidence and safe to delete after review. No other issues were modified.
+
+## Authentication and secret handling
+
+- [x] Live login, identity status, context selection, doctor, profile listing, logout, and legacy migration pass using explicit POSIX file storage in an isolated home.
+- [x] Preference files omit tokens; credential files use mode 0600; captured login/status/error output contains no submitted token. Original user config is preserved.
+- [x] Native macOS scripted login fails with actionable instructions when OS access approval is needed; no silent plaintext fallback or profile write occurs.
+- [x] Regression tests verify Keychain interaction suppression/restoration on failure and prevent Linux scripted wallet unlock dialogs.
+- [ ] Approve and validate successful interactive native credential-store login/read/logout on supported desktop systems. This environment needs macOS OS approval; happy-path native store validation is not claimed.
+
+API-token expiry cannot be queried reliably and API tokens do not refresh. Interactive 401 replacement keeps the selected account and does not replay mutations. Linux native wallets are interactive only; scripts use environment authentication or explicit protected file storage. Windows file storage is intentionally unsupported without ACL protection.
+
+## Published release and updater
+
+- [x] Complete the tag-triggered release workflow, including full compatibility/native matrix and publication permissions.
+- [x] Download the published eight-asset release; verify commit, manifest, sizes, SHA-256 checksums and prerelease designation.
+- [x] Update an actual earlier standalone CI binary to the published candidate; confirm previous binary retention, byte-identical config and no-op checks.
+- [x] Confirm the candidate is excluded from latest stable.
+- [x] Rerun publication against the existing candidate; matching complete assets are preserved.
+
+Published [release candidate](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0rc1); [tag-triggered pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37497037819) passed all ten required jobs. The downloaded wheel also passed isolated installed-entry-point checks.
+
+GitHub attestations are optional and disabled until this private repository’s plan eligibility is confirmed. When enabled, publication depends on attestation success; verification uses `gh attestation verify` separately from updater integrity checks. No code-signing or notarization claim is made.
+
+## Stable promotion
+
+- [ ] Complete the interactive native-store manual gate.
+- [ ] Merge the reviewed v2 PR into main, bump the package/runtime/lock version to 2.0.0, rerun required checks, and tag the tested main commit.
+- [ ] Verify complete stable assets and latest-stable discovery after publication.
+
+Required fields, duplicate names, stale metadata, disallowed operations and transition validators are additionally covered by fixtures. Live writes in company-managed/non-software projects were not authorized. App-specific validators, old OS versions, Data Center, and Service Management customer-request APIs are not certified by this candidate.

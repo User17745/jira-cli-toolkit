@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: v2 release candidate preparation. Sprints 0–6 implementation is complete and tested. CI and native build checks pass after the Windows UTF-8 repair. Sprint 7 end-to-end publication/update validation is in progress; live Jira acceptance and stable promotion remain explicit release gates.
+Status: v2 release candidate `v2.0.0rc1` is published and verified. Sprints 0–7 implementation and release/update validation are complete. Live BUG acceptance and package bootstrap passed. Successful interactive native credential-store acceptance and stable promotion remain open; see [acceptance evidence](acceptance.md).
 
 ## Goal
 
@@ -29,8 +29,8 @@ Before every push: run the complete regression suite plus tests for the changed 
 - [x] Sprint 4 discovery: required-field/metadata tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 5 maintenance: issue-operation tests plus regressions and installed smoke checks; commit/push and verify CI.
 - [x] Sprint 6 workflows: template/completion/output tests plus regressions and installed smoke checks; commit/push and verify CI.
-- [ ] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
-- [ ] Sprint 8 acceptance: full release checks and migration validation; commit/push verified release documentation and record CI results.
+- [x] Sprint 7 distribution: release/updater tests plus regressions, native binary smoke checks, and GitHub release-candidate validation; commit/push and record evidence.
+- [x] Sprint 8 RC evidence: regression/package checks and migration/live acceptance evidence; commit/push verified documentation and record CI results. Stable promotion remains a separate unchecked gate below.
 
 ## Repository housekeeping
 
@@ -249,7 +249,7 @@ GitHub Releases is the shared distribution source for installers and the update 
 - [x] Mark prerelease tags as prereleases and exclude them from stable updates; set the latest stable release explicitly so an older maintenance release or failed run cannot displace it.
 - [x] Produce artifact provenance/attestations where repository capabilities support them and define client verification separately from checksum validation; checksums alone detect corruption, not publisher identity.
 - [x] Decide whether release downloads are public or require GitHub authentication based on actual repository visibility; support private-release access if needed without changing repository visibility or reusing Jira credentials.
-- [ ] Verify an end-to-end release-candidate run on GitHub, including asset download, manifest consistency, failed-matrix handling, publication permissions, and stable/prerelease selection.
+- [x] Verify an end-to-end release-candidate run on GitHub, including asset download, manifest consistency, failed-matrix handling, publication permissions, and stable/prerelease selection.
 
 ### Update command
 
@@ -273,8 +273,8 @@ Version `0.2.0` does not contain an update command. A future command cannot appe
 
 Completion criteria:
 
-- [ ] A validated version tag automatically publishes complete, downloadable release assets on GitHub; failed builds and prereleases never replace latest stable.
-- [ ] A supported standalone installation can check for and install that exact published release, verifies the candidate, and retains credentials/configuration.
+- [x] A validated version tag automatically publishes complete, downloadable release assets on GitHub; failed builds and prereleases never replace latest stable.
+- [x] A supported standalone installation can check for and install that exact published release, verifies the candidate, and retains credentials/configuration.
 - [x] Existing pipx/uv/pip users have a tested bootstrap and upgrade path without breaking their managed environments; unsupported methods receive usable instructions.
 
 ## Sprint 8 — Validation, documentation, and release
@@ -285,13 +285,13 @@ Completion criteria:
 - [x] Extend Sprint 7 CI with the complete parser/config/client/operation acceptance suite; include checks that prevent reintroducing original-project defaults into the generic paths.
 - [x] Rewrite the README and help examples around onboarding and common generic workflows; document field formats, profiles, credential storage, auth recovery, scripting, limitations, and troubleshooting.
 - [x] Publish a migration guide with old/new command mappings, config migration, default-behavior changes, JSON compatibility, alias duration, and rollback steps.
-- [ ] Finalize package metadata, release version, installation channels, changelog, and executable names; publish a release candidate and record validation evidence before the stable release.
+- [x] Finalize package metadata, release version, installation channels, changelog, and executable names; publish a release candidate and record validation evidence before the stable release.
 - [x] Confirm credential/token redaction across status/config/doctor/errors and confirm no secrets are included in shipped fixtures, templates, examples, or diagnostic reports.
 
 Completion criteria:
 
-- [ ] A fresh user can install, authenticate, select a project, create an issue with required fields, update it, and transition it using only public documentation.
-- [ ] An existing user can migrate and run the legacy examples without undocumented breakage.
+- [x] A fresh user can install, authenticate, select a project, create an issue with required fields, update it, and transition it using only public documentation.
+- [x] An existing user can migrate and run the legacy examples without undocumented breakage.
 - [x] Scripts receive documented JSON and exit codes and never unexpectedly request input.
 - [ ] Record release acceptance evidence and remaining limitations, then publish the stable release.
 
@@ -359,7 +359,7 @@ Use the current supported APIs during implementation; these links informed the p
 
 Reliability CI evidence: commit `fdc86ad`; [run 37487449923](https://github.com/User17745/jira-cli-toolkit/actions/runs/37487449923) passed every configured job.
 
-Distribution CI evidence: commit `364ba76`; [run 37489313815](https://github.com/User17745/jira-cli-toolkit/actions/runs/37489313815) passed Python packaging and all four native builds/smoke checks, including the real Windows deferred update helper. No release tag has been published yet.
+Distribution CI evidence: commit `364ba76`; [run 37489313815](https://github.com/User17745/jira-cli-toolkit/actions/runs/37489313815) passed Python packaging and all four native builds/smoke checks, including the real Windows deferred update helper. This historical run did not publish a release; the RC tag/publication evidence is recorded below.
 
 Authentication CI evidence: commit `5bbde12`; [run 37488337845](https://github.com/User17745/jira-cli-toolkit/actions/runs/37488337845) passed the full Python/OS matrix.
 
@@ -376,3 +376,9 @@ Provenance: the workflow includes optional, pinned GitHub attestations gated by 
 Read-only live capability matrix: BUG (team-managed software), PRD (company-managed software), TEST (team-managed business), and LDSUP (company-managed service desk) returned their own issue-type catalogs. Write acceptance was limited to authorized BUG. Required-field/validator variations and denied operations are additionally covered by deterministic fixtures; customer request APIs remain outside this release.
 
 Manager acceptance: the actual 0.2.0 wheel was installed and upgraded to the candidate in isolated pipx 1.14.0 and uv environments; both executables, receipt-based manager discovery (including a custom uv directory), config preservation, and manager uninstall passed. pipx’s uv force-install path failed on an existing venv; the explicit pip-backend fallback passed and is documented. Bash/zsh completion scripts pass shell syntax checks. The suite has 128 passing tests. [Auth/native CI run 37495926075](https://github.com/User17745/jira-cli-toolkit/actions/runs/37495926075) passed all package/native jobs at `2fd8541`.
+
+Release-candidate validation on 7 October 2026: tag `v2.0.0rc1` points to tested commit `d064060`. [Tag run 37497037819](https://github.com/User17745/jira-cli-toolkit/actions/runs/37497037819) passed four compatibility jobs, four native builds, packaging and publication. Authenticated downloads verified all eight assets (four binaries, wheel/sdist, manifest and checksums), manifest commit/version, sizes and SHA-256 hashes. An actual earlier `0.3.0.dev0` standalone CI binary updated to the published candidate; the prior executable remained available, config was byte-identical, and a repeated check was a no-op. The published wheel passed isolated smoke checks. The RC is excluded from latest stable.
+
+Stable release gates remain explicit: successful interactive native-store acceptance needs OS approval; reviewed v2 must be merged into main, version/package/lock changed to 2.0.0, and the tested main commit tagged and verified as latest stable. Current source work is reviewable in [PR #1](https://github.com/User17745/jira-cli-toolkit/pull/1). Later extensions remain outside the initial release gate.
+
+Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.

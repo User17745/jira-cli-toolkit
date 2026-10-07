@@ -10,7 +10,7 @@
 - Add declarative templates, shell completion, CSV and selected columns.
 - Add hash-locked cross-platform CI, native binaries, tag-triggered releases, and a verified installation-aware updater.
 
-This is a release candidate. Live Jira acceptance and stable promotion remain tracked in the v2 roadmap.
+This is a release candidate. Live BUG acceptance, package bootstrap, publication and standalone update checks passed. Interactive native-store acceptance and stable promotion remain tracked in the v2 roadmap.
 
 ## 0.2.0
 
