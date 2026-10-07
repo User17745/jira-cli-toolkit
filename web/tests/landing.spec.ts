@@ -1,6 +1,15 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const raw = 'https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts'
+const terminal = (page: Page) => page.getByRole('textbox', { name: 'Sandbox command' })
+const log = (page: Page) => page.getByRole('log', { name: 'Sandbox output' })
+const lastEntry = (page: Page) => log(page).locator('.term-entry').last()
+
+async function run(page: Page, command: string) {
+  await terminal(page).fill(command)
+  await terminal(page).press('Enter')
+}
+
 test('OS tabs expose and copy exact working installation commands', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto('./')
@@ -22,23 +31,78 @@ test('clipboard failures provide recovery without a false success', async ({ pag
   await expect(page.locator('.install-code:visible [role=status]')).toHaveText('Select the command and copy it manually.')
 })
 
-test('keyboard tabs, command examples, FAQ and mobile menu work', async ({ page }, info) => {
+test('keyboard tabs switch the installation platform', async ({ page }) => {
   await page.goto('./')
   await page.getByRole('tab', { name: 'macOS', exact: true }).click()
   await page.getByRole('tab', { name: 'macOS', exact: true }).press('ArrowRight')
   await expect(page.getByRole('tab', { name: 'Linux', exact: true })).toHaveAttribute('aria-selected', 'true')
-  await page.getByRole('tab', { name: 'Sprints', exact: true }).click()
-  await expect(page.getByRole('tabpanel', { name: 'Sprints', exact: true }).locator('.terminal-prompt code')).toHaveText('jira sprint list --board 123')
-  await page.getByRole('tab', { name: 'JSON', exact: true }).click()
-  await expect(page.getByRole('tabpanel', { name: 'JSON', exact: true }).locator('.terminal-output')).toContainText('"issues"')
-  await page.getByRole('button', { name: 'Do I need a new Jira account?' }).click()
-  await expect(page.getByText('No. Use your existing Jira Cloud site', { exact: false })).toBeVisible()
-  if (info.project.name === 'mobile') {
-    await page.getByRole('button', { name: 'Open navigation' }).click()
-    await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible()
-    await page.getByRole('navigation', { name: 'Mobile navigation' }).getByRole('link', { name: 'Workflows' }).click()
-    await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
-  }
+})
+
+test('sandbox opens on the headline command and keeps sample state', async ({ page }) => {
+  await page.goto('./')
+  await expect(page.locator('#hero-title')).toHaveText('$ jira issue list --open')
+  await expect(log(page).getByRole('table', { name: 'Open issues (4 fetched)' })).toBeVisible()
+  await expect(page.locator('.example-label')).toHaveText('Sample data on an example site. Nothing here reaches Jira.')
+
+  await run(page, "jira issue transition ENG-43 --to 'In Review'")
+  await expect(lastEntry(page).locator('.term-out')).toHaveText('Moved ENG-43 → In Review')
+  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 0')
+  await run(page, 'jira issue list --open --csv --columns key,status')
+  await expect(lastEntry(page).locator('.term-out')).toContainText('ENG-43,In Review')
+
+  await page.getByRole('button', { name: 'Reset' }).click()
+  await run(page, 'jira issue list --open --csv --columns key,status')
+  await expect(lastEntry(page).locator('.term-out')).toContainText('ENG-43,To Do')
+})
+
+test('sandbox reproduces argparse errors, JSON errors and exit codes', async ({ page }) => {
+  await page.goto('./')
+  await run(page, 'jira issue list --json --csv')
+  await expect(lastEntry(page).locator('.term-err')).toContainText('jira issue list: error: argument --csv: not allowed with argument --json')
+  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 2')
+
+  await run(page, 'jira issue lst')
+  await expect(lastEntry(page).locator('.term-err')).toContainText("argument issue_action: invalid choice: 'lst'")
+
+  await run(page, 'jira issue view ENG-99 --json')
+  await expect(lastEntry(page).locator('.term-out')).toContainText('"code": "jira_error"')
+  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 1')
+
+  await terminal(page).fill('jira issue list')
+  await terminal(page).press('Control+c')
+  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 130')
+})
+
+test('sandbox completes with Tab, recalls with arrows and releases focus after Escape', async ({ page }) => {
+  await page.goto('./')
+  await terminal(page).fill('jira iss')
+  await terminal(page).press('Tab')
+  await expect(terminal(page)).toHaveValue('jira issue ')
+  await terminal(page).pressSequentially('transition ENG-4')
+  await terminal(page).press('Tab')
+  await expect(lastEntry(page).locator('.term-options')).toContainText('ENG-42')
+  await terminal(page).fill('')
+  await terminal(page).press('ArrowUp')
+  await expect(terminal(page)).toHaveValue('jira issue list --open')
+  await terminal(page).press('Escape')
+  await terminal(page).press('Tab')
+  await expect(terminal(page)).not.toBeFocused()
+})
+
+test('suggestions, exit-code examples and the command reference run in the sandbox', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('button', { name: 'jira sprint list' }).click()
+  await expect(log(page).getByRole('table', { name: 'Sprints' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Run jira issue view ENG-99 in the sandbox' }).click()
+  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 1')
+
+  await page.getByLabel('Filter commands').fill('attach')
+  await expect(page.locator('.reference-filter [role=status]')).toHaveText(/^4 of \d+ commands$/)
+  await page.getByRole('button', { name: /issue attachment upload/ }).click()
+  await expect(lastEntry(page).locator('.term-out')).toContainText('usage: jira issue attachment upload')
+  await page.getByLabel('Filter commands').fill('zzz')
+  await expect(page.getByText('No command matches “zzz”.', { exact: false })).toBeVisible()
 })
 
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
@@ -53,6 +117,8 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   for (const width of info.project.name === 'mobile' ? [320, 390, 760] : [768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    const heading = await page.locator('#hero-title').boundingBox()
+    expect(heading!.height, `headline stays on one line at ${width}px`).toBeLessThan(width < 720 ? 60 : 110)
   }
   await page.setViewportSize(info.project.name === 'mobile' ? { width: 390, height: 844 } : { width: 1440, height: 1000 })
   await page.screenshot({ path: `test-results/landing-${info.project.name}-fold.png` })
@@ -62,11 +128,9 @@ test('first fold contains installation, assets load and narrow layouts do not ov
 
 test('project identity and installation action clearly distinguish the independent CLI', async ({ page }, info) => {
   await page.goto('./')
-  await expect(page).toHaveTitle('CLI Toolkit for Jira — Your work. At your command.')
+  await expect(page).toHaveTitle('CLI Toolkit for Jira — Jira Cloud from your terminal')
   await expect(page.getByRole('link', { name: 'CLI Toolkit for Jira home' })).toBeVisible()
-  await expect(page.getByText('Independent CLI for Jira Cloud', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Install the CLI', exact: true })).toHaveAttribute('href', '#get-started')
-  await expect(page.getByText('Install jira', { exact: true })).toHaveCount(0)
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(0)
   await expect(page.locator('.independent-notice')).toContainText('not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities')
   await expect(page.locator('.independent-notice')).toContainText('including the jira command name')
@@ -80,16 +144,12 @@ test('project identity and installation action clearly distinguish the independe
   await page.screenshot({ path: `test-results/legal-notice-${info.project.name}.png` })
 })
 
-test('ownership, support claims and illustrative data are clear on every screen size', async ({ page }) => {
+test('ownership, support claims, planned features and sample data are clear', async ({ page }) => {
   await page.goto('./')
   await expect(page.locator('.hero-independence')).toBeInViewport()
   await expect(page.locator('.hero-independence')).toHaveText('Independently maintained. Not affiliated with Atlassian.')
-  await expect(page.locator('.hero-proof')).toContainText('Within your Jira permissions')
-  await expect(page.locator('.example-label')).toHaveText('Illustration with sample data')
-  await expect(page.getByLabel('Illustrative project workflow with sample data')).toBeVisible()
-  await expect(page.getByText('Original workflow illustration.', { exact: true })).toBeVisible()
-  await expect(page.locator('.profile-example')).toContainText('Example profile · native storage')
-  await expect(page.getByText('Login defaults to your OS credential store.', { exact: false })).toBeVisible()
+  await expect(page.locator('.hero-proof')).toContainText('within your Jira permissions')
+  await expect(page.getByText('stores the token in your OS credential store by default', { exact: false })).toBeVisible()
   for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
     await expect(page.locator(selector)).toHaveAttribute('content', /Not affiliated with Atlassian/)
   }
@@ -98,8 +158,12 @@ test('ownership, support claims and illustrative data are clear on every screen 
   await expect(page.getByText('command runs this toolkit and connects to your Jira Cloud account.', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: 'Do I need a new Jira account?' }).click()
   await expect(page.getByText('The CLI uses your account’s Jira permissions.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Can I call any Jira API endpoint?' }).click()
+  await expect(page.getByRole('link', { name: 'planned for v2.5' })).toBeVisible()
   await page.getByRole('link', { name: 'Third-party notices', exact: true }).click()
   await expect(page.locator('body')).toContainText('SIL OPEN FONT LICENSE')
+  await expect(page.locator('body')).toContainText('The Martian Mono Project Authors')
+  await expect(page.locator('body')).toContainText('The Atkinson Hyperlegible Next Project Authors')
   await expect(page.locator('body')).toContainText('Copyright (c) 2023 shadcn')
   await expect(page.locator('body')).toContainText('macOS is a trademark of Apple Inc.')
   await expect(page.locator('body')).toContainText('Windows and PowerShell are trademarks of the Microsoft group of companies.')
