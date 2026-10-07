@@ -1,6 +1,7 @@
 <a href="https://user17745.github.io/jira-cli-toolkit/"><img src="docs/assets/cli-toolkit-cover.svg" alt="CLI Toolkit for Jira — independent terminal tools for Jira Cloud" width="100%" /></a>
 
 <p align="center">
+  <a href="LICENSE"><img alt="License: AGPL v3 only" src="https://img.shields.io/badge/license-AGPL%20v3%20only-087f75?style=flat-square" /></a>
   <a href="https://github.com/User17745/jira-cli-toolkit/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/User17745/jira-cli-toolkit?style=flat-square&color=087f75" /></a>
   <a href="https://github.com/User17745/jira-cli-toolkit/actions/workflows/ci.yml"><img alt="CLI tests" src="https://img.shields.io/github/actions/workflow/status/User17745/jira-cli-toolkit/ci.yml?branch=main&style=flat-square&label=tests" /></a>
   <a href="https://github.com/User17745/jira-cli-toolkit/actions/workflows/release.yml"><img alt="Native builds" src="https://img.shields.io/github/actions/workflow/status/User17745/jira-cli-toolkit/release.yml?branch=main&style=flat-square&label=native%20builds" /></a>
@@ -166,4 +167,18 @@ npm test
 
 The current release supports standard **Jira Cloud** issues and applicable Software boards/sprints. Data Center and Service Management customer-request APIs remain future work. Required-field discovery cannot describe every app-specific workflow validator; Jira remains authoritative.
 
-The repository is public. A project license is still to be selected; public visibility alone is not an open-source license. [See completed milestones and remaining work](docs/sprints/v2-upgrade/roadmap.md).
+Original project code is licensed under **AGPL-3.0-only**. [See completed milestones and remaining work](docs/sprints/v2-upgrade/roadmap.md).
+
+## Independent project and intellectual property notice
+
+CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.
+
+References to Jira and Atlassian, including the `jira` command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.
+
+No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.
+
+## License
+
+Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under the **GNU Affero General Public License, version 3 only (AGPL-3.0-only)**. You may redistribute and modify it under that license. It is provided **without warranty**, including any implied warranty of merchantability or fitness for a particular purpose. See [LICENSE](LICENSE) for the complete terms and [NOTICE](NOTICE) for the project notice.
+
+Third-party components and assets retain their own copyright notices and applicable license terms; preserve those notices when redistributing them. This does not remove applicable AGPL obligations for covered combined works. The project license does not grant rights to third-party trademarks. [Website third-party notices](web/public/third-party-notices.txt) are included separately.

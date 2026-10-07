@@ -121,8 +121,14 @@ function App() {
       </Accordion></section>
       <section className="bottom-cta page-shell"><div><h2>Your next issue is a command away.</h2><p>Get back to the work, without leaving your terminal.</p></div><a className="primary-link" href="#get-started"><Terminal size={18} /> Install the CLI</a></section>
     </main>
-    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party notices</a></div></footer>
-    <p className="independent-notice page-shell">Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira and Atlassian are trademarks of Atlassian.</p>
+    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={`${repo}/blob/main/LICENSE`}>License</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party notices</a></div></footer>
+    <section className="independent-notice page-shell" aria-labelledby="independence-title">
+      <h2 id="independence-title">Independent project and intellectual property notice</h2>
+      <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
+      <p>References to Jira and Atlassian, including the <code>jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
+      <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
+      <p className="project-license">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a href={`${repo}/blob/main/NOTICE`}>Project notice</a> · <a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
+    </section>
   </>
 }
 export default App

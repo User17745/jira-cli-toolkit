@@ -396,7 +396,7 @@ Publication retry check: rerunning the publisher against the verified existing R
 ## Remaining work after v2.1
 
 - [ ] Complete the [v2.5 authenticated API/spec roadmap](../v2.5-api/roadmap.md), including request safety, spec freshness, agent documentation and acceptance/release checks.
-- [ ] Choose and add an explicit reuse/contribution license; public visibility alone does not grant open-source reuse rights.
+- [x] Add AGPL-3.0-only with the complete unmodified license, project notice, README/website attribution and package metadata; retain third-party licenses.
 - [ ] Enable and verify release attestations, then assess client-side verification, macOS signing/notarization and Windows signing.
 - [ ] Verify interactive Windows Credential Manager and Linux wallet acceptance on user machines; current CI checks do not certify interactive prompts.
 - [ ] Prioritize package-registry/distribution publication (PyPI/Homebrew or equivalents), broader native OS support, Data Center/JSM APIs and optional convenience commands based on demand.
