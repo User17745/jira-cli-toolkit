@@ -411,10 +411,10 @@ Local v2.1 acceptance: the actual pipx installation upgrades through its recorde
 - [x] Revamp the README with the supplied hero image, relevant release/CI/platform badges, quick start and linked full command reference.
 - [x] Build a responsive shadcn/ui landing page with first-fold OS installation, copy controls, manual releases, migration and examples.
 - [x] Add checksum-verified POSIX and PowerShell installers with platform checks and existing-command protection; document options and recovery.
-- [ ] Verify desktop/mobile UI, accessibility interactions, installer success/failure cases and native Windows/macOS/Linux integration.
+- [x] Verify desktop/mobile UI, accessibility interactions, installer success/failure cases and native Windows/macOS/Linux integration.
 - [x] Before the milestone push, run full CLI regressions, wheel/sdist and installed-CLI smoke checks, docs QA, frontend lint/build/browser tests.
-- [ ] Push the tested milestone promptly, verify CLI/native/site CI, merge, and publish GitHub Pages automatically.
-- [ ] Verify public page/assets/install-script URLs, update repo homepage/topics, and record final build/deployment evidence.
+- [x] Push the tested milestone promptly, verify CLI/native/site CI, merge, and publish GitHub Pages automatically.
+- [x] Verify public page/assets/install-script URLs, update repo homepage/topics, and record final build/deployment evidence.
 
 Local website/installer validation: 141 CLI regressions, wheel/sdist builds and all three entry points in an isolated installed wheel pass; documentation QA validates links, 25 old command names, 86 migration invocations and 37 current README/website examples. Eight production-build browser checks pass at desktop/mobile sizes, including first-fold installation and overflow from 320px to 1440px. The verified macOS arm64 release binary passes offline installer success, checksum rejection and conflict checks. Frontend lint/type/build and the full npm dependency audit pass (zero vulnerabilities). Native CI runs installer integration for all four release targets before merge/publication.
 
@@ -423,3 +423,7 @@ The real public latest-stable POSIX installer also passes an isolated macOS arm6
 Release compatibility review keeps RC/development builds available: fresh-installer native success checks apply to stable versions, while all existing native CLI/update checks remain active for prereleases. Installer fixtures explicitly reject RC/development version selections.
 
 Installer requirements match the published manifest, including Windows 10+. Windows native CI also rejects an older-OS fixture before any installation.
+
+Website/installer milestone completion: [PR #4](https://github.com/User17745/jira-cli-toolkit/pull/4) merges as `5a2e2a1` with a tree identical to the tested final head `499ba19`. [PR compatibility](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600054880), [all four native installer builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600055471), and [website checks](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600054854) pass. Merged main passes [compatibility/package CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371219), [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371649), and [Pages build/deployment](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371353).
+
+The [public landing page](https://user17745.github.io/jira-cli-toolkit/) renders successfully. Its HTML and 21 CSS/JS/font/image/notice assets match the tested production build byte for byte. Both raw main installer URLs match source; manual latest resolves to v2.1.0. The repository homepage, description and 10 relevant GitHub topics are verified. README badges link to real release/test/native-build/download data; the supplied cover is preserved. Frontend/installer options and recovery docs are linked. Current CLI release remains v2.1.0; no immutable release assets were replaced. Final evidence is committed/pushed after rerunning the full CLI regression, package build and installed-entry-point smoke gates.
