@@ -1,0 +1,25 @@
+CLI Toolkit for Jira
+Copyright (C) 2026 Abhishek Aggarwal
+SPDX-License-Identifier: AGPL-3.0-only
+
+Original project code is licensed under version 3 only of the GNU Affero
+General Public License, except for separately identified third-party material.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Third-party components and assets retain their copyright notices and
+applicable license terms. Preserve those notices when redistributing them.
+Website font/component/icon notices are in web/public/third-party-notices.txt.
+Dependencies and separately identified third-party material are not relicensed
+by this notice. Applicable AGPL obligations for covered combined works remain.
+The project license does not grant rights to third-party trademarks.

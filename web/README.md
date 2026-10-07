@@ -32,6 +32,6 @@ Public URL: https://user17745.github.io/jira-cli-toolkit/
 
 The installation panel links to source-controlled POSIX/PowerShell scripts on main, which resolve the latest stable GitHub Release. Manual installation links to `/releases/latest`. Update documentation and browser assertions whenever these commands or platform constraints change. Raw authenticated API/spec functionality remains explicitly planned for v2.5.
 
-Font and component license notices are served from `public/third-party-notices.txt`; preserve them when deploying. They do not assign a license to this repository’s own code.
+Font and component license notices are served from `public/third-party-notices.txt`; preserve them when deploying. Original project code is licensed under [AGPL-3.0-only](../LICENSE); separately identified third-party material retains its own license terms.
 
 Components and `src/shadcn.css` are generated/vendored from shadcn/ui 4.21.3. The code-generation CLI is not a build or runtime dependency. Keep its MIT notice when editing these sources.

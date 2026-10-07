@@ -60,7 +60,7 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   expect(errors).toEqual([])
 })
 
-test('project identity and installation action clearly distinguish the independent CLI', async ({ page }) => {
+test('project identity and installation action clearly distinguish the independent CLI', async ({ page }, info) => {
   await page.goto('./')
   await expect(page).toHaveTitle('CLI Toolkit for Jira — Your work. At your command.')
   await expect(page.getByRole('link', { name: 'CLI Toolkit for Jira home' })).toBeVisible()
@@ -68,9 +68,16 @@ test('project identity and installation action clearly distinguish the independe
   await expect(page.getByRole('link', { name: 'Install the CLI', exact: true })).toHaveAttribute('href', '#get-started')
   await expect(page.getByText('Install jira', { exact: true })).toHaveCount(0)
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(0)
-  await expect(page.locator('.independent-notice')).toHaveText('Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira and Atlassian are trademarks of Atlassian.')
+  await expect(page.locator('.independent-notice')).toContainText('not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities')
+  await expect(page.locator('.independent-notice')).toContainText('including the jira command name')
+  await expect(page.locator('.independent-notice')).toContainText('No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended.')
+  await expect(page.locator('.independent-notice')).toContainText('This statement does not establish that a particular use is non-infringing')
+  await expect(page.getByRole('link', { name: 'License', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
+  await expect(page.locator('.project-license')).toContainText('AGPL-3.0-only')
+  await expect(page.locator('.project-license')).toContainText('Provided without warranty')
   await page.locator('.independent-notice').scrollIntoViewIfNeeded()
-  await expect(page.locator('.independent-notice')).toBeInViewport()
+  await expect(page.getByRole('heading', { name: 'Independent project and intellectual property notice' })).toBeInViewport()
+  await page.screenshot({ path: `test-results/legal-notice-${info.project.name}.png` })
 })
 
 test('ownership, support claims and illustrative data are clear on every screen size', async ({ page }) => {
@@ -105,6 +112,7 @@ test('JavaScript-disabled visitors see independent identity and installation lin
     await page.goto('./')
     await expect(page.locator('body')).toContainText('CLI Toolkit for Jira is independently maintained and is not affiliated with Atlassian.', { useInnerText: true })
     await expect(page.getByRole('link', { name: 'GitHub', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'GNU AGPL v3 only license.', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
     await expect(page.getByRole('link', { name: 'Download the latest release.', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/releases/latest')
   } finally {
     await context.close()
