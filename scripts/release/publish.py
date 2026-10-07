@@ -26,8 +26,8 @@ if existing.returncode==0 and not json.loads(existing.stdout)['isDraft']:
 notes=Path('release-notes.md')
 notes.write_text(f"Jira CLI Toolkit {manifest['version']}\n\nCommit: {manifest['commit']}\n\n"
                 f"[Migration and roadmap](https://github.com/{repo}/blob/{tag}/docs/sprints/v2-upgrade/roadmap.md).\n\n"
-                'Use the manifest for platform requirements and SHA-256 checksums. Python users retain both jsup and jira-cli-toolkit commands. '
-                'API tokens and local profiles are preserved during executable updates. The repository is private; downloads require repository read access.\n\n'
+                'Use the manifest for platform requirements and SHA-256 checksums. Use the short jira command. Python users also retain jsup and jira-cli-toolkit compatibility commands. '
+                'API tokens and local profiles are preserved during executable updates. The repository and release assets are public; downloads do not require GitHub or Jira credentials.\n\n'
                 'Prereleases are for validation and do not become latest stable. macOS binaries are not notarized; Windows binaries are not code-signed.\n')
 if existing.returncode!=0:
     subprocess.run(['gh','release','create',tag,'--repo',repo,'--verify-tag','--draft','--title','Jira CLI Toolkit '+manifest['version'],'--notes-file',str(notes)],check=True)

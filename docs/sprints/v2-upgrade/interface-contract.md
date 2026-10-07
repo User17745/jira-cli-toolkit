@@ -6,11 +6,11 @@ This document records the foundation interface decisions. Current implemented fe
 
 ## Product identity and compatibility
 
-The repository/product is **Jira CLI Toolkit**, hosted at [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit). The executable is `jira-cli-toolkit`. Keep the Python distribution/import package `jsup` during the upgrade so existing installations and imports retain their identity. A separate package rename is outside this milestone.
+The repository/product is **Jira CLI Toolkit**, hosted at [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit). Starting with v2.1, the primary executable is `jira`; `jira-cli-toolkit` remains the repository name and a compatible executable alias. Keep the Python distribution/import package `jsup` during the upgrade so existing installations and imports retain their identity. A separate package rename is outside this milestone.
 
-Do not install a `jira` executable: [JiraCLI](https://github.com/ankitpokhrel/jira-cli/wiki/Installation) and [go-jira](https://github.com/go-jira/jira) already use that name. Users may choose their own shell alias. No package-registry publication is part of this change.
+The user selected `jira` for v2.1, superseding the foundation naming decision. [JiraCLI](https://github.com/ankitpokhrel/jira-cli/wiki/Installation) and [go-jira](https://github.com/go-jira/jira) also use that name; installations must select the intended command on PATH, or use the retained `jira-cli-toolkit` alias. No package-registry publication is part of this change.
 
-The source version is `2.0.0`. Release validation is recorded in the acceptance evidence. Keep the `jsup` executable and all existing command names throughout v2.x. Removal requires a separately announced major release and migration instructions. Both executables accept grouped and legacy command spellings, with shared application operations.
+The source version is `2.1.0`. Release validation is recorded in the acceptance evidence. Keep the `jsup` executable and all existing command names throughout v2.x. Removal requires a separately announced major release and migration instructions. All three package executables accept grouped and legacy command spellings, with shared application operations.
 
 ## Product position and initial capability scope
 
@@ -71,7 +71,7 @@ Successful API output retains the returned payload rather than introducing a new
 {"url": "https://example.atlassian.net/browse/ENG-1", "opened": true}
 ```
 
-New dashboard output contains `site` and `projects`; each result contains its `project`, approximate `count`, and `approximate: true`. Per-project non-auth API failures may instead contain a null count and an error message. Legacy `jsup dashboard --json` and `jsup --json` retain the original project/hint payload and do not fetch counts. New grouped commands under `jira-cli-toolkit --json` report runtime errors as `{"error":{"code":"jira_error","message":"...","status":401}}` (status is present for HTTP errors). Successful API objects retain their payload shape; paged objects add `fetched`. Legacy aliases and the `jsup` executable keep errors on stderr. Argparse usage errors remain on stderr with exit 2.
+New dashboard output contains `site` and `projects`; each result contains its `project`, approximate `count`, and `approximate: true`. Per-project non-auth API failures may instead contain a null count and an error message. Legacy `jsup dashboard --json` and `jsup --json` retain the original project/hint payload and do not fetch counts. New grouped commands under `jira --json` (or the `jira-cli-toolkit` alias) report runtime errors as `{"error":{"code":"jira_error","message":"...","status":401}}` (status is present for HTTP errors). Successful API objects retain their payload shape; paged objects add `fetched`. Legacy aliases and the `jsup` executable keep errors on stderr. Argparse usage errors remain on stderr with exit 2.
 
 Progress goes to stderr; JSON stdout contains a result or the documented runtime error object. `config show --json` reports whether a saved token exists without printing it. Human `config show` retains the existing masked token suffix. Interactive `config init` rejects `--json` rather than producing mixed JSON/prompt output.
 
@@ -94,6 +94,6 @@ The user selected API-token login instead of OAuth for v2 (6 October 2026). Toke
 
 ## Verification and next milestones
 
-The foundation is tested using local fixtures and mocked Jira calls, covering grouped/legacy compatibility, flag placement, help, context, project selection, creation metadata isolation, browser routing, input handling, output, and failures. Packaging checks build and install the same source as a wheel with both entry points. No real Jira tickets are created or changed by these checks.
+The foundation is tested using local fixtures and mocked Jira calls, covering grouped/legacy compatibility, flag placement, help, context, project selection, creation metadata isolation, browser routing, input handling, output, and failures. Packaging checks build and install the same source as a wheel with all three entry points from v2.1. No real Jira tickets are created or changed by these checks.
 
 Complete Sprint 2 transport/pagination/output handling next. Then implement the explicit auth/profile/context design and metadata-aware creation. The updater and automated GitHub binary publication remain Sprint 7; no releases are published by this foundation change.

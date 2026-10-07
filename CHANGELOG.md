@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.0
+
+- Install `jira` as the primary command; retain `jira-cli-toolkit` and `jsup` aliases throughout v2.x.
+- Legacy executables print a startup migration notice on stderr without changing JSON stdout or internal completion/update protocols.
+- Native binaries now identify themselves as `jira`; release asset filenames remain compatible with existing updaters.
+- Preserve configuration/profile paths and credential-store references, so v2.0 users need no auth migration.
+- Update help, completion, installation and developer migration examples for the shorter command and public GitHub downloads.
+- Make the GitHub repository public after reviewing reachable Git history and available Actions logs for credential leaks.
+
 ## 2.0.0
 
 - Promote the tested v2 release candidate, including project-neutral commands, guided API-token auth, discovery, issue maintenance, native releases and verified updates.

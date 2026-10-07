@@ -5,7 +5,7 @@ from .commands import build_parser
 from . import config
 
 
-def candidates(words,prog='jira-cli-toolkit'):
+def candidates(words,prog='jira'):
     prefix=words[-1] if words else ''
     previous=words[:-1]
     parser=build_parser(prog)

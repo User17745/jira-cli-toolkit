@@ -19,6 +19,11 @@ with tempfile.TemporaryDirectory() as home:
     env.update(HOME=home,USERPROFILE=home,XDG_CONFIG_HOME=home,PYINSTALLER_RESET_ENVIRONMENT='1')
     for args in (['--version'],['--help'],['help','auth','login'],['context','show','--json'],['update','--info','--json'],['template','show','callback','--json'],['completion','bash']):
         result=subprocess.run([str(path.absolute()),*args],cwd=home,env=env,text=True,capture_output=True,timeout=60,check=True)
+        if args[0]=='--version':
+            from jsup import __version__
+            assert result.stdout.strip()==f'jira {__version__}',result.stdout
+        if args[0]=='--help':
+            assert 'usage: jira ' in result.stdout,result.stdout
         if args[0]=='update':
             info=json.loads(result.stdout)
             assert info['method']=='standalone' and info['os']==os_name and info['arch']==arch,info

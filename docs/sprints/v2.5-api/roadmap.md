@@ -1,12 +1,12 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.0.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; v2.0.0 is published and verified as latest stable.
+Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
 
 ## Goal and boundaries
 
 Let a user or agent call a Jira Cloud REST endpoint through the CLI's selected identity without embedding an API token in the command, prompt, or generated script. New compatible endpoints should be callable without adding a Python wrapper for each operation.
 
-Use a small authenticated HTTP layer with curl-like arguments, reusing the existing profile selection, scoped-token gateway, credential storage, timeout, redaction, and uncertain-write handling. Spawning curl with a credential-bearing argument would undermine the goal. The executable remains `jira-cli-toolkit`, with `jsup` compatibility throughout v2.x.
+Use a small authenticated HTTP layer with curl-like arguments, reusing the existing profile selection, scoped-token gateway, credential storage, timeout, redaction, and uncertain-write handling. Spawning curl with a credential-bearing argument would undermine the goal. The executable is `jira` from v2.1, with `jira-cli-toolkit` and `jsup` compatibility throughout v2.x.
 
 Keep the human-friendly commands for common workflows and project-specific field discovery. Prefer generic API coverage over adding a dedicated command for every endpoint. A useful guided workflow can still justify a convenience command.
 
@@ -20,25 +20,25 @@ Examples are design targets:
 
 ```sh
 # Read using a saved identity; no token in the command.
-jira-cli-toolkit api /rest/api/3/myself --profile work
-jira-cli-toolkit api /rest/api/3/issue/BUG-703 --profile work
+jira api /rest/api/3/myself --profile work
+jira api /rest/api/3/issue/BUG-703 --profile work
 
 # Inspect an operation before constructing its payload; no Jira auth required.
-jira-cli-toolkit api /rest/api/3/issue -X POST --spec
-jira-cli-toolkit api /rest/api/3/issue -X POST --spec > issue-create-spec.json
+jira api /rest/api/3/issue -X POST --spec
+jira api /rest/api/3/issue -X POST --spec > issue-create-spec.json
 
 # Make a request with a JSON file, or JSON received on stdin.
-jira-cli-toolkit api /rest/api/3/issue -X POST --data @issue.json --profile work
-jira-cli-toolkit api /rest/api/3/search/jql -X POST --data @- --profile work
+jira api /rest/api/3/issue -X POST --data @issue.json --profile work
+jira api /rest/api/3/search/jql -X POST --data @- --profile work
 
 # Supply query parameters explicitly; the CLI performs URL encoding.
-jira-cli-toolkit api /rest/api/3/project/search --query maxResults=20 --profile work
+jira api /rest/api/3/project/search --query maxResults=20 --profile work
 
 # Multipart APIs also need a generic input path.
-jira-cli-toolkit api /rest/api/3/issue/BUG-703/attachments -X POST --form file=@proof.txt --header X-Atlassian-Token:no-check --profile work
+jira api /rest/api/3/issue/BUG-703/attachments -X POST --form file=@proof.txt --header X-Atlassian-Token:no-check --profile work
 
 # Refresh public API discovery metadata separately from executable updates.
-jira-cli-toolkit api spec refresh
+jira api spec refresh
 ```
 
 GET is the default; POST/PUT/PATCH/DELETE/HEAD/OPTIONS are explicit. Data does not silently change the method. `-d` aliases `--data`. Endpoint specs are selected by path and method, including concrete paths matched to templates. An explicit mutation invocation is authorization for that request: generic API calls must not introduce an unconditional confirmation dialog that prevents scripted use. Account permissions, upstream validation, and any enforced agent policy still apply.
