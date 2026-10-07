@@ -297,33 +297,7 @@ Completion criteria:
 
 ## Command migration reference
 
-`jira` is shorthand for an optional user alias of `jira-cli-toolkit`. The grouped interface and legacy compatibility policy are recorded in the interface contract.
-
-| Current command | Proposed interface |
-| --- | --- |
-| `jsup config init` | `jira auth login`, followed by context selection |
-| `jsup config show` | `jira config show`; auth health via `jira auth status` |
-| `jsup me` | `jira user me` |
-| `jsup` / `jsup dashboard` | `jira dashboard`; new root shows local context/help |
-| `jsup project-list` / `project-show` | `jira project list` / `view` |
-| `jsup open -p ENG` | `jira issue list -p ENG --open` |
-| `jsup issue-create` | `jira issue create` |
-| `jsup intake` | `jira issue create --template callback` |
-| `jsup issue-show ENG-42` | `jira issue view ENG-42` |
-| `jsup transitions ENG-42` | `jira issue transitions ENG-42` |
-| `jsup issue-move ENG-42` | `jira issue transition ENG-42` |
-| `jsup issue-delete ENG-42` | `jira issue delete ENG-42` |
-| `jsup comment-add` / `comment-list` | `jira issue comment add` / `list` |
-| `jsup board-list` / `board-create` / `board-issues` | `jira board list` / `create` / `issues` |
-| `jsup board-feature --enable` / `--disable` | `jira board feature enable` / `disable` |
-| `jsup sprint-list` / `sprint-create` | `jira sprint list` / `create` |
-| `jsup sprint-state <id> active` / `closed` | `jira sprint start <id>` / `close <id>` |
-| `jsup sprint-state <id> future` | Supported state update via `jira sprint edit`; retain legacy parsing and validate legal transitions |
-| `jsup sprint-add` | `jira sprint add-issues` |
-| `jsup component-list` / `component-create` | `jira component list` / `create` |
-| `jsup browse ENG-42` | `jira issue view ENG-42 --web` |
-| `jsup browse board:<id>` | `jira board view <id> --web` |
-| No existing update command | `jira update`, `jira update --check`, `jira update --version <version>`; retain `jsup update` after bootstrap |
+The implemented old/new command mapping now lives in the [developer migration guide](../../migration/legacy-commands.md#old-to-new-command-reference), alongside behavioral differences for queries, creation, JSON, pagination and scripted identity selection. The [upgrade guide](../../migration/upgrade-to-v2.md) covers installation, verified downloads, credential migration and rollback. Both guides use the full installed executable name, `jira-cli-toolkit`; `jira` remains an optional user alias.
 
 ## Later extensions — outside the initial release gate
 
@@ -396,5 +370,9 @@ Stable preparation: package/runtime/lock agree on 2.0.0; the offline lock check,
 Stable completion on 7 October 2026: preparation commit `2222537` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568701502) and [all native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568701917). Merge commit `cdb0c0f` has an identical tree and passes [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928087) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928341) before tag `v2.0.0`. [Stable tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37569094482) passes all ten required jobs and publishes eight assets. Authenticated downloads match all manifest/checksum entries and latest stable resolves to v2.0.0. An actual published RC1 standalone binary updates through default stable discovery, retains its backup and byte-identical schema-2 config/mode, and reports a no-op on a repeat check. The downloaded stable wheel passes installed CLI smoke checks; an isolated pipx/pip RC1 installation upgrades with both commands, receipt detection and config preservation. The user's actual RC installation and Keychain profile are unchanged by these checks.
 
 - [x] Final release evidence milestone: run regression/package/installed-CLI checks and documentation link checks, then commit/push the completed v2 acceptance and roadmap checkboxes.
+
+- [ ] Migration documentation milestone: publish separate user-upgrade and developer-command guides, verify all command examples/old-command coverage and local links, run regression/package/installed-CLI checks, then commit/push and verify CI.
+
+Migration documentation preparation: all 25 original command names are covered; 85 documented invocations parse against the implemented v2 parser, 16 shell blocks pass Bash syntax checks, and local links/anchors resolve. The documented verifier accepts the published wheel/manifest and rejects a corrupted wheel. A temporary CLI fixture exercises the JSON consumer's success path and preserves exit codes 1, 2 and 130 on failure, without contacting Jira. Full regression remains 128 passing tests; wheel/sdist and both installed CLI smoke checks pass before push.
 
 Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.

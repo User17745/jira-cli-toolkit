@@ -19,6 +19,13 @@ jsup --version
 
 If `jsup` is already installed, use `pipx install --force .` from the desired checkout to replace the installation. If an existing uv-backed pipx environment refuses force installation, follow the [migration recovery](docs/sprints/v2-upgrade/migration.md#one-time-bootstrap). The explicit updater and tag-triggered release workflow are described below. The Python package remains `jsup` for compatibility.
 
+## Migrating from old jsup versions
+
+- [Upgrade to v2](docs/migration/upgrade-to-v2.md): verified release downloads, pipx/uv/Python and standalone installation paths, the pipx uv-backend recovery, credential migration and rollback.
+- [Developer command migration](docs/migration/legacy-commands.md): every old command mapped to its grouped equivalent, behavior changes, JSON/exit-code handling and unattended script examples.
+
+The package remains `jsup`; both executables and legacy command names are supported throughout v2.x. Version 0.2 needs a one-time manager upgrade before it gains the updater. Already-migrated RC1 users can upgrade to stable without migrating credentials again.
+
 ## Setup and help
 
 ```bash
