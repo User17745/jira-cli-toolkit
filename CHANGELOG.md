@@ -9,6 +9,8 @@
 - Update help, completion, installation and developer migration examples for the shorter command and public GitHub downloads.
 - Make the GitHub repository public after reviewing reachable Git history and available Actions logs for credential leaks.
 
+Published as latest stable with all eight verified assets. The actual v2.0-to-v2.1 standalone update, retained backup/config, repeated no-op check and anonymous wheel download pass. The cross-platform CI/native/tag pipelines pass; 132 regression tests cover the new command and legacy notices.
+
 ## 2.0.0
 
 - Promote the tested v2 release candidate, including project-neutral commands, guided API-token auth, discovery, issue maintenance, native releases and verified updates.

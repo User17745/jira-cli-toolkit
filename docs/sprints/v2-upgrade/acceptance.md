@@ -1,6 +1,6 @@
 # v2 release acceptance evidence
 
-Evidence collected: 6–7 October 2026. Stable: `v2.0.0`, commit `cdb0c0f00cd719ea1c7492e40487a9594a8d5605`. Earlier candidate evidence: `v2.0.0rc1`, commit `d0640607c7e58c99d804dedb54f7871ed2e21369`.
+Evidence collected: 6–7 October 2026. Initial stable: `v2.0.0`, commit `cdb0c0f00cd719ea1c7492e40487a9594a8d5605`. Earlier candidate evidence: `v2.0.0rc1`, commit `d0640607c7e58c99d804dedb54f7871ed2e21369`.
 
 ## Automated and packaged checks
 
@@ -78,3 +78,16 @@ GitHub attestations remain optional and disabled. The repository becomes public 
 - [x] Verify complete stable assets and latest-stable discovery after publication.
 
 Required fields, duplicate names, stale metadata, disallowed operations and transition validators are additionally covered by fixtures. Live writes in company-managed/non-software projects were not authorized. App-specific validators, old OS versions, Data Center, and Service Management customer-request APIs are not certified by this candidate.
+
+## V2.1 public command release
+
+- [x] Package/runtime/lock versions agree on 2.1.0; 132 regressions and package/native smoke checks pass.
+- [x] `jira` is the primary command; both existing aliases remain functional and print a legacy-support notice on stderr, including version/help. JSON stdout is unchanged and internal completion/update protocols remain quiet.
+- [x] Review 181 reachable Git blobs, all 57 available Actions run logs and public PR metadata before switching repository visibility. Flagged URL credentials are synthetic rejection fixtures; no credential leaks detected.
+- [x] Repository is public; anonymous repository/release pages, direct manifest and v2.1 wheel downloads pass. Anonymous API verification hit the shared-IP rate limit; optional GitHub auth works and is documented.
+- [x] [PR #3](https://github.com/User17745/jira-cli-toolkit/pull/3), main and all required [v2.1 tag jobs](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574959673) pass. Tag `v2.1.0` points to `0675d21bbb1d303e1fe5a503ec74e7b4e4918cb4`, with a tree identical to the tested PR head.
+- [x] Latest stable is v2.1.0; all eight assets match manifest/checksums, sizes and commit/version/channel. The documented verifier succeeds against the published wheel and rejects corruption.
+- [x] The user’s actual pipx installation upgrades to 2.1.0; all three entry points pass version/help, both legacy warnings are confirmed, and the existing `work` profile authenticates from keyring with unchanged config bytes/permissions.
+- [x] An actual published v2.0 standalone binary updates via default stable discovery to `jira 2.1.0`, preserves its previous executable and config bytes/mode, and reports no update on a repeat check.
+
+Native asset filenames and credential-store service/config paths remain unchanged for upgrade compatibility. No new Jira issues or write operations were needed. V2.5, release hardening and broader platform/transport acceptance remain future work.

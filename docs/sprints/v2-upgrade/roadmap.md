@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: [stable v2.0.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0) is published and verified as latest stable. Initial v2 Sprints 0–8 are complete, including live BUG acceptance, package bootstrap, user-verified macOS Keychain migration/status, CI/native builds and actual RC-to-stable update checks. See [acceptance evidence](acceptance.md). Optional extensions and the separately planned v2.5 remain future work.
+Status: [stable v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0) is published and verified as latest stable; it adds the short `jira` command and public distribution to the completed v2.0 foundation. Initial v2 Sprints 0–8 are complete, including live BUG acceptance, package bootstrap, user-verified macOS Keychain migration/status, CI/native builds and actual RC-to-stable update checks. See [acceptance evidence](acceptance.md). Optional extensions and the separately planned v2.5 remain future work.
 
 ## Goal
 
@@ -388,10 +388,10 @@ Publication retry check: rerunning the publisher against the verified existing R
 - [x] Bump package/runtime/lock to 2.1.0 and update current command, installation and migration documentation.
 - [x] Review reachable Git history (181 blobs) and all 57 available Actions run logs before public visibility; no credential leaks detected. Three URL-credential detections were reviewed synthetic rejection fixtures in `tests/test_auth.py`.
 - [x] Test before the milestone push: 132 regressions, offline lock/build, wheel/sdist, all three installed entry points and local macOS arm64 native smoke pass. Documentation QA covers all 25 old command names, 86 parsed invocations, 16 shell blocks, links and checksum/error-handling fixtures.
-- [ ] Push the tested milestone, verify GitHub CI/native builds, and merge into main.
+- [x] Push the tested milestone, verify GitHub CI/native builds, and merge [PR #3](https://github.com/User17745/jira-cli-toolkit/pull/3) into main (`0675d21`, identical to the tested head tree).
 - [x] Make the repository public and verify anonymous repository/release page and manifest access (HTTP 200). The shared-IP anonymous API quota was exhausted during this check; authenticated API requests and unauthenticated direct downloads work.
-- [ ] Tag the tested main commit, verify the complete v2.1.0 publication and a real v2.0-to-v2.1 update.
-- [ ] Upgrade the local installed CLI and confirm existing native-auth profiles still work.
+- [x] Tag the tested main commit and verify all eight v2.1.0 assets, latest-stable selection and a real v2.0-to-v2.1 standalone update; backup retained, config bytes/mode unchanged, repeat check is a no-op. Anonymous wheel download and the guide checksum verifier pass.
+- [x] Upgrade the user’s installed pipx CLI to the verified stable wheel: `jira 2.1.0`, all three version/help checks and both legacy notices pass; the existing `work` profile authenticates from keyring with byte-identical config and unchanged permissions.
 
 ## Remaining work after v2.1
 
@@ -401,3 +401,7 @@ Publication retry check: rerunning the publisher against the verified existing R
 - [ ] Verify interactive Windows Credential Manager and Linux wallet acceptance on user machines; current CI checks do not certify interactive prompts.
 - [ ] Prioritize package-registry/distribution publication (PyPI/Homebrew or equivalents), broader native OS support, Data Center/JSM APIs and optional convenience commands based on demand.
 - [ ] Remove the two previously authorized labeled BUG acceptance issues when an account with Delete Issues permission is available.
+
+V2.1 release evidence: source milestone `d3f1ea9` passes [PR CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742016) and [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742210). Merged commit `0675d21` passes [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953579) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953839); its identical tested tree is tagged `v2.1.0`. The [tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574959673) passes all ten required compatibility/native/package/publication jobs. Published hashes/sizes and manifest commit/version match; native update and package/docs checks use isolated homes and perform no Jira writes.
+
+Local v2.1 acceptance: the actual pipx installation upgrades through its recorded pip backend. `jira` is available on PATH, retained aliases emit the requested notice, installation discovery reports `pipx`, and the existing Keychain profile remains authenticated. The final documentation/evidence milestone reruns full regressions, package build and installed smoke checks before pushing to Git.
