@@ -68,7 +68,45 @@ test('project identity and installation action clearly distinguish the independe
   await expect(page.getByRole('link', { name: 'Install the CLI', exact: true })).toHaveAttribute('href', '#get-started')
   await expect(page.getByText('Install jira', { exact: true })).toHaveCount(0)
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(0)
-  await expect(page.locator('.independent-notice')).toHaveText('Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira is a trademark of Atlassian.')
+  await expect(page.locator('.independent-notice')).toHaveText('Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira and Atlassian are trademarks of Atlassian.')
   await page.locator('.independent-notice').scrollIntoViewIfNeeded()
   await expect(page.locator('.independent-notice')).toBeInViewport()
+})
+
+test('ownership, support claims and illustrative data are clear on every screen size', async ({ page }) => {
+  await page.goto('./')
+  await expect(page.locator('.hero-independence')).toBeInViewport()
+  await expect(page.locator('.hero-independence')).toHaveText('Independently maintained. Not affiliated with Atlassian.')
+  await expect(page.locator('.hero-proof')).toContainText('Within your Jira permissions')
+  await expect(page.locator('.example-label')).toHaveText('Illustration with sample data')
+  await expect(page.getByLabel('Illustrative project workflow with sample data')).toBeVisible()
+  await expect(page.getByText('Original workflow illustration.', { exact: true })).toBeVisible()
+  await expect(page.locator('.profile-example')).toContainText('Example profile · native storage')
+  await expect(page.getByText('Login defaults to your OS credential store.', { exact: false })).toBeVisible()
+  for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
+    await expect(page.locator(selector)).toHaveAttribute('content', /Not affiliated with Atlassian/)
+  }
+  await page.getByRole('button', { name: 'Is this an official Atlassian tool?' }).click()
+  await expect(page.getByRole('link', { name: 'User17745', exact: true })).toHaveAttribute('href', 'https://github.com/User17745')
+  await expect(page.getByText('command runs this toolkit and connects to your Jira Cloud account.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Do I need a new Jira account?' }).click()
+  await expect(page.getByText('The CLI uses your account’s Jira permissions.', { exact: false })).toBeVisible()
+  await page.getByRole('link', { name: 'Third-party notices', exact: true }).click()
+  await expect(page.locator('body')).toContainText('SIL OPEN FONT LICENSE')
+  await expect(page.locator('body')).toContainText('Copyright (c) 2023 shadcn')
+  await expect(page.locator('body')).toContainText('macOS is a trademark of Apple Inc.')
+  await expect(page.locator('body')).toContainText('Windows and PowerShell are trademarks of the Microsoft group of companies.')
+})
+
+test('JavaScript-disabled visitors see independent identity and installation links', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, baseURL })
+  try {
+    const page = await context.newPage()
+    await page.goto('./')
+    await expect(page.locator('body')).toContainText('CLI Toolkit for Jira is independently maintained and is not affiliated with Atlassian.', { useInnerText: true })
+    await expect(page.getByRole('link', { name: 'GitHub', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Download the latest release.', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/releases/latest')
+  } finally {
+    await context.close()
+  }
 })
