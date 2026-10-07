@@ -327,6 +327,8 @@ Completion criteria:
 
 ## Later extensions — outside the initial release gate
 
+The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. Finish v2 acceptance/stable publication first. This will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0rc1.
+
 These are candidate work packages. Prioritize them after the foundation is released and user demand is known.
 
 - [ ] Add `filter list/view/create/update` and saved-filter selection in issue searches.

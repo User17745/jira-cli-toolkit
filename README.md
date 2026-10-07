@@ -4,6 +4,8 @@ A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `
 
 The current source is the v2 release candidate (`2.0.0rc1`). It adds guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and remaining release gates are tracked in the [upgrade roadmap](docs/sprints/v2-upgrade/roadmap.md).
 
+The [planned v2.5 roadmap](docs/sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents after v2 is finalized. These commands are not part of the current release candidate.
+
 ## Install from this checkout
 
 Requires Python 3.10 or later:
