@@ -81,7 +81,10 @@ try {
     if ([Environment]::GetEnvironmentVariable('Path', 'User') -ne $original) { throw 'NoPath altered the user PATH' }
 } catch { Write-Error $_; exit 1 }
 ''')
-        env = {**os.environ, 'PATH':str(Path(os.environ['WINDIR'])/'System32'),
+        # Do not inherit PowerShell 7 module paths when testing Windows PowerShell 5.1.
+        env = {**{k:v for k,v in os.environ.items() if k.upper() != 'PSMODULEPATH'},
+               'PSModulePath':str(Path(shell).parent/'Modules'),
+               'PATH':str(Path(os.environ['WINDIR'])/'System32'),
                'JIRA_INSTALL_TEST_ASSETS':str(assets), 'JIRA_INSTALL_TEST_SCRIPT':str(ROOT/'scripts/install.ps1')}
         def run(destination, **changes):
             return subprocess.run([shell,'-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',str(driver)],
