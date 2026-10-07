@@ -2,9 +2,9 @@
 
 A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `jsup` executable. Repository: [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit).
 
-The current source is the v2 release candidate (`2.0.0rc1`). It adds guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and remaining release gates are tracked in the [upgrade roadmap](docs/sprints/v2-upgrade/roadmap.md).
+The current source is v2.0.0. It adds guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and publication checks are tracked in the [upgrade roadmap](docs/sprints/v2-upgrade/roadmap.md).
 
-The [planned v2.5 roadmap](docs/sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents after v2 is finalized. These commands are not part of the current release candidate.
+The [planned v2.5 roadmap](docs/sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents after v2 is finalized. These commands are not part of v2.0.0.
 
 ## Install from this checkout
 

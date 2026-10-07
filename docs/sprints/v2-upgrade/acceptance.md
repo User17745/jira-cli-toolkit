@@ -47,7 +47,9 @@ Writes were authorized only in BUG. Discovery was read-only in other projects.
 - [x] Preference files omit tokens; credential files use mode 0600; captured login/status/error output contains no submitted token. Original user config is preserved.
 - [x] Native macOS scripted login fails with actionable instructions when OS access approval is needed; no silent plaintext fallback or profile write occurs.
 - [x] Regression tests verify Keychain interaction suppression/restoration on failure and prevent Linux scripted wallet unlock dialogs.
-- [ ] Approve and validate successful interactive native credential-store login/read/logout on supported desktop systems. This environment needs macOS OS approval; happy-path native store validation is not claimed.
+- [x] User completes interactive macOS migration with `--storage keyring`; a separate `auth status --profile work` invocation reports `source: keyring` and `authenticated: True`, validating native credential persistence/retrieval and live Jira acceptance on 7 October 2026.
+
+The macOS check used the published RC wheel installed through pipx and reused the existing token. Native interactive login/logout and wallet behavior on Linux/Windows were not live-tested; OS-specific behavior remains bounded by the documented limitations and deterministic/native build checks. No token or personal identity details are recorded in this evidence.
 
 API-token expiry cannot be queried reliably and API tokens do not refresh. Interactive 401 replacement keeps the selected account and does not replay mutations. Linux native wallets are interactive only; scripts use environment authentication or explicit protected file storage. Windows file storage is intentionally unsupported without ACL protection.
 
@@ -65,7 +67,7 @@ GitHub attestations are optional and disabled until this private repository’s 
 
 ## Stable promotion
 
-- [ ] Complete the interactive native-store manual gate.
+- [x] Complete the interactive native-store manual gate through user-verified macOS migration and live status retrieval.
 - [ ] Merge the reviewed v2 PR into main, bump the package/runtime/lock version to 2.0.0, rerun required checks, and tag the tested main commit.
 - [ ] Verify complete stable assets and latest-stable discovery after publication.
 

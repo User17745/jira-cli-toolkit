@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 2.0.0
 
+- Promote the tested v2 release candidate, including project-neutral commands, guided API-token auth, discovery, issue maintenance, native releases and verified updates.
+- Record successful user acceptance of macOS Keychain migration and live credential retrieval in separate CLI invocations.
 - Correct pipx recovery instructions for existing uv-backed environments: replace the managed environment with the verified wheel using the pip backend; an install-time backend override alone does not switch it.
 
 ## 2.0.0rc1

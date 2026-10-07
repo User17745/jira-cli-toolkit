@@ -29,6 +29,9 @@ class UpdateTests(unittest.TestCase):
             {'name':'jira-cli-toolkit-linux-x86_64','id':2,'size':3,'state':'uploaded'}]}
         self.api.release.return_value=self.release
         self.addCleanup(patch.stopall)
+        # The fixture offers 2.0.0; simulate an older installation regardless of
+        # the source version so a release bump cannot turn upgrade tests into no-ops.
+        patch.object(update,'__version__','1.0.0').start()
         patch.object(update,'Releases',return_value=self.api).start()
         self.installed={'version':update.__version__,'method':'standalone','os':'linux','arch':'x86_64','executable':'/tmp/jira','python':'3.12'}
         patch.object(update,'installation',return_value=self.installed).start()
@@ -55,8 +58,7 @@ class UpdateTests(unittest.TestCase):
 
     def test_noop_same_version_does_not_require_confirmation(self):
         self.data=manifest(update.__version__); self.release['tag_name']='v'+update.__version__
-        self.release['prerelease']=True
-        result=update.handle(args(check=False,version=update.__version__,prerelease=True))
+        result=update.handle(args(check=False,version=update.__version__))
         self.assertFalse(result['update_available'])
 
     def test_incomplete_draft_and_prerelease_releases_fail(self):

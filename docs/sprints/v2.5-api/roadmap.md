@@ -1,6 +1,6 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.0.0rc1. Complete the [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) first.
+Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.0.0. Complete the [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) first.
 
 ## Goal and boundaries
 
@@ -54,7 +54,7 @@ Start with one request/one response. Do not promise automatic pagination of arbi
 ### Finish v2 first
 
 - [x] Record the user's decision to prioritize authenticated API access and spec discovery in v2.5.
-- [ ] Complete the outstanding interactive native credential-store acceptance and record its evidence in the v2 roadmap.
+- [x] Complete interactive macOS native credential-store acceptance and record the user's successful migration/live status evidence in the v2 roadmap.
 - [ ] Complete v2 review/merge, stable version preparation, regression/build checks, and stable GitHub publication/latest-update verification.
 
 ### Shared request layer and API command

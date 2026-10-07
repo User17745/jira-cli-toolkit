@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: v2 release candidate `v2.0.0rc1` is published and verified. Sprints 0–7 implementation and release/update validation are complete. Live BUG acceptance and package bootstrap passed. Successful interactive native credential-store acceptance and stable promotion remain open; see [acceptance evidence](acceptance.md).
+Status: v2 release candidate `v2.0.0rc1` is published and verified. Implementation, live BUG acceptance, package bootstrap and user-verified macOS Keychain migration/status checks have passed. Source is prepared as `2.0.0`; stable CI, merge, tagging and publication verification are in progress. See [acceptance evidence](acceptance.md).
 
 ## Goal
 
@@ -281,7 +281,7 @@ Completion criteria:
 
 - [x] Run a representative acceptance matrix covering team-managed/company-managed Cloud projects, non-software project capabilities, required custom fields, differing workflows, restricted permissions, and headless operation.
 - [x] Exercise live integration smoke checks in a designated test project with authorized credentials; keep normal automated tests deterministic and independent of production Jira.
-- [ ] Verify packaged installation in a clean environment, advertised Python versions, supported operating systems, credential-store behavior, completion, and uninstallation.
+- [x] Verify packaged installation in a clean environment, advertised Python versions, supported operating-system build/smoke matrix, macOS Keychain migration/read behavior, completion, and uninstallation; record untested interactive Linux/Windows wallet behavior as a limitation.
 - [x] Extend Sprint 7 CI with the complete parser/config/client/operation acceptance suite; include checks that prevent reintroducing original-project defaults into the generic paths.
 - [x] Rewrite the README and help examples around onboarding and common generic workflows; document field formats, profiles, credential storage, auth recovery, scripting, limitations, and troubleshooting.
 - [x] Publish a migration guide with old/new command mappings, config migration, default-behavior changes, JSON compatibility, alias duration, and rollback steps.
@@ -327,7 +327,7 @@ Completion criteria:
 
 ## Later extensions — outside the initial release gate
 
-The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. Finish v2 acceptance/stable publication first. This will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0rc1.
+The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. Finish v2 stable publication first. This will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0.
 
 These are candidate work packages. Prioritize them after the foundation is released and user demand is known.
 
@@ -385,6 +385,12 @@ User acceptance exposed that pipx’s `install --force --backend pip` ignores th
 
 Release-candidate validation on 7 October 2026: tag `v2.0.0rc1` points to tested commit `d064060`. [Tag run 37497037819](https://github.com/User17745/jira-cli-toolkit/actions/runs/37497037819) passed four compatibility jobs, four native builds, packaging and publication. Authenticated downloads verified all eight assets (four binaries, wheel/sdist, manifest and checksums), manifest commit/version, sizes and SHA-256 hashes. An actual earlier `0.3.0.dev0` standalone CI binary updated to the published candidate; the prior executable remained available, config was byte-identical, and a repeated check was a no-op. The published wheel passed isolated smoke checks. The RC is excluded from latest stable.
 
-Stable release gates remain explicit: successful interactive native-store acceptance needs OS approval; reviewed v2 must be merged into main, version/package/lock changed to 2.0.0, and the tested main commit tagged and verified as latest stable. Current source work is reviewable in [PR #1](https://github.com/User17745/jira-cli-toolkit/pull/1). Later extensions remain outside the initial release gate.
+Native acceptance on 7 October 2026: the user successfully installs the published RC wheel, migrates legacy credentials with `--storage keyring`, and runs a separate live status command reporting `source: keyring` and `authenticated: True`. This closes the macOS interactive native-store gate. No additional Jira issues were created. The pipx recovery correction at `291ec14` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37567939789) and [all four native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37567940018).
+
+Stable release gates remain explicit: v2 must pass final review/checks, be merged into main, and the tested 2.0.0 main commit tagged and verified as latest stable. Source package/runtime/lock versions are prepared as 2.0.0. Current work is reviewable in [PR #1](https://github.com/User17745/jira-cli-toolkit/pull/1). Later extensions remain outside the initial release gate.
+
+- [ ] Stable promotion milestone: rerun full regression, build and installed-CLI smoke checks; commit/push version and acceptance updates; verify CI/native builds before merge/tag; record stable release/update verification.
+
+Stable preparation: package/runtime/lock agree on 2.0.0; the offline lock check, all 128 regression tests, wheel/sdist builds, both installed CLI smoke checks, and local macOS arm64 native build/smoke pass before push. Updater tests now simulate an older installed version explicitly, so a source-version bump cannot silently turn upgrade-path checks into no-ops.
 
 Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.
