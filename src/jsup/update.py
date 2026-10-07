@@ -263,7 +263,7 @@ def handle(args):
                 result.update(instructions=instructions[installed['method']], wheel=wheel['name'],
                               note='Download the wheel from this release; verify its manifest checksum. For private/unpublished PyPI packages, pass that wheel to the owning manager instead of a registry upgrade.')
                 if installed['method']=='pipx':
-                    result['backend_fallback']='If pipx force-install reports an existing venv under its uv backend, repeat with --backend pip on pipx versions that support that option.'
+                    result['backend_fallback']='If pipx force-install reports an existing uv venv, --backend pip does not switch that existing environment. After downloading and verifying the wheel, run pipx uninstall jsup, then pipx install --backend pip /path/to/verified-release.whl. This replaces the managed environment and preserves ~/.config/jsup/config.json.'
                 return result
             match=[a for a in manifest['artifacts'] if a.get('kind')=='binary' and a.get('os')==installed['os'] and a.get('arch')==installed['arch']]
             if len(match)!=1: raise UpdateError('No compatible binary for this platform/architecture.')

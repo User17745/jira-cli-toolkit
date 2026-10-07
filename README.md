@@ -17,7 +17,7 @@ jira-cli-toolkit --version
 jsup --version
 ```
 
-If `jsup` is already installed, use `pipx install --force .` from the desired checkout to replace the installation. The explicit updater and tag-triggered release workflow are described below. The Python package remains `jsup` for compatibility.
+If `jsup` is already installed, use `pipx install --force .` from the desired checkout to replace the installation. If an existing uv-backed pipx environment refuses force installation, follow the [migration recovery](docs/sprints/v2-upgrade/migration.md#one-time-bootstrap). The explicit updater and tag-triggered release workflow are described below. The Python package remains `jsup` for compatibility.
 
 ## Setup and help
 
@@ -121,7 +121,7 @@ A selected `--profile` owns its full site/account identity. Complete identity fl
 
 The repository is private. Set a repository-read `GH_TOKEN` or authenticate `gh` with the correct GitHub account for release discovery/downloads. Jira tokens are never used for GitHub. Package installations receive instructions for their owning pipx/uv/Python environment; the updater does not overwrite manager shims. Since the Python package is not published to PyPI, download and verify the wheel from the release and pass its path to that manager (`pipx install --force /path/to/jsup.whl`, `uv tool install --force /path/to/jsup.whl`, or your environment's `python -m pip install --upgrade /path/to/jsup.whl`). Version 0.2.0 needs this one-time bootstrap before it gains an update command.
 
-If pipx’s uv backend refuses force installation because the venv exists, repeat with `--backend pip` on versions supporting that option. The [migration guide](docs/sprints/v2-upgrade/migration.md) records this tested fallback. Manager detection uses installation receipts, including custom pipx/uv directories.
+If pipx’s uv backend refuses force installation because the venv exists, adding `--backend pip` does not switch that existing environment in pipx 1.14.0. Download and verify the wheel, run `pipx uninstall jsup`, then `pipx install --backend pip /path/to/jsup.whl`. The [migration guide](docs/sprints/v2-upgrade/migration.md) explains this recovery and preservation of saved credentials. Manager detection uses installation receipts, including custom pipx/uv directories.
 
 GitHub Actions builds and smoke-tests Python packages and native binaries. Version tags publish a complete manifest, checksums, wheel/sdist, and macOS arm64/x86_64, Linux x86_64, and Windows x86_64 executables. Prereleases never become latest stable; stable publication additionally requires a commit on main. Native platform requirements are recorded in each release manifest. Checksums detect corruption; publisher verification currently relies on authenticated GitHub HTTPS. Optional GitHub attestations can be enabled with repository variable `RELEASE_ATTESTATIONS=true` when the repository’s plan supports them; for private repositories this requires [GitHub Enterprise Cloud](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations). When enabled, publication requires attestation success. Verify each downloaded artifact separately with `gh attestation verify ARTIFACT --repo User17745/jira-cli-toolkit`; the updater does not perform this verification. Attestations are disabled by default until eligibility is confirmed. Code signing and notarization remain release-hardening tasks.
 

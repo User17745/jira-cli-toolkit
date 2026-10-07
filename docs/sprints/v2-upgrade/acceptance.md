@@ -12,7 +12,9 @@ Evidence collected: 6–7 October 2026. Candidate: `v2.0.0rc1`, commit `d0640607
 - [x] Bash/zsh completion scripts pass shell syntax checks; fish generation is covered by deterministic tests.
 - [x] Actual original 0.2.0 source is built and installed, then upgraded to the candidate in an isolated Python environment; config remains byte-identical.
 - [x] Original-to-candidate pipx 1.14.0 and uv 0.11.11 upgrades, both executables, custom-directory manager discovery and manager uninstall pass in isolated homes.
-- [x] pipx uv-backend force-install failure is reproduced; explicit pip-backend fallback passes and is documented.
+- [x] pipx uv-backend force-install failure is reproduced. Follow-up recovery starts with an actual uv-backed 0.2.0 environment: force installation ignores `--backend pip`, then manager uninstall plus a fresh pip-backend install of the published RC wheel succeeds. Both entry points, pipx receipt detection, config bytes and mode 0600 are verified.
+
+The original pipx upgrade check started with the pip backend and did not prove that an install-time backend override switches an existing uv environment. User acceptance exposed that gap. Recovery instructions are corrected in the current branch’s documentation and updater guidance; the immutable published RC1 still contains the earlier guidance.
 
 CI: [package/compatibility](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642208), [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642748).
 

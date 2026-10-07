@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Correct pipx recovery instructions for existing uv-backed environments: replace the managed environment with the verified wheel using the pip backend; an install-time backend override alone does not switch it.
+
 ## 2.0.0rc1
 
 - Introduce project-neutral resource commands and help with legacy jsup compatibility.

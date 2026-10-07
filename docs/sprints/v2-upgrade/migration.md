@@ -15,7 +15,16 @@ python -m pip install --upgrade /path/to/jsup-VERSION-py3-none-any.whl
 
 Choose the command for your installation. Releases are private; use repository-read GitHub authentication. Installing from a checked-out tag with `pipx install --force .` is another supported bootstrap. The package is not published to PyPI, so a bare registry upgrade is not the distribution path.
 
-If pipx’s uv backend reports that the environment already exists during force installation, repeat with `pipx install --force --backend pip /path/to/jsup-VERSION-py3-none-any.whl` on pipx versions supporting `--backend` (verified with pipx 1.14.0). Older pipx versions using the pip backend do not need that option. The manager owns the environment; do not manually delete it or overwrite its shims.
+If pipx’s uv backend reports that the environment already exists during force installation, `install --force --backend pip` does **not** switch the existing environment’s recorded backend in pipx 1.14.0. Download and verify the desired wheel first, then replace the managed environment:
+
+```sh
+pipx uninstall jsup
+pipx install --backend pip /path/to/jsup-VERSION-py3-none-any.whl
+jsup --version
+jira-cli-toolkit --version
+```
+
+Run these one at a time and stop if installation fails. Uninstalling removes the pipx environment and command shims; it preserves `~/.config/jsup/config.json`, including existing Jira credentials. The new install supplies both commands. This recovery was verified starting from a 0.2.0 installation whose recorded backend was uv, with config bytes and permissions unchanged. Older pipx versions using the pip backend do not need the backend option. Do not manually delete the environment or overwrite its shims. `pipx reinstall jsup --backend pip` switches the backend but reuses the original recorded source; it does not necessarily install the downloaded release wheel.
 
 Both commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases. A release candidate must be requested explicitly, for example `update --version 2.0.0rc1 --prerelease --check`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
 
