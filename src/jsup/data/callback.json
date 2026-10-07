@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "name": "callback",
+  "type": "Task",
+  "summary": "Callback: {name} — {issue}",
+  "description": "Client: {name}\nIssue as reported: {issue}\nRequested callback: {callback}\nSource: jsup intake. Assumed open — team to review & update.",
+  "fields": {"priority": "High", "labels": ["callback"], "components": ["ops-runbook"]},
+  "variables": [
+    {"name": "name", "prompt": "Client name", "required": true},
+    {"name": "issue", "prompt": "Issue as reported", "required": true},
+    {"name": "callback", "prompt": "Requested callback", "default": "not specified"}
+  ]
+}
