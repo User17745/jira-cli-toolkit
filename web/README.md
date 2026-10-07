@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open the printed URL under `/jira-cli-toolkit/`.
+Open the printed URL. Vercel serves the site from the domain root. The GitHub Pages copy is built with `BASE_PATH=/jira-cli-toolkit/`, which sets both the Vite base and the Playwright URL.
 
 ### Command data
 
@@ -21,7 +21,7 @@ The sandbox and command reference read `src/data/commands.json`, which is genera
 python scripts/command_tree.py > web/src/data/commands.json
 ```
 
-`tests/test_website_commands.py` fails in Python CI when the file drifts from the parser. Help text and argument errors in the sandbox are a port of Python's argparse formatting at 80 columns, so `jira <command> --help` on the site matches the installed CLI. Sample issues, users and sprints live in `src/sandbox/sample.ts` and are illustrative. The Vite base is the GitHub Pages repository path. Change `vite.config.ts`, the canonical/OG URLs in `index.html`, and repo links in `src/App.tsx` together if hosting moves.
+`tests/test_website_commands.py` fails in Python CI when the file drifts from the parser. Help text and argument errors in the sandbox are a port of Python's argparse formatting at 80 columns, so `jira <command> --help` on the site matches the installed CLI. Sample issues, users and sprints live in `src/sandbox/sample.ts` and are illustrative. If hosting moves, update the canonical and OG URLs in `index.html` and the repository links in `src/App.tsx` together.
 
 ## Verify
 
@@ -38,7 +38,7 @@ Playwright checks the built site served by Vite preview: OS tabs and keyboard na
 
 The [Pages workflow](../.github/workflows/pages.yml) builds and tests pull requests and main. Only main deploys through GitHub’s Pages artifact/deployment actions. Repository Settings → Pages must select **GitHub Actions** as the build source. No npm build output is committed. Dependencies are locked in `package-lock.json`; action revisions are pinned.
 
-Public URL: https://user17745.github.io/jira-cli-toolkit/
+Public URL: https://jira.abhishekaggarwal.com/ (Vercel). The GitHub Pages copy is at https://user17745.github.io/jira-cli-toolkit/.
 
 The installation panel links to source-controlled POSIX/PowerShell scripts on main, which resolve the latest stable GitHub Release. Manual installation links to `/releases/latest`. Update documentation and browser assertions whenever these commands or platform constraints change. Raw authenticated API/spec functionality remains explicitly planned for v2.5.
 
