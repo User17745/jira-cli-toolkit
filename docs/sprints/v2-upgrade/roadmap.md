@@ -434,6 +434,8 @@ The [public landing page](https://user17745.github.io/jira-cli-toolkit/) renders
 - [x] Change the installation CTA to “Install the CLI”, foreground “CLI Toolkit for Jira”, and add visible independence/trademark notices.
 - [x] Replace the logo-bearing promotional cover with original terminal artwork and remove it from website/social metadata.
 - [x] Run CLI regressions, package/installed smoke checks and desktop/mobile branding/installation checks before pushing.
-- [ ] Push the tested milestone, verify compatibility/native/site CI, merge and verify the public deployment.
+- [x] Push the tested milestone, verify compatibility/native/site CI, merge and verify the public deployment.
 
 Branding validation: 141 CLI regressions, wheel/sdist builds, all three installed entry-point smoke checks, migration/docs QA, lint/type/build and 10 desktop/mobile browser checks pass. Historical website milestone references to the supplied cover are superseded by the original artwork in this correction.
+
+Branding publication evidence: [PR #5](https://github.com/User17745/jira-cli-toolkit/pull/5) passes [compatibility CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37604843341), [all four native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37604843680), and [website checks](https://github.com/User17745/jira-cli-toolkit/actions/runs/37604843277), then merges as `792730b` with an identical tested tree. [Main Pages deployment](https://github.com/User17745/jira-cli-toolkit/actions/runs/37605146214) succeeds. Public HTML and all 20 assets match the local production build; public README and original SVG cover match source. The previous website cover returns 404. The live page shows “Install the CLI” and the readable independence notice.
