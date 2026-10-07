@@ -1,28 +1,31 @@
-import { useState } from 'react'
-import { Laptop, ArrowDown, ArrowUpRight, Check, CheckCheck, ChevronRight, Code2, Copy, GitPullRequest, KeyRound, Menu, Monitor, ShieldCheck, Terminal, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useMemo, useRef, useState } from 'react'
+import { Check, Copy } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Sandbox, suggestions, type SandboxHandle } from '@/components/Sandbox'
+import { leaves, root, type Node } from '@/sandbox/tree'
 import './App.css'
 
 const repo = 'https://github.com/User17745/jira-cli-toolkit'
 const docs = `${repo}/blob/main/README.md`
 const latest = `${repo}/releases/latest`
 const raw = 'https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts'
+const notices = `${import.meta.env.BASE_URL}third-party-notices.txt`
 type OS = 'macos' | 'linux' | 'windows'
-const platforms: Record<OS, { name: string; icon: typeof Laptop; command: string; note: string }> = {
-  macos: { name: 'macOS', icon: Laptop, command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'macOS 15+ · Apple Silicon or Intel' },
-  linux: { name: 'Linux', icon: Terminal, command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'x86_64 · glibc 2.39+ (Ubuntu 24.04+)' },
-  windows: { name: 'Windows', icon: Monitor, command: `irm ${raw}/install.ps1 | iex`, note: 'Windows 10+ x86_64 · PowerShell 5.1 or later' },
-}
-const demos = {
-  issues: { label: 'Find your next issue', command: 'jira issue list -p ENG --open', lines: ['Key      Summary                       Status', 'ENG-42   Ship the onboarding flow      In Progress', 'ENG-43   Fix keyboard navigation       To Do', 'ENG-44   Update release notes          To Do'], footer: 'Project ENG · 3 example issues' },
-  boards: { label: 'Plan a sprint', command: 'jira sprint list --board 123', lines: ['ID    Name                  State', '456   Onboarding sprint     active', '457   Accessibility         future', '458   Release polish        future'], footer: 'Board 123 · example sprint data' },
-  scripts: { label: 'Make it scriptable', command: 'jira issue list -p ENG --open --json --no-input', lines: ['{', '  "issues": [', '    { "key": "ENG-42", "fields": { "summary":', '        "Ship the onboarding flow" } }', '  ], "fetched": 1', '}'], footer: 'Structured stdout · explicit exit codes' },
+const platforms: Record<OS, { name: string; shell: string; command: string; note: string }> = {
+  macos: { name: 'macOS', shell: 'Terminal', command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'macOS 15 or later, on Apple Silicon or Intel.' },
+  linux: { name: 'Linux', shell: 'Terminal', command: `curl -fsSL ${raw}/install.sh | bash\nexport PATH="$HOME/.local/bin:$PATH"`, note: 'x86_64 with glibc 2.39 or later, such as Ubuntu 24.04.' },
+  windows: { name: 'Windows', shell: 'PowerShell', command: `irm ${raw}/install.ps1 | iex`, note: 'Windows 10 or later on x86_64, with PowerShell 5.1 or later.' },
 }
 
-function CopyButton({ text, label = 'Copy command' }: { text: string; label?: string }) {
+const exitCodes: { code: number; meaning: string; detail: string; example?: string }[] = [
+  { code: 0, meaning: 'Success', detail: 'Data is on stdout.', example: 'jira issue list --open --json --limit 1' },
+  { code: 1, meaning: 'Jira or network error', detail: 'Jira refused the request, or could not be reached.', example: 'jira issue view ENG-99' },
+  { code: 2, meaning: 'Invalid input', detail: 'Bad arguments, missing values or configuration.', example: 'jira issue list --json --csv' },
+  { code: 130, meaning: 'Interrupted', detail: 'Ctrl+C stopped the command, or input ended at a prompt.' },
+]
+
+function CopyButton({ text, label }: { text: string; label: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
   async function copy() {
     try { await navigator.clipboard.writeText(text); setState('copied') }
@@ -30,105 +33,180 @@ function CopyButton({ text, label = 'Copy command' }: { text: string; label?: st
     window.setTimeout(() => setState('idle'), 3500)
   }
   return <div className="copy-control">
-    <Button variant="ghost" className="copy-button" onClick={copy} aria-label={label}>
-      {state === 'copied' ? <Check size={16} /> : <Copy size={16} />}
+    <button type="button" className="copy-button" onClick={copy} aria-label={label}>
+      {state === 'copied' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
       <span>{state === 'copied' ? 'Copied' : 'Copy'}</span>
-    </Button>
+    </button>
     <span className="copy-status" role="status">{state === 'failed' ? 'Select the command and copy it manually.' : state === 'copied' ? 'Command copied to clipboard.' : ''}</span>
   </div>
 }
 
-function InstallPanel() {
+function Install() {
   const [os, setOS] = useState<OS>(() => /Win/i.test(navigator.userAgent) ? 'windows' : /Linux/i.test(navigator.userAgent) ? 'linux' : 'macos')
-  return <section className="install-panel" id="get-started" aria-labelledby="install-title">
-    <div className="install-title-row"><h2 id="install-title">Get started</h2><Badge variant="secondary"><span className="status-dot" /> Native install</Badge></div>
-    <p className="install-intro">One command. Your terminal does the rest.</p>
-    <Tabs value={os} onValueChange={(value) => setOS(value as OS)} className="os-tabs">
-      <TabsList activateOnFocus className="os-list" aria-label="Installation operating system">
-        {(Object.keys(platforms) as OS[]).map(key => { const Icon = platforms[key].icon; return <TabsTrigger key={key} value={key}><Icon size={16} />{platforms[key].name}</TabsTrigger> })}
+  return <section className="install" id="get-started" aria-labelledby="install-title">
+    <h2 id="install-title">Install</h2>
+    <Tabs value={os} onValueChange={value => setOS(value as OS)} className="install-tabs">
+      <TabsList activateOnFocus variant="line" className="install-list" aria-label="Installation operating system">
+        {(Object.keys(platforms) as OS[]).map(key => <TabsTrigger key={key} value={key}>{platforms[key].name}</TabsTrigger>)}
       </TabsList>
       {(Object.keys(platforms) as OS[]).map(key => <TabsContent value={key} key={key}>
-        <div className="install-code"><div className="code-top"><span>{key === 'windows' ? 'PowerShell' : 'Terminal'}</span><CopyButton text={platforms[key].command} label={`Copy ${platforms[key].name} installation command`} /></div><pre tabIndex={0}><code>{platforms[key].command}</code></pre></div>
-        <p className="platform-note">{platforms[key].note}</p>
+        <div className="install-code">
+          <div className="install-code-top"><span>{platforms[key].shell}</span><CopyButton text={platforms[key].command} label={`Copy ${platforms[key].name} installation command`} /></div>
+          <pre tabIndex={0}><code>{platforms[key].command}</code></pre>
+        </div>
+        <p className="install-note">{platforms[key].note} The installer verifies release checksums first.</p>
       </TabsContent>)}
     </Tabs>
-    <div className="install-check"><ShieldCheck size={16} /><span>Verifies release checksums before installing.</span></div>
-    <div className="install-links"><a href={latest}>Prefer a manual install?<ArrowUpRight size={15} /></a><a href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>Upgrading? Read the guide.</a></div>
+    <p className="install-links"><a href={latest}>Prefer a manual install?</a> <a href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>Upgrading from jsup?</a></p>
   </section>
 }
 
-function Workbench() {
-  const [demo, setDemo] = useState('issues')
-  return <section className="workbench" id="workflows" aria-label="Jira command examples">
-    <div className="workbench-top"><span><Terminal size={17} /> Less switching. More shipping.</span><span className="example-label">Illustration with sample data</span></div>
-    <div className="workbench-body">
-      <div className="terminal-demo">
-        <Tabs value={demo} onValueChange={(value) => setDemo(String(value))}>
-          <TabsList activateOnFocus variant="line" className="demo-tabs" aria-label="Command examples">
-            <TabsTrigger value="issues">Issues</TabsTrigger><TabsTrigger value="boards">Sprints</TabsTrigger><TabsTrigger value="scripts">JSON</TabsTrigger>
-          </TabsList>
-          {Object.entries(demos).map(([key, example]) => <TabsContent key={key} value={key}>
-            <div className="terminal-prompt"><span>$</span><code>{example.command}</code><CopyButton text={example.command} label={`Copy ${example.label.toLowerCase()} command`} /></div>
-            <pre className="terminal-output" tabIndex={0}>{example.lines.join('\n')}</pre>
-            <div className="terminal-footer"><span className="status-dot" />{example.footer}</div>
-          </TabsContent>)}
-        </Tabs>
-      </div>
-      <div className="mini-board" aria-label="Illustrative project workflow with sample data">
-        <div className="board-heading"><span className="project-symbol">E</span><div><strong>Engineering</strong><span>Original workflow illustration.</span></div><GitPullRequest size={19} /></div>
-        <div className="board-columns">
-          <div className="board-lane"><h3>To do <span>2</span></h3><div className="issue-note"><span><span className="issue-kind bug" />ENG-43</span><p>Fix keyboard navigation</p><div className="issue-bottom"><Badge variant="secondary">Accessibility</Badge><span className="avatar">JL</span></div></div><div className="issue-note"><span><span className="issue-kind" />ENG-44</span><p>Update release notes</p><div className="issue-bottom"><Badge variant="secondary">Release</Badge><span className="avatar blue">AK</span></div></div></div>
-          <div className="board-lane"><h3>In progress <span>1</span></h3><div className="issue-note active-issue"><span><span className="issue-kind" />ENG-42</span><p>Ship the onboarding flow</p><div className="issue-bottom"><Badge variant="secondary">Onboarding</Badge><span className="avatar blue">AK</span></div></div><div className="board-hint"><CheckCheck size={17} /><span>Your workflow.<br />In your terminal.</span></div></div>
-        </div>
-      </div>
+function groupsOf(): { name: string; items: { path: string[]; node: Node }[] }[] {
+  const general = (root.commands ?? []).filter(c => !c.commands).map(node => ({ path: [node.name], node }))
+  const grouped = (root.commands ?? []).filter(c => c.commands).map(group => ({ name: group.name, items: leaves(group, [group.name]) }))
+  return [...grouped.sort((a, b) => b.items.length - a.items.length), { name: 'more', items: general }]
+}
+
+function Reference({ onRun }: { onRun: (command: string) => void }) {
+  const [query, setQuery] = useState('')
+  const groups = useMemo(groupsOf, [])
+  const total = groups.reduce((n, g) => n + g.items.length, 0)
+  const q = query.trim().toLowerCase()
+  const shown = groups.map(g => ({ ...g, items: g.items.filter(i => !q || `${i.path.join(' ')} ${i.node.help}`.toLowerCase().includes(q)) })).filter(g => g.items.length)
+  const count = shown.reduce((n, g) => n + g.items.length, 0)
+  return <section className="reference" id="commands" aria-labelledby="commands-title">
+    <div className="section-head">
+      <h2 id="commands-title">Every command, read from the parser</h2>
+      <p>This list is generated from the argument parser in jira {root.version}, so it can’t drift from the tool. Select a command to open its real help in the sandbox.</p>
     </div>
+    <div className="reference-filter">
+      <label htmlFor="command-filter">Filter commands</label>
+      <input id="command-filter" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="sprint, comment, attach…" autoComplete="off" spellCheck={false} />
+      <p role="status">{count === total ? `${total} commands` : `${count} of ${total} commands`}</p>
+    </div>
+    {shown.length ? <div className="reference-groups">
+      {shown.map(group => <div className="reference-group" key={group.name}>
+        <h3>{group.name === 'more' ? 'Setup and maintenance' : `jira ${group.name}`}</h3>
+        <ul>{group.items.map(({ path, node }) => <li key={path.join(' ')}>
+          <button type="button" onClick={() => onRun(`jira help ${path.join(' ')}`)}>
+            <code>{path.join(' ')}</code><span>{node.help}</span>
+          </button>
+        </li>)}</ul>
+      </div>)}
+    </div> : <p className="reference-empty">No command matches “{query}”. Try a noun such as issue, sprint or board.</p>}
   </section>
 }
 
 function App() {
-  const [menu, setMenu] = useState(false)
+  const sandbox = useRef<SandboxHandle>(null)
+  const run = (command: string) => sandbox.current?.run(command)
   return <>
     <a className="skip-link" href="#get-started">Skip to installation</a>
-    <header className="site-header"><div className="header-inner">
-      <a className="brand" href="#" aria-label="CLI Toolkit for Jira home"><span className="brand-icon"><Terminal size={24} /></span><span className="brand-command">CLI Toolkit</span><span className="brand-name">for Jira</span></a>
-      <nav className="desktop-nav" aria-label="Main navigation"><a href="#workflows">Workflows</a><a href={docs}>Documentation</a><a className="github-link" href={repo}><Code2 size={17} /> GitHub<ArrowUpRight size={14} /></a></nav>
-      <Button variant="ghost" className="menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</Button>
-    </div>{menu && <nav className="mobile-nav" aria-label="Mobile navigation"><a href="#workflows" onClick={() => setMenu(false)}>Workflows</a><a href={docs}>Documentation</a><a href={repo}>GitHub</a></nav>}</header>
+    <header className="site-header">
+      <a className="brand" href="#" aria-label="CLI Toolkit for Jira home"><span className="brand-name">CLI Toolkit</span> <span className="brand-for">for Jira</span></a>
+      <nav aria-label="Main navigation">
+        <a className="nav-optional" href="#scripting">Scripting</a>
+        <a className="nav-optional" href="#commands">Commands</a>
+        <a href={docs}>Docs</a>
+        <a href={repo}>GitHub</a>
+        <a className="nav-install" href="#get-started">Install the CLI</a>
+      </nav>
+    </header>
     <main>
-      <div className="page-shell">
-        <section className="hero" aria-labelledby="hero-title"><div className="hero-copy">
-          <div className="cloud-note"><span className="small-terminal">$ jira</span><span>Independent CLI for Jira Cloud</span></div>
-          <h1 id="hero-title">Your work.<br />At your command.</h1>
-          <p className="hero-description">Find issues, move work forward, and manage sprints. Right where you already work.</p>
+      <section className="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title"><span className="hero-prompt" aria-hidden="true">$ </span>jira issue list --open</h1>
+        <div className="hero-copy">
+          <p className="hero-lead">An independent command-line tool for Jira Cloud. List, view, move and assign issues, plan sprints, and script all of it with JSON, CSV and exit codes that mean one thing each.</p>
           <p className="hero-independence">Independently maintained. Not affiliated with Atlassian.</p>
-          <div className="hero-actions"><a className="text-link" href="#workflows">See it in action <ArrowDown size={16} /></a><a className="release-link" href={latest}>Latest release <ArrowUpRight size={15} /></a></div>
-          <div className="hero-proof"><span><Check size={15} /> Within your Jira permissions</span><span><KeyRound size={15} /> Your existing API token</span></div>
-        </div><InstallPanel /></section>
-        <Workbench />
-        <section className="setup-strip" aria-label="Next steps"><div><span className="setup-number">1</span><p>Install <code>jira</code><span>Choose your OS above.</span></p></div><div><span className="setup-number">2</span><p>Connect your account<span><code>jira auth login --profile work</code></span></p></div><div><span className="setup-number">3</span><p>Pick your project<span><code>jira context use --project ENG</code></span></p></div></section>
-      </div>
-      <section className="capabilities" aria-labelledby="capabilities-title"><div className="page-shell"><div className="section-intro"><h2 id="capabilities-title">Fits the way<br />your team works.</h2><p>Keep your projects, permissions, and workflows.<br />Bring them into your terminal.</p></div>
-        <div className="feature-row"><div className="feature-copy"><GitPullRequest className="feature-icon" /><h3>Work with your project’s fields.</h3><p>Create and edit issues, add comments and attachments, and follow the transitions your workflow allows. Field discovery helps you supply the right inputs.</p><a href={`${docs}#everyday-workflows`}>Explore the commands <ChevronRight size={16} /></a></div><div className="field-example"><div className="example-command"><code>jira project fields -p ENG --type Bug</code><Code2 size={18} /></div><div className="field-line"><span>Summary</span><Badge>Required</Badge></div><div className="field-line"><span>Issue type</span><strong>Bug</strong></div><div className="field-line"><span>Your custom fields</span><strong>Discovered from Jira</strong></div><div className="field-line"><span>Available transitions</span><strong>Your workflow</strong></div></div></div>
-        <div className="feature-row"><div className="feature-copy"><KeyRound className="feature-icon" /><h3>Choose your account and context.</h3><p>Use named profiles for different accounts and sites. Login defaults to your OS credential store. For headless use, choose environment authentication or explicit POSIX plaintext file storage. Guided login explains setup and permissions.</p><a href={`${docs}#authentication-and-profiles`}>Set up authentication <ChevronRight size={16} /></a></div><div className="profile-example"><div className="profile-top"><span className="profile-avatar">W</span><div><strong>work</strong><span>Example profile · native storage</span></div><Badge className="profile-status"><Check size={12} /> Connected</Badge></div><div className="profile-detail"><span>Project</span><strong>ENG</strong></div><div className="profile-detail"><span>Token</span><strong><ShieldCheck size={15} /> OS credential store</strong></div><code>jira auth status --profile work</code></div></div>
-        <div className="feature-row"><div className="feature-copy"><Code2 className="feature-icon" /><h3>Ready for scripts and agents.</h3><p>Use structured JSON, CSV, explicit exit codes, and noninteractive commands. Build repeatable workflows around the commands you use every day.</p><a href={`${docs}#automation-and-agents`}>Automate a workflow <ChevronRight size={16} /></a></div><div className="automation-example"><div className="automation-label"><Terminal size={17} /><span>Readable in a terminal. Useful in a script.</span></div><pre><code>{'jira issue list -p ENG --open \\\n  --csv --columns key,summary,status\n\njira issue view ENG-42 --json --no-input'}</code></pre><p>Generic API requests and <code>--spec</code> discovery are <a href={`${repo}/blob/main/docs/sprints/v2.5-api/roadmap.md`}>planned for v2.5</a>.</p></div></div>
-      </div></section>
-      <section className="help-section page-shell" aria-labelledby="help-title"><div><h2 id="help-title">A few things<br />before you start.</h2><p>Install it, connect it, make it yours.</p><a className="text-link" href={docs}>Read the documentation <ArrowUpRight size={15} /></a></div><Accordion className="faq">
-        <AccordionItem value="independent"><AccordionTrigger>Is this an official Atlassian tool?</AccordionTrigger><AccordionContent>No. CLI Toolkit for Jira is independently maintained by <a href="https://github.com/User17745">User17745</a> and is not affiliated with, endorsed by, or sponsored by Atlassian. The <code>jira</code> command runs this toolkit and connects to your Jira Cloud account.</AccordionContent></AccordionItem>
-        <AccordionItem value="auth"><AccordionTrigger>Do I need a new Jira account?</AccordionTrigger><AccordionContent>No. Use your existing Jira Cloud site, email, and API token. The CLI uses your account’s Jira permissions. Guided login links to token creation and explains scopes; tokens cannot refresh automatically.</AccordionContent></AccordionItem>
-        <AccordionItem value="platform"><AccordionTrigger>Which systems can run it?</AccordionTrigger><AccordionContent>Native releases support macOS 15+ on Apple Silicon and Intel, Linux x86_64 with glibc 2.39+, and Windows 10+ x86_64. For other compatible systems, install the verified Python wheel with Python 3.10 or later. <a href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>See installation options.</a></AccordionContent></AccordionItem>
-        <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
-        <AccordionItem value="support"><AccordionTrigger>Does it support every Jira edition?</AccordionTrigger><AccordionContent>The current release supports standard Jira Cloud issue workflows, plus Software boards and sprints where permissions allow. Data Center and Service Management customer-request APIs are future work.</AccordionContent></AccordionItem>
-      </Accordion></section>
-      <section className="bottom-cta page-shell"><div><h2>Your next issue is a command away.</h2><p>Get back to the work, without leaving your terminal.</p></div><a className="primary-link" href="#get-started"><Terminal size={18} /> Install the CLI</a></section>
+          <p className="hero-proof">Runs within your Jira permissions, using your existing API token.</p>
+          <Install />
+        </div>
+        <div className="hero-sandbox">
+          <Sandbox ref={sandbox} />
+          <div className="try">
+            <p id="try-title">Try</p>
+            <ul aria-labelledby="try-title">{suggestions.map(s => <li key={s}><button type="button" onClick={() => run(s)}><code>{s}</code></button></li>)}</ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="scripting" id="scripting" aria-labelledby="scripting-title">
+        <div className="section-head">
+          <h2 id="scripting-title">Predictable enough to script</h2>
+          <p>Data goes to stdout. Messages and prompts go to stderr. Add <code>--json</code> and failures become JSON on stdout too, so a script never has to parse prose.</p>
+        </div>
+        <div className="scripting-grid">
+          <table className="exit-table">
+            <caption>Exit codes</caption>
+            <thead><tr><th scope="col">Code</th><th scope="col">Meaning</th></tr></thead>
+            <tbody>{exitCodes.map(row => <tr key={row.code}>
+              <td><code>{row.code}</code></td>
+              <td><p><strong>{row.meaning}.</strong> {row.detail}</p>{row.example
+                ? <button type="button" className="run-button" onClick={() => run(row.example!)} aria-label={`Run ${row.example} in the sandbox`}>Run <code>{row.example}</code></button>
+                : <p className="run-hint">Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the sandbox to see it.</p>}</td>
+            </tr>)}</tbody>
+          </table>
+          <div className="error-shape">
+            <p className="error-shape-title">Every error has one shape with <code>--json</code></p>
+            <pre tabIndex={0}><code>{`$ jira issue view ENG-99 --json
+{
+  "error": {
+    "code": "jira_error",
+    "message": "Error: GET /rest/api/3/issue/ENG-99 -> 404: …",
+    "status": 404
+  }
+}`}</code></pre>
+            <ul className="rules">
+              <li><code>--no-input</code>, or any input that isn’t a terminal, never prompts. Missing values fail with exit 2.</li>
+              <li>Global flags such as <code>--project</code> and <code>--json</code> work before or after the command.</li>
+              <li>Deletes ask for confirmation, or need <code>--yes</code> when nothing can prompt.</li>
+              <li>Tokens stay in your OS credential store and are redacted from error output.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <Reference onRun={run} />
+
+      <section className="setup" aria-labelledby="setup-title">
+        <div className="section-head">
+          <h2 id="setup-title">From install to your first list</h2>
+        </div>
+        <ol className="steps">
+          <li><p><a href="#get-started">Choose your system</a> and run its install command. It puts <code>jira</code> on your PATH.</p></li>
+          <li><p>Sign in with an API token. Guided login links to token creation, explains scopes, and stores the token in your OS credential store by default. For headless use, choose environment authentication or explicit POSIX plaintext file storage.</p><code>jira auth login --profile work</code></li>
+          <li><p>Pick a default project, then list what’s open.</p><code>jira context use --project ENG</code><code>jira issue list --open</code></li>
+        </ol>
+      </section>
+
+      <section className="questions" aria-labelledby="questions-title">
+        <div className="section-head">
+          <h2 id="questions-title">Before you install</h2>
+          <p>What it supports today, and what it doesn’t yet.</p>
+        </div>
+        <Accordion className="faq">
+          <AccordionItem value="independent"><AccordionTrigger>Is this an official Atlassian tool?</AccordionTrigger><AccordionContent>No. CLI Toolkit for Jira is independently maintained by <a href="https://github.com/User17745">User17745</a> and is not affiliated with, endorsed by, or sponsored by Atlassian. The <code>jira</code> command runs this toolkit and connects to your Jira Cloud account.</AccordionContent></AccordionItem>
+          <AccordionItem value="auth"><AccordionTrigger>Do I need a new Jira account?</AccordionTrigger><AccordionContent>No. Use your existing Jira Cloud site, email, and API token. The CLI uses your account’s Jira permissions. Guided login links to token creation and explains scopes; tokens cannot refresh automatically.</AccordionContent></AccordionItem>
+          <AccordionItem value="support"><AccordionTrigger>Does it support every Jira edition?</AccordionTrigger><AccordionContent>The current release supports standard Jira Cloud issue workflows, plus Software boards and sprints where permissions allow. Data Center and Service Management customer-request APIs are future work.</AccordionContent></AccordionItem>
+          <AccordionItem value="api"><AccordionTrigger>Can I call any Jira API endpoint?</AccordionTrigger><AccordionContent>Not yet. Generic API requests with <code>jira api</code> and <code>--spec</code> discovery are <a href={`${repo}/blob/main/docs/sprints/v2.5-api/roadmap.md`}>planned for v2.5</a>. Today’s commands are the ones listed above.</AccordionContent></AccordionItem>
+          <AccordionItem value="platform"><AccordionTrigger>Which systems can run it?</AccordionTrigger><AccordionContent>Native releases support macOS 15+ on Apple Silicon and Intel, Linux x86_64 with glibc 2.39+, and Windows 10+ x86_64. For other compatible systems, install the verified Python wheel with Python 3.10 or later. <a href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>See installation options.</a></AccordionContent></AccordionItem>
+          <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
+        </Accordion>
+      </section>
     </main>
-    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={`${repo}/blob/main/LICENSE`}>License</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party notices</a></div></footer>
-    <section className="independent-notice page-shell" aria-labelledby="independence-title">
-      <h2 id="independence-title">Independent project and intellectual property notice</h2>
-      <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
-      <p>References to Jira and Atlassian, including the <code>jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
-      <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
-      <p className="project-license">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a href={`${repo}/blob/main/NOTICE`}>Project notice</a> · <a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
-    </section>
+    <footer className="site-footer">
+      <div className="footer-row">
+        <a className="brand" href="#"><span className="brand-name">CLI Toolkit</span> <span className="brand-for">for Jira</span></a>
+        <nav aria-label="Project links"><a href={repo}>Source</a><a href={`${repo}/blob/main/LICENSE`}>License</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={notices}>Third-party notices</a></nav>
+      </div>
+      <section className="independent-notice" aria-labelledby="independence-title">
+        <h2 id="independence-title">Independent project and intellectual property notice</h2>
+        <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
+        <p>References to Jira and Atlassian, including the <code>jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
+        <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
+        <p className="project-license">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
+      </section>
+    </footer>
   </>
 }
 export default App

@@ -1,6 +1,6 @@
 # CLI Toolkit for Jira landing page
 
-React, TypeScript and Vite, with Tailwind CSS and generated shadcn/ui (Base UI) components. The site is static: no credentials, Jira requests, analytics, or backend. Fonts and visual assets are self-hosted. [Design decisions](DESIGN.md) explain the installation-first layout.
+React, TypeScript and Vite, with Tailwind CSS and generated shadcn/ui (Base UI) components. The site is static: no credentials, Jira requests, analytics, or backend. Fonts and visual assets are self-hosted. [Design decisions](DESIGN.md) explain the command-first layout and the sandbox.
 
 ## Develop
 
@@ -11,7 +11,17 @@ npm ci
 npm run dev
 ```
 
-Open the printed URL under `/jira-cli-toolkit/`. The Vite base is the GitHub Pages repository path. Change `vite.config.ts`, the canonical/OG URLs in `index.html`, and repo links in `src/App.tsx` together if hosting moves.
+Open the printed URL under `/jira-cli-toolkit/`.
+
+### Command data
+
+The sandbox and command reference read `src/data/commands.json`, which is generated from the real `jira` argument parser. After changing commands, regenerate it from the repository root:
+
+```bash
+python scripts/command_tree.py > web/src/data/commands.json
+```
+
+`tests/test_website_commands.py` fails in Python CI when the file drifts from the parser. Help text and argument errors in the sandbox are a port of Python's argparse formatting at 80 columns, so `jira <command> --help` on the site matches the installed CLI. Sample issues, users and sprints live in `src/sandbox/sample.ts` and are illustrative. The Vite base is the GitHub Pages repository path. Change `vite.config.ts`, the canonical/OG URLs in `index.html`, and repo links in `src/App.tsx` together if hosting moves.
 
 ## Verify
 
@@ -22,7 +32,7 @@ npx playwright install chromium
 npm test
 ```
 
-Playwright checks the built site served by Vite preview: OS tabs and keyboard navigation, exact copied commands and clipboard failures, example tabs, FAQ, mobile menu, responsive overflow, first-fold installation, and missing assets/console errors. It does not contact Jira or execute copied commands. Installers are tested separately by Python fixtures and native build integration on all four supported targets for stable builds. RC/development builds retain existing native CLI smoke checks and are never selected by fresh installers.
+Playwright checks the built site served by Vite preview: OS tabs and keyboard navigation, exact copied commands and clipboard failures, the sandbox (sample state, argparse and JSON errors, exit codes, Tab completion, history, Escape releasing focus), the command reference, FAQ, a one-line headline, responsive overflow, first-fold installation, and missing assets/console errors. It does not contact Jira or execute copied commands. Installers are tested separately by Python fixtures and native build integration on all four supported targets for stable builds. RC/development builds retain existing native CLI smoke checks and are never selected by fresh installers.
 
 ## Publish
 

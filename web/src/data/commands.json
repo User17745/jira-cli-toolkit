@@ -1,0 +1,2753 @@
+{
+ "name": "jira",
+ "help": "Jira CLI Toolkit — Jira Cloud from your terminal",
+ "description": "Jira CLI Toolkit — Jira Cloud from your terminal",
+ "shared": true,
+ "dest": "command",
+ "title": "commands",
+ "commands": [
+  {
+   "name": "help",
+   "help": "show help for any command",
+   "description": null,
+   "shared": false,
+   "options": [
+    {
+     "positional": "path",
+     "metavar": null,
+     "nargs": "*",
+     "choices": [],
+     "type": null,
+     "help": "for example: issue comment add"
+    }
+   ]
+  },
+  {
+   "name": "dashboard",
+   "help": "summarize selected projects",
+   "description": null,
+   "shared": true,
+   "options": [
+    {
+     "flag": "--projects",
+     "names": [
+      "--projects"
+     ],
+     "takesValue": true,
+     "nargs": "+",
+     "metavar": "PROJECTS",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "project keys to summarize"
+    }
+   ]
+  },
+  {
+   "name": "completion",
+   "help": "generate local shell completion",
+   "description": null,
+   "shared": true,
+   "options": [
+    {
+     "positional": "shell",
+     "metavar": null,
+     "nargs": null,
+     "choices": [
+      "bash",
+      "zsh",
+      "fish"
+     ],
+     "type": null,
+     "help": ""
+    }
+   ]
+  },
+  {
+   "name": "template",
+   "help": "inspect and validate reusable JSON templates",
+   "description": null,
+   "shared": true,
+   "dest": "template_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list built-in and local templates",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "show",
+     "help": "show a declarative template",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "template",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "validate",
+     "help": "validate a declarative template",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "template",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--var",
+       "names": [
+        "--var"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "VAR",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--refresh",
+       "names": [
+        "--refresh"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "REFRESH",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "update",
+   "help": "check GitHub Releases or explicitly upgrade",
+   "description": null,
+   "shared": true,
+   "options": [
+    {
+     "flag": "--check",
+     "names": [
+      "--check"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "CHECK",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": ""
+    },
+    {
+     "flag": "--info",
+     "names": [
+      "--info"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "INFO",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "local installation details, without network"
+    },
+    {
+     "flag": "--version",
+     "names": [
+      "--version"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "VERSION",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "requested release version"
+    },
+    {
+     "flag": "--prerelease",
+     "names": [
+      "--prerelease"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "PRERELEASE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": ""
+    },
+    {
+     "flag": "--allow-downgrade",
+     "names": [
+      "--allow-downgrade"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "ALLOW_DOWNGRADE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": ""
+    },
+    {
+     "flag": "--yes",
+     "names": [
+      "--yes"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "YES",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": ""
+    }
+   ]
+  },
+  {
+   "name": "config",
+   "help": "set up and inspect local configuration",
+   "description": null,
+   "shared": true,
+   "dest": "config_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "init",
+     "help": "legacy credential setup",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "show",
+     "help": "show saved configuration with token masked",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "migrate",
+     "help": "migrate legacy credentials to a named profile",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--storage",
+       "names": [
+        "--storage"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STORAGE",
+       "required": false,
+       "choices": [
+        "keyring",
+        "file"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "get",
+     "help": "inspect or change a nonsecret preference",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [
+        "project",
+        "board"
+       ],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "set",
+     "help": "inspect or change a nonsecret preference",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [
+        "project",
+        "board"
+       ],
+       "type": null,
+       "help": ""
+      },
+      {
+       "positional": "value",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "auth",
+   "help": "guided API-token login and credential health",
+   "description": null,
+   "shared": true,
+   "dest": "auth_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "login",
+     "help": "validate and store an API token",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--storage",
+       "names": [
+        "--storage"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STORAGE",
+       "required": false,
+       "choices": [
+        "keyring",
+        "file"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--token-stdin",
+       "names": [
+        "--token-stdin"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "TOKEN_STDIN",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--scoped",
+       "names": [
+        "--scoped"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "SCOPED",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "token uses API scopes and the Atlassian gateway"
+      },
+      {
+       "flag": "--cloud-id",
+       "names": [
+        "--cloud-id"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "CLOUD_ID",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "cloud ID for a scoped token"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "help": "validate the selected identity with Jira",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "logout",
+     "help": "delete selected local credential; upstream tokens are not revoked",
+     "description": null,
+     "shared": true,
+     "options": []
+    }
+   ]
+  },
+  {
+   "name": "profile",
+   "help": "named site/account identities",
+   "description": null,
+   "shared": true,
+   "dest": "profile_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list saved profiles without reading secrets",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "use",
+     "help": "select or remove a profile",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "name",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "remove",
+     "help": "select or remove a profile",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "name",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "doctor",
+   "help": "redacted connectivity, identity and project diagnostics",
+   "description": null,
+   "shared": true,
+   "options": []
+  },
+  {
+   "name": "context",
+   "help": "inspect resolved local context",
+   "description": null,
+   "shared": true,
+   "dest": "context_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "show",
+     "help": "show site and project without contacting Jira",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "use",
+     "help": "select a profile/project/board after checking access",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--board",
+       "names": [
+        "--board"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "BOARD",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--select",
+       "names": [
+        "--select"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "SELECT",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "choose accessible projects and boards interactively"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "user",
+   "help": "user identity",
+   "description": null,
+   "shared": true,
+   "dest": "user_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "me",
+     "help": "show authenticated user",
+     "description": null,
+     "shared": true,
+     "options": []
+    }
+   ]
+  },
+  {
+   "name": "project",
+   "help": "projects",
+   "description": null,
+   "shared": true,
+   "dest": "project_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list accessible projects",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "view",
+     "help": "view a project",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": "?",
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "issue-types",
+     "help": "discover available issue types",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": "?",
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--refresh",
+       "names": [
+        "--refresh"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "REFRESH",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "fields",
+     "help": "discover creation fields and required values",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": "?",
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--refresh",
+       "names": [
+        "--refresh"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "REFRESH",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "statuses",
+     "help": "show workflow statuses by issue type",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": "?",
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "issue",
+   "help": "issue operations",
+   "description": null,
+   "shared": true,
+   "dest": "issue_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "search issues, optionally excluding Done",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--jql",
+       "names": [
+        "--jql"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "JQL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "complete JQL query; cannot be combined with --open or --project"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--open",
+       "names": [
+        "--open"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "OPEN",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "exclude the Done status category"
+      },
+      {
+       "flag": "--assignee",
+       "names": [
+        "--assignee"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ASSIGNEE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "account ID or me"
+      },
+      {
+       "flag": "--status",
+       "names": [
+        "--status"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STATUS",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--label",
+       "names": [
+        "--label"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "LABEL",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--board",
+       "names": [
+        "--board"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "BOARD",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--order-by",
+       "names": [
+        "--order-by"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ORDER_BY",
+       "required": false,
+       "choices": [
+        "updated",
+        "created",
+        "priority",
+        "key"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--order",
+       "names": [
+        "--order"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ORDER",
+       "required": false,
+       "choices": [
+        "asc",
+        "desc"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--fields",
+       "names": [
+        "--fields"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELDS",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "comma-separated Jira field IDs"
+      }
+     ]
+    },
+    {
+     "name": "create",
+     "help": "create an issue",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--summary",
+       "names": [
+        "--summary",
+        "-s"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "SUMMARY",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--description",
+       "names": [
+        "--description",
+        "--desc",
+        "-d"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESC",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--description-file",
+       "names": [
+        "--description-file",
+        "--desc-file"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESC_FILE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type",
+        "-t"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "issue type name or id:<ID>; guided selection when omitted"
+      },
+      {
+       "flag": "--priority",
+       "names": [
+        "--priority"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "PRIORITY",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--assignee",
+       "names": [
+        "--assignee"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ASSIGNEE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "Jira account ID"
+      },
+      {
+       "flag": "--label",
+       "names": [
+        "--label"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "LABEL",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--component",
+       "names": [
+        "--component"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "COMPONENT",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--parent",
+       "names": [
+        "--parent"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "PARENT",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--field",
+       "names": [
+        "--field"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELD",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--fields-file",
+       "names": [
+        "--fields-file"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELDS_FILE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--editor",
+       "names": [
+        "--editor"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "EDITOR",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--refresh",
+       "names": [
+        "--refresh"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "REFRESH",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--template",
+       "names": [
+        "--template"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TEMPLATE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "built-in/local template name or JSON path"
+      },
+      {
+       "flag": "--var",
+       "names": [
+        "--var"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "VAR",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": "template variable NAME=VALUE"
+      }
+     ]
+    },
+    {
+     "name": "view",
+     "help": "view an issue or open it with --web",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--web",
+       "names": [
+        "--web"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "WEB",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "transition",
+     "help": "choose or apply an available transition",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--to",
+       "names": [
+        "--to"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TO",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "transition name or ID"
+      },
+      {
+       "flag": "--field",
+       "names": [
+        "--field"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELD",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--fields-file",
+       "names": [
+        "--fields-file"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELDS_FILE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "transitions",
+     "help": "list available transitions",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "help": "delete an issue after confirmation",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--yes",
+       "names": [
+        "--yes"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "YES",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "skip confirmation"
+      }
+     ]
+    },
+    {
+     "name": "edit",
+     "help": "update editable fields and collection values",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--summary",
+       "names": [
+        "--summary"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "SUMMARY",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--priority",
+       "names": [
+        "--priority"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "PRIORITY",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--due-date",
+       "names": [
+        "--due-date"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DUE_DATE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--parent",
+       "names": [
+        "--parent"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "PARENT",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--description",
+       "names": [
+        "--description",
+        "--desc"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESC",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--description-file",
+       "names": [
+        "--description-file"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESC_FILE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--editor",
+       "names": [
+        "--editor"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "EDITOR",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--field",
+       "names": [
+        "--field"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELD",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--fields-file",
+       "names": [
+        "--fields-file"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FIELDS_FILE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--label",
+       "names": [
+        "--label"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "LABEL",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--add-label",
+       "names": [
+        "--add-label"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ADD_LABEL",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--remove-label",
+       "names": [
+        "--remove-label"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "REMOVE_LABEL",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--component",
+       "names": [
+        "--component"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "COMPONENT",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--add-component",
+       "names": [
+        "--add-component"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "ADD_COMPONENT",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--remove-component",
+       "names": [
+        "--remove-component"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "REMOVE_COMPONENT",
+       "required": false,
+       "choices": [],
+       "repeat": true,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "assign",
+     "help": "assign an issue",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--user",
+       "names": [
+        "--user"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "USER",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "me, id:<account ID>, or unambiguous display name/email"
+      }
+     ]
+    },
+    {
+     "name": "unassign",
+     "help": "clear the assignee",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "link",
+     "help": "link two issues with explicit direction",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "positional": "other",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--direction",
+       "names": [
+        "--direction"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DIRECTION",
+       "required": true,
+       "choices": [
+        "inward",
+        "outward"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "unlink",
+     "help": "delete a link after confirmation",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--yes",
+       "names": [
+        "--yes"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "YES",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "comment",
+     "help": "issue comments",
+     "description": null,
+     "shared": true,
+     "dest": "comment_action",
+     "title": "positional arguments",
+     "commands": [
+      {
+       "name": "add",
+       "help": "add a comment",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        },
+        {
+         "flag": "--message",
+         "names": [
+          "--message",
+          "-m"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "MESSAGE",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        },
+        {
+         "flag": "--message-file",
+         "names": [
+          "--message-file"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "MESSAGE_FILE",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        },
+        {
+         "flag": "--editor",
+         "names": [
+          "--editor"
+         ],
+         "takesValue": false,
+         "nargs": 0,
+         "metavar": "EDITOR",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "list",
+       "help": "list comments",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "flag": "--all",
+         "names": [
+          "--all"
+         ],
+         "takesValue": false,
+         "nargs": 0,
+         "metavar": "ALL",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": "fetch every page; overrides --limit"
+        },
+        {
+         "flag": "--limit",
+         "names": [
+          "--limit"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "MAX",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "edit",
+       "help": "edit a comment",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        },
+        {
+         "positional": "comment_id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--message",
+         "names": [
+          "--message",
+          "-m"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "MESSAGE",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        },
+        {
+         "flag": "--message-file",
+         "names": [
+          "--message-file"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "MESSAGE_FILE",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        },
+        {
+         "flag": "--editor",
+         "names": [
+          "--editor"
+         ],
+         "takesValue": false,
+         "nargs": 0,
+         "metavar": "EDITOR",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "delete",
+       "help": "delete a comment after confirmation",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        },
+        {
+         "positional": "comment_id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--yes",
+         "names": [
+          "--yes"
+         ],
+         "takesValue": false,
+         "nargs": 0,
+         "metavar": "YES",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "attachment",
+     "help": "issue attachments",
+     "description": null,
+     "shared": true,
+     "dest": "attachment_action",
+     "title": "positional arguments",
+     "commands": [
+      {
+       "name": "list",
+       "help": "list attachments",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "upload",
+       "help": "upload attachments",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "key",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": null,
+         "help": ""
+        },
+        {
+         "positional": "files",
+         "metavar": null,
+         "nargs": "+",
+         "choices": [],
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "download",
+       "help": "download attachments",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--output",
+         "names": [
+          "--output"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "OUTPUT",
+         "required": true,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": "new file path or existing directory"
+        }
+       ]
+      },
+      {
+       "name": "delete",
+       "help": "delete attachments",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--yes",
+         "names": [
+          "--yes"
+         ],
+         "takesValue": false,
+         "nargs": 0,
+         "metavar": "YES",
+         "required": false,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "board",
+   "help": "board operations",
+   "description": null,
+   "shared": true,
+   "dest": "board_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list boards",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--jql-project",
+       "names": [
+        "--jql-project"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "JQL_PROJECT",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "legacy project-filter override"
+      }
+     ]
+    },
+    {
+     "name": "create",
+     "help": "create a filter and board",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--name",
+       "names": [
+        "--name"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "NAME",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--jql",
+       "names": [
+        "--jql"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "JQL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--filter-id",
+       "names": [
+        "--filter-id"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "FILTER_ID",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--type",
+       "names": [
+        "--type"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TYPE",
+       "required": false,
+       "choices": [
+        "scrum",
+        "kanban"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "view",
+     "help": "view a board or open it with --web",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "board_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--web",
+       "names": [
+        "--web"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "WEB",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "issues",
+     "help": "list issues on a board",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "positional": "board_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--jql",
+       "names": [
+        "--jql"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "JQL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "feature",
+     "help": "toggle board features",
+     "description": null,
+     "shared": true,
+     "dest": "feature_action",
+     "title": "positional arguments",
+     "commands": [
+      {
+       "name": "enable",
+       "help": "enable a feature",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "board_id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--feature",
+         "names": [
+          "--feature"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "FEATURE",
+         "required": true,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      },
+      {
+       "name": "disable",
+       "help": "disable a feature",
+       "description": null,
+       "shared": true,
+       "options": [
+        {
+         "positional": "board_id",
+         "metavar": null,
+         "nargs": null,
+         "choices": [],
+         "type": "positive_int",
+         "help": ""
+        },
+        {
+         "flag": "--feature",
+         "names": [
+          "--feature"
+         ],
+         "takesValue": true,
+         "nargs": null,
+         "metavar": "FEATURE",
+         "required": true,
+         "choices": [],
+         "repeat": false,
+         "type": null,
+         "help": ""
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "sprint",
+   "help": "sprint operations",
+   "description": null,
+   "shared": true,
+   "dest": "sprint_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list board sprints",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--board",
+       "names": [
+        "--board"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "BOARD",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--state",
+       "names": [
+        "--state"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STATE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "create",
+     "help": "create a sprint",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--board",
+       "names": [
+        "--board"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "BOARD",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--name",
+       "names": [
+        "--name"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "NAME",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--goal",
+       "names": [
+        "--goal"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "GOAL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "start",
+     "help": "start a sprint",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "sprint_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "close",
+     "help": "close a sprint",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "sprint_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "edit",
+     "help": "change sprint state",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "sprint_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--state",
+       "names": [
+        "--state"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STATE",
+       "required": true,
+       "choices": [
+        "active",
+        "closed",
+        "future"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "add-issues",
+     "help": "add issues to a sprint",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "sprint_id",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "positional": "keys",
+       "metavar": null,
+       "nargs": "+",
+       "choices": [],
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "component",
+   "help": "project components",
+   "description": null,
+   "shared": true,
+   "dest": "component_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list components",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "create",
+     "help": "create a component",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--name",
+       "names": [
+        "--name"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "NAME",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--description",
+       "names": [
+        "--description",
+        "--desc"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESC",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "version": "2.1.0",
+ "epilog": "Examples: jira issue list -p ENG --open; jira help issue create",
+ "legacy": [
+  {
+   "name": "me",
+   "help": "legacy: show authenticated user"
+  },
+  {
+   "name": "project-list",
+   "help": "legacy: list projects"
+  },
+  {
+   "name": "project-show",
+   "help": "legacy: show project details"
+  },
+  {
+   "name": "issue-create",
+   "help": "legacy: create an issue"
+  },
+  {
+   "name": "intake",
+   "help": "legacy: explicit legacy callback/support wizard"
+  },
+  {
+   "name": "open",
+   "help": "legacy: list unfinished issues"
+  },
+  {
+   "name": "issue-show",
+   "help": "legacy: show an issue"
+  },
+  {
+   "name": "issue-move",
+   "help": "legacy: transition an issue"
+  },
+  {
+   "name": "transitions",
+   "help": "legacy: list available transitions"
+  },
+  {
+   "name": "issue-delete",
+   "help": "legacy: delete an issue"
+  },
+  {
+   "name": "comment-add",
+   "help": "legacy: add a comment"
+  },
+  {
+   "name": "comment-list",
+   "help": "legacy: list comments"
+  },
+  {
+   "name": "board-list",
+   "help": "legacy: list boards"
+  },
+  {
+   "name": "board-create",
+   "help": "legacy: create a board"
+  },
+  {
+   "name": "board-issues",
+   "help": "legacy: list board issues"
+  },
+  {
+   "name": "board-feature",
+   "help": "legacy: toggle a board feature"
+  },
+  {
+   "name": "sprint-list",
+   "help": "legacy: list sprints"
+  },
+  {
+   "name": "sprint-create",
+   "help": "legacy: create a sprint"
+  },
+  {
+   "name": "sprint-state",
+   "help": "legacy: change sprint state"
+  },
+  {
+   "name": "sprint-add",
+   "help": "legacy: add issues to a sprint"
+  },
+  {
+   "name": "component-list",
+   "help": "legacy: list components"
+  },
+  {
+   "name": "component-create",
+   "help": "legacy: create a component"
+  },
+  {
+   "name": "browse",
+   "help": "legacy: open an issue or board in a browser"
+  }
+ ],
+ "globals": [
+  {
+   "flag": "--help",
+   "names": [
+    "-h",
+    "--help"
+   ],
+   "takesValue": false,
+   "nargs": 0,
+   "metavar": "HELP",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "show this help message and exit"
+  },
+  {
+   "flag": "--site",
+   "names": [
+    "--site"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "SITE",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": ""
+  },
+  {
+   "flag": "--email",
+   "names": [
+    "--email"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "EMAIL",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": ""
+  },
+  {
+   "flag": "--token",
+   "names": [
+    "--token"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "TOKEN",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": ""
+  },
+  {
+   "flag": "--project",
+   "names": [
+    "--project",
+    "-p"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "PROJECT",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "project key"
+  },
+  {
+   "flag": "--profile",
+   "names": [
+    "--profile"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "PROFILE",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "named identity; never mixed with identity flags"
+  },
+  {
+   "flag": "--json",
+   "names": [
+    "--json"
+   ],
+   "takesValue": false,
+   "nargs": 0,
+   "metavar": "JSON",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "JSON output"
+  },
+  {
+   "flag": "--csv",
+   "names": [
+    "--csv"
+   ],
+   "takesValue": false,
+   "nargs": 0,
+   "metavar": "CSV",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "CSV output for lists"
+  },
+  {
+   "flag": "--columns",
+   "names": [
+    "--columns"
+   ],
+   "takesValue": true,
+   "nargs": null,
+   "metavar": "COLUMNS",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "comma-separated list columns"
+  },
+  {
+   "flag": "--no-input",
+   "names": [
+    "--no-input"
+   ],
+   "takesValue": false,
+   "nargs": 0,
+   "metavar": "NO_INPUT",
+   "required": false,
+   "choices": [],
+   "repeat": false,
+   "type": null,
+   "help": "never prompt"
+  }
+ ],
+ "exclusive": [
+  [
+   "--json",
+   "--csv"
+  ]
+ ]
+}
