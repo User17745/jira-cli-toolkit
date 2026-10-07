@@ -28,5 +28,6 @@ with tempfile.TemporaryDirectory() as home:
             info=json.loads(result.stdout)
             assert info['method']=='standalone' and info['os']==os_name and info['arch']==arch,info
 print(f'Native binary verified: {path}')
+subprocess.run([sys.executable,'scripts/release/installer_smoke.py',str(path.absolute())],check=True,timeout=240)
 if os_name=='windows':
     subprocess.run([sys.executable,'scripts/release/windows_smoke.py',str(path.absolute())],check=True,timeout=180)
