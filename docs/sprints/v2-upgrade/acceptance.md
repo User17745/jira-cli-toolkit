@@ -1,6 +1,6 @@
 # v2 release acceptance evidence
 
-Evidence collected: 6–7 October 2026. Candidate: `v2.0.0rc1`, commit `d0640607c7e58c99d804dedb54f7871ed2e21369`.
+Evidence collected: 6–7 October 2026. Stable: `v2.0.0`, commit `cdb0c0f00cd719ea1c7492e40487a9594a8d5605`. Earlier candidate evidence: `v2.0.0rc1`, commit `d0640607c7e58c99d804dedb54f7871ed2e21369`.
 
 ## Automated and packaged checks
 
@@ -14,7 +14,7 @@ Evidence collected: 6–7 October 2026. Candidate: `v2.0.0rc1`, commit `d0640607
 - [x] Original-to-candidate pipx 1.14.0 and uv 0.11.11 upgrades, both executables, custom-directory manager discovery and manager uninstall pass in isolated homes.
 - [x] pipx uv-backend force-install failure is reproduced. Follow-up recovery starts with an actual uv-backed 0.2.0 environment: force installation ignores `--backend pip`, then manager uninstall plus a fresh pip-backend install of the published RC wheel succeeds. Both entry points, pipx receipt detection, config bytes and mode 0600 are verified.
 
-The original pipx upgrade check started with the pip backend and did not prove that an install-time backend override switches an existing uv environment. User acceptance exposed that gap. Recovery instructions are corrected in the current branch’s documentation and updater guidance; the immutable published RC1 still contains the earlier guidance.
+The original pipx upgrade check started with the pip backend and did not prove that an install-time backend override switches an existing uv environment. User acceptance exposed that gap. Recovery instructions are corrected in stable 2.0.0 documentation and updater guidance; the immutable published RC1 still contains the earlier guidance.
 
 CI: [package/compatibility](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642208), [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37496642748).
 
@@ -60,15 +60,21 @@ API-token expiry cannot be queried reliably and API tokens do not refresh. Inter
 - [x] Update an actual earlier standalone CI binary to the published candidate; confirm previous binary retention, byte-identical config and no-op checks.
 - [x] Confirm the candidate is excluded from latest stable.
 - [x] Rerun publication against the existing candidate; matching complete assets are preserved.
+- [x] Stable tag pipeline passes all ten required compatibility/native/package/publication jobs.
+- [x] Download and verify all eight stable assets, including manifest commit/version/channel, sizes and SHA-256 hashes; confirm latest stable resolves to v2.0.0.
+- [x] Update the published standalone RC1 through default latest-stable discovery to 2.0.0 in an isolated home; verify exact candidate bytes, previous binary retention, schema-2 config bytes/mode 0600 preservation, and repeated no-op behavior.
+- [x] Install the published stable wheel and smoke both CLI entry points; upgrade an isolated pipx/pip RC1 environment with the stable wheel and verify commands, manager receipt detection, and migrated config bytes/permissions.
 
 Published [release candidate](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0rc1); [tag-triggered pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37497037819) passed all ten required jobs. The downloaded wheel also passed isolated installed-entry-point checks.
+
+Published [stable release](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0); [stable tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37569094482) passed all ten required jobs. The merged main tree matches the tested PR head; [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928087) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928341) passed before tagging. Release/update tests used temporary installations and did not change the user's installed RC or Keychain profile.
 
 GitHub attestations are optional and disabled until this private repository’s plan eligibility is confirmed. When enabled, publication depends on attestation success; verification uses `gh attestation verify` separately from updater integrity checks. No code-signing or notarization claim is made.
 
 ## Stable promotion
 
 - [x] Complete the interactive native-store manual gate through user-verified macOS migration and live status retrieval.
-- [ ] Merge the reviewed v2 PR into main, bump the package/runtime/lock version to 2.0.0, rerun required checks, and tag the tested main commit.
-- [ ] Verify complete stable assets and latest-stable discovery after publication.
+- [x] Merge the reviewed v2 PR into main, bump the package/runtime/lock version to 2.0.0, rerun required checks, and tag the tested main commit.
+- [x] Verify complete stable assets and latest-stable discovery after publication.
 
 Required fields, duplicate names, stale metadata, disallowed operations and transition validators are additionally covered by fixtures. Live writes in company-managed/non-software projects were not authorized. App-specific validators, old OS versions, Data Center, and Service Management customer-request APIs are not certified by this candidate.

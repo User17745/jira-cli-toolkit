@@ -26,7 +26,7 @@ jira-cli-toolkit --version
 
 Run these one at a time and stop if installation fails. Uninstalling removes the pipx environment and command shims; it preserves `~/.config/jsup/config.json`, including existing Jira credentials. The new install supplies both commands. This recovery was verified starting from a 0.2.0 installation whose recorded backend was uv, with config bytes and permissions unchanged. Older pipx versions using the pip backend do not need the backend option. Do not manually delete the environment or overwrite its shims. `pipx reinstall jsup --backend pip` switches the backend but reuses the original recorded source; it does not necessarily install the downloaded release wheel.
 
-Both commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases. A release candidate must be requested explicitly, for example `update --version 2.0.0rc1 --prerelease --check`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
+Both commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases, currently 2.0.0. A release candidate must be requested explicitly with `update --version VERSION --prerelease --check`; selecting an older version also requires `--allow-downgrade`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
 
 ## Credentials and contexts
 

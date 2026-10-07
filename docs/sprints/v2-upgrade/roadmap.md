@@ -2,7 +2,7 @@
 
 Created: 6 October 2026
 
-Status: v2 release candidate `v2.0.0rc1` is published and verified. Implementation, live BUG acceptance, package bootstrap and user-verified macOS Keychain migration/status checks have passed. Source is prepared as `2.0.0`; stable CI, merge, tagging and publication verification are in progress. See [acceptance evidence](acceptance.md).
+Status: [stable v2.0.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0) is published and verified as latest stable. Initial v2 Sprints 0–8 are complete, including live BUG acceptance, package bootstrap, user-verified macOS Keychain migration/status, CI/native builds and actual RC-to-stable update checks. See [acceptance evidence](acceptance.md). Optional extensions and the separately planned v2.5 remain future work.
 
 ## Goal
 
@@ -293,7 +293,7 @@ Completion criteria:
 - [x] A fresh user can install, authenticate, select a project, create an issue with required fields, update it, and transition it using only public documentation.
 - [x] An existing user can migrate and run the legacy examples without undocumented breakage.
 - [x] Scripts receive documented JSON and exit codes and never unexpectedly request input.
-- [ ] Record release acceptance evidence and remaining limitations, then publish the stable release.
+- [x] Record release acceptance evidence and remaining limitations, then publish the stable release.
 
 ## Command migration reference
 
@@ -327,7 +327,7 @@ Completion criteria:
 
 ## Later extensions — outside the initial release gate
 
-The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. Finish v2 stable publication first. This will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0.
+The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. V2 stable publication and verification are complete. V2.5 will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0.
 
 These are candidate work packages. Prioritize them after the foundation is released and user demand is known.
 
@@ -387,10 +387,14 @@ Release-candidate validation on 7 October 2026: tag `v2.0.0rc1` points to tested
 
 Native acceptance on 7 October 2026: the user successfully installs the published RC wheel, migrates legacy credentials with `--storage keyring`, and runs a separate live status command reporting `source: keyring` and `authenticated: True`. This closes the macOS interactive native-store gate. No additional Jira issues were created. The pipx recovery correction at `291ec14` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37567939789) and [all four native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37567940018).
 
-Stable release gates remain explicit: v2 must pass final review/checks, be merged into main, and the tested 2.0.0 main commit tagged and verified as latest stable. Source package/runtime/lock versions are prepared as 2.0.0. Current work is reviewable in [PR #1](https://github.com/User17745/jira-cli-toolkit/pull/1). Later extensions remain outside the initial release gate.
+Stable preparation gates required final review/checks, merge into main, and tagging the tested 2.0.0 main commit before verification as latest stable. Source package/runtime/lock versions agree on 2.0.0. [PR #1](https://github.com/User17745/jira-cli-toolkit/pull/1) is merged. Later extensions remain outside the initial release gate.
 
-- [ ] Stable promotion milestone: rerun full regression, build and installed-CLI smoke checks; commit/push version and acceptance updates; verify CI/native builds before merge/tag; record stable release/update verification.
+- [x] Stable promotion milestone: rerun full regression, build and installed-CLI smoke checks; commit/push version and acceptance updates; verify CI/native builds before merge/tag; record stable release/update verification.
 
 Stable preparation: package/runtime/lock agree on 2.0.0; the offline lock check, all 128 regression tests, wheel/sdist builds, both installed CLI smoke checks, and local macOS arm64 native build/smoke pass before push. Updater tests now simulate an older installed version explicitly, so a source-version bump cannot silently turn upgrade-path checks into no-ops.
+
+Stable completion on 7 October 2026: preparation commit `2222537` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568701502) and [all native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568701917). Merge commit `cdb0c0f` has an identical tree and passes [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928087) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928341) before tag `v2.0.0`. [Stable tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37569094482) passes all ten required jobs and publishes eight assets. Authenticated downloads match all manifest/checksum entries and latest stable resolves to v2.0.0. An actual published RC1 standalone binary updates through default stable discovery, retains its backup and byte-identical schema-2 config/mode, and reports a no-op on a repeat check. The downloaded stable wheel passes installed CLI smoke checks; an isolated pipx/pip RC1 installation upgrades with both commands, receipt detection and config preservation. The user's actual RC installation and Keychain profile are unchanged by these checks.
+
+- [x] Final release evidence milestone: run regression/package/installed-CLI checks and documentation link checks, then commit/push the completed v2 acceptance and roadmap checkboxes.
 
 Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.
