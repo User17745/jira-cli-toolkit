@@ -126,6 +126,40 @@ test('examples, exit-code rows and the command reference type into the terminal 
   await expect(page.getByText('No command matches “zzz”.', { exact: false })).toBeVisible()
 })
 
+test('theme follows the system, toggles, persists and applies before paint', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, colorScheme: 'dark' })
+  try {
+    const page = await context.newPage()
+    await page.goto('./')
+    await expect(page.locator('html')).toHaveClass(/dark/)
+    await page.getByRole('button', { name: 'Switch to light theme' }).click()
+    await expect(page.locator('html')).not.toHaveClass(/dark/)
+    // The inline script reads the saved choice before React mounts.
+    await page.reload()
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(false)
+    await expect(page.getByRole('button', { name: 'Switch to dark theme' })).toBeVisible()
+  } finally {
+    await context.close()
+  }
+})
+
+test('ASCII background is decorative and the install prompts are not copied text', async ({ page }) => {
+  await page.goto('./')
+  await expect(page.locator('canvas.ascii-field')).toHaveAttribute('aria-hidden', 'true')
+  const prompt = await page.locator('.install-code:visible .cmd-line').first().evaluate(e => getComputedStyle(e, '::before').content)
+  expect(prompt).toMatch(/\$|PS>/)
+})
+
+test('the desktop terminal stays below the header at the end of the page', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'the terminal docks on narrow screens')
+  await page.goto('./')
+  await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }))
+  const header = await page.locator('header').boundingBox()
+  const terminal = await page.locator('.terminal').boundingBox()
+  expect(terminal!.y).toBeGreaterThanOrEqual(header!.y + header!.height)
+  expect(terminal!.y + terminal!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+})
+
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', e => errors.push(e.message))

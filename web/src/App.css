@@ -1,6 +1,17 @@
 html { scroll-padding-top: 4.5rem; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 body { -webkit-font-smoothing: antialiased; }
+:root { --ascii: rgb(10 10 10 / 8%); color-scheme: light; }
+.dark { --ascii: rgb(250 250 250 / 6%); color-scheme: dark; }
+
+/* Behind everything; content above it has transparent or solid surfaces. */
+.ascii-field { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none;
+  mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 95%); }
+
+.install-pre { white-space: pre; mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent); scrollbar-width: thin; scrollbar-color: #333 transparent; }
+.install-pre[data-prompt='$'] .cmd-line::before { content: '$ '; color: #6e6e6e; }
+.install-pre[data-prompt='PS>'] .cmd-line::before { content: 'PS> '; color: #6e6e6e; }
+.install-pre:focus-visible { outline-offset: -2px; }
 :focus-visible { outline-color: var(--ring); }
 
 .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 50; padding: 0.5rem 0.8rem; border-radius: 6px; background: var(--foreground); color: var(--background); }
