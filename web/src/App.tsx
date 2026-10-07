@@ -1,13 +1,14 @@
-import { useMemo, useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import { Check, ChevronRight, Copy, CornerDownLeft, Search } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Terminal, type TerminalHandle } from '@/components/Terminal'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { AsciiField } from '@/components/AsciiField'
 import { leaves, root, type Node } from '@/sandbox/tree'
 import { cn } from 'cn'
 import './App.css'
@@ -49,10 +50,10 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     catch { setState('failed') }
     window.setTimeout(() => setState('idle'), 3500)
   }
-  return <div className="relative flex items-center">
-    <button type="button" className={buttonVariants({ variant: 'ghost', size: 'sm' })} onClick={copy} aria-label={label}>
-      {state === 'copied' ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-      <span>{state === 'copied' ? 'Copied' : 'Copy'}</span>
+  return <div className="absolute top-1.5 right-1.5">
+    <button type="button" onClick={copy} aria-label={label} title={state === 'copied' ? 'Copied' : 'Copy'}
+      className="grid size-8 place-items-center rounded-md text-[#a1a1a1] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-[#22d3ee]">
+      {state === 'copied' ? <Check className="size-4 text-[#4ade80]" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
     </button>
     <span className="copy-status" role="status">{state === 'failed' ? 'Select the command and copy it manually.' : state === 'copied' ? 'Command copied to clipboard.' : ''}</span>
   </div>
@@ -69,12 +70,11 @@ function Install() {
         </TabsList>
       </div>
       {(Object.keys(platforms) as OS[]).map(key => <TabsContent value={key} key={key}>
-        <div className="install-code overflow-hidden rounded-lg border bg-muted/50">
-          <div className="flex items-center justify-between border-b py-1 pr-1 pl-3 text-xs text-muted-foreground">
-            <span>{platforms[key].shell}</span>
-            <CopyButton text={platforms[key].command} label={`Copy ${platforms[key].name} installation command`} />
-          </div>
-          <pre tabIndex={0} className="px-3 py-3 font-mono text-[13px] leading-relaxed break-all whitespace-pre-wrap focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"><code>{platforms[key].command}</code></pre>
+        {/* Each line gets a prompt drawn by CSS, so the copied and displayed text stay identical. */}
+        <div className="install-code relative rounded-lg border border-[#262626] bg-[#0a0a0a] text-[#ededed]">
+          <pre tabIndex={0} data-prompt={platforms[key].shell === 'PowerShell' ? 'PS>' : '$'} aria-label={`${platforms[key].shell} command`}
+            className="install-pre mr-10 overflow-x-auto py-3 pr-4 pl-3.5 font-mono text-[13px] leading-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#22d3ee]"><code>{platforms[key].command.split('\n').map((line, i) => <Fragment key={i}>{i > 0 && '\n'}<span className="cmd-line">{line}</span></Fragment>)}</code></pre>
+          <CopyButton text={platforms[key].command} label={`Copy ${platforms[key].name} installation command`} />
         </div>
         <p className="mt-2.5 text-[13px] text-muted-foreground">{platforms[key].note} The installer verifies release checksums first.</p>
       </TabsContent>)}
@@ -87,7 +87,11 @@ function Install() {
 }
 
 function BrandMark() {
-  return <svg viewBox="0 0 40 40" className="size-6" aria-hidden="true"><rect width="40" height="40" rx="9" fill="currentColor" /><path d="m11 12 8 8-8 8m11 0h8" fill="none" stroke="var(--background)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  return <svg viewBox="0 0 64 64" className="size-6" aria-hidden="true">
+    <rect width="64" height="64" rx="15" fill="currentColor" />
+    <path d="m17 20 12 12-12 12" fill="none" stroke="var(--background)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="34" y="19" width="13" height="26" rx="2" fill="#4ade80" />
+  </svg>
 }
 
 function SectionHead({ id, title, children }: { id: string; title: string; children?: React.ReactNode }) {
@@ -143,6 +147,7 @@ function App() {
   const run = (command: string) => { setActive(command); terminal.current?.run(command) }
   return <>
     <a className="skip-link" href="#get-started">Skip to installation</a>
+    <AsciiField />
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-6 px-4 sm:px-6">
         <a className="flex items-center gap-2 whitespace-nowrap" href="#" aria-label="CLI Toolkit for Jira home">
@@ -158,17 +163,16 @@ function App() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <a className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex')} href={repo}>GitHub</a>
+          <ThemeToggle />
           <a className={buttonVariants({ size: 'sm' })} href="#get-started">Install the CLI</a>
         </div>
       </div>
     </header>
 
-    <div className="layout mx-auto grid max-w-[1440px] gap-10 px-4 sm:px-6">
-      <main className="min-w-0">
+    <div className="layout relative z-10 mx-auto grid max-w-[1440px] gap-10 px-4 sm:px-6">
+      <div className="min-w-0">
+      <main>
         <section className="hero flex flex-col items-start pt-6 pb-12 sm:pt-16" aria-labelledby="hero-title">
-          <Badge variant="outline" className="mb-4 h-6 sm:mb-5 gap-1.5 rounded-full px-2.5 font-normal text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />jira {root.version} for Jira Cloud
-          </Badge>
           <h1 id="hero-title" className="max-w-[16ch] text-4xl font-semibold tracking-tighter text-balance sm:text-5xl xl:text-6xl">Jira Cloud, from your terminal.</h1>
           <p className="order-4 mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:order-none sm:mt-5 sm:text-lg">An independent command-line tool for Jira Cloud. List, view, move and assign issues, plan sprints, and script all of it with JSON, CSV and exit codes that mean one thing each.</p>
           <p className="hero-independence order-2 mt-3 text-sm font-medium sm:order-none sm:mt-4">Independently maintained. Not affiliated with Atlassian.</p>
@@ -259,32 +263,33 @@ function App() {
           </Accordion>
         </section>
       </main>
+      <footer className="border-t">
+        <div className="pt-8 pb-28 min-[1100px]:pb-12">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <a className="flex items-center gap-2" href="#">
+              <BrandMark />
+              <span className="font-semibold tracking-tight">CLI Toolkit</span> <span className="text-sm text-muted-foreground">for Jira</span>
+            </a>
+            <nav aria-label="Project links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <a className="hover:text-foreground" href={repo}>Source</a><a className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a className="hover:text-foreground" href={latest}>Releases</a><a className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a className="hover:text-foreground" href={notices}>Third-party notices</a>
+            </nav>
+          </div>
+          <section className="independent-notice mt-8 max-w-[80ch] space-y-3 text-xs leading-relaxed text-muted-foreground" aria-labelledby="independence-title">
+            <h2 id="independence-title" className="text-sm font-medium text-foreground">Independent project and intellectual property notice</h2>
+            <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
+            <p>References to Jira and Atlassian, including the <code className="font-mono">jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
+            <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
+            <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
+          </section>
+        </div>
+      </footer>
+      </div>
 
       <aside className="terminal-column" aria-label="Sandbox">
         <Terminal ref={terminal} open={open} onOpenChange={setOpen} />
       </aside>
     </div>
 
-    <footer className="border-t">
-      <div className="mx-auto max-w-[1440px] px-4 pt-8 pb-28 sm:px-6 min-[1100px]:pb-12">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <a className="flex items-center gap-2" href="#">
-            <BrandMark />
-            <span className="font-semibold tracking-tight">CLI Toolkit</span> <span className="text-sm text-muted-foreground">for Jira</span>
-          </a>
-          <nav aria-label="Project links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            <a className="hover:text-foreground" href={repo}>Source</a><a className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a className="hover:text-foreground" href={latest}>Releases</a><a className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a className="hover:text-foreground" href={notices}>Third-party notices</a>
-          </nav>
-        </div>
-        <section className="independent-notice mt-8 max-w-[80ch] space-y-3 text-xs leading-relaxed text-muted-foreground" aria-labelledby="independence-title">
-          <h2 id="independence-title" className="text-sm font-medium text-foreground">Independent project and intellectual property notice</h2>
-          <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
-          <p>References to Jira and Atlassian, including the <code className="font-mono">jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
-          <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
-          <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
-        </section>
-      </div>
-    </footer>
   </>
 }
 export default App
