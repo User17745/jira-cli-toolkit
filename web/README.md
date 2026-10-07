@@ -22,7 +22,7 @@ npx playwright install chromium
 npm test
 ```
 
-Playwright checks the built site served by Vite preview: OS tabs and keyboard navigation, exact copied commands and clipboard failures, example tabs, FAQ, mobile menu, responsive overflow, first-fold installation, and missing assets/console errors. It does not contact Jira or execute copied commands. Installers are tested separately by Python fixtures and native build integration on all four supported targets.
+Playwright checks the built site served by Vite preview: OS tabs and keyboard navigation, exact copied commands and clipboard failures, example tabs, FAQ, mobile menu, responsive overflow, first-fold installation, and missing assets/console errors. It does not contact Jira or execute copied commands. Installers are tested separately by Python fixtures and native build integration on all four supported targets for stable builds. RC/development builds retain existing native CLI smoke checks and are never selected by fresh installers.
 
 ## Publish
 

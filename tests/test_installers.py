@@ -136,7 +136,8 @@ shutil.copyfile(source,args[args.index('-o')+1])
     def test_missing_asset_and_invalid_version_fail(self):
         (self.assets/self.asset).unlink()
         self.assertNotEqual(self.invoke().returncode,0)
-        self.assertNotEqual(self.invoke('--version','../bad').returncode,0)
+        for version in ('../bad', '2.2.0rc1', '2.2.0.dev0'):
+            self.assertNotEqual(self.invoke('--version',version).returncode,0)
         self.assertFalse(self.destination.exists())
 
 
