@@ -59,3 +59,16 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   await page.screenshot({ path: `test-results/landing-${info.project.name}.png`, fullPage: true })
   expect(errors).toEqual([])
 })
+
+test('project identity and installation action clearly distinguish the independent CLI', async ({ page }) => {
+  await page.goto('./')
+  await expect(page).toHaveTitle('CLI Toolkit for Jira — Your work. At your command.')
+  await expect(page.getByRole('link', { name: 'CLI Toolkit for Jira home' })).toBeVisible()
+  await expect(page.getByText('Independent CLI for Jira Cloud', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Install the CLI', exact: true })).toHaveAttribute('href', '#get-started')
+  await expect(page.getByText('Install jira', { exact: true })).toHaveCount(0)
+  await expect(page.locator('meta[property="og:image"]')).toHaveCount(0)
+  await expect(page.locator('.independent-notice')).toHaveText('Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira is a trademark of Atlassian.')
+  await page.locator('.independent-notice').scrollIntoViewIfNeeded()
+  await expect(page.locator('.independent-notice')).toBeInViewport()
+})

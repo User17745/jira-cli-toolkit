@@ -427,3 +427,13 @@ Installer requirements match the published manifest, including Windows 10+. Wind
 Website/installer milestone completion: [PR #4](https://github.com/User17745/jira-cli-toolkit/pull/4) merges as `5a2e2a1` with a tree identical to the tested final head `499ba19`. [PR compatibility](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600054880), [all four native installer builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600055471), and [website checks](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600054854) pass. Merged main passes [compatibility/package CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371219), [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371649), and [Pages build/deployment](https://github.com/User17745/jira-cli-toolkit/actions/runs/37600371353).
 
 The [public landing page](https://user17745.github.io/jira-cli-toolkit/) renders successfully. Its HTML and 21 CSS/JS/font/image/notice assets match the tested production build byte for byte. Both raw main installer URLs match source; manual latest resolves to v2.1.0. The repository homepage, description and 10 relevant GitHub topics are verified. README badges link to real release/test/native-build/download data; the supplied cover is preserved. Frontend/installer options and recovery docs are linked. Current CLI release remains v2.1.0; no immutable release assets were replaced. Final evidence is committed/pushed after rerunning the full CLI regression, package build and installed-entry-point smoke gates.
+
+## Independent project branding correction
+
+- [x] Review Atlassian trademark guidance and distinguish the toolkit identity from compatibility references.
+- [x] Change the installation CTA to “Install the CLI”, foreground “CLI Toolkit for Jira”, and add visible independence/trademark notices.
+- [x] Replace the logo-bearing promotional cover with original terminal artwork and remove it from website/social metadata.
+- [x] Run CLI regressions, package/installed smoke checks and desktop/mobile branding/installation checks before pushing.
+- [ ] Push the tested milestone, verify compatibility/native/site CI, merge and verify the public deployment.
+
+Branding validation: 141 CLI regressions, wheel/sdist builds, all three installed entry-point smoke checks, migration/docs QA, lint/type/build and 10 desktop/mobile browser checks pass. Historical website milestone references to the supplied cover are superseded by the original artwork in this correction.

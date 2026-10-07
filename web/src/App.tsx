@@ -90,15 +90,15 @@ function App() {
   return <>
     <a className="skip-link" href="#get-started">Skip to installation</a>
     <header className="site-header"><div className="header-inner">
-      <a className="brand" href="#" aria-label="Jira CLI Toolkit home"><span className="brand-icon"><Terminal size={24} /></span><span className="brand-command">jira</span><span className="brand-name">CLI Toolkit</span></a>
+      <a className="brand" href="#" aria-label="CLI Toolkit for Jira home"><span className="brand-icon"><Terminal size={24} /></span><span className="brand-command">CLI Toolkit</span><span className="brand-name">for Jira</span></a>
       <nav className="desktop-nav" aria-label="Main navigation"><a href="#workflows">Workflows</a><a href={docs}>Documentation</a><a className="github-link" href={repo}><Code2 size={17} /> GitHub<ArrowUpRight size={14} /></a></nav>
       <Button variant="ghost" className="menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</Button>
     </div>{menu && <nav className="mobile-nav" aria-label="Mobile navigation"><a href="#workflows" onClick={() => setMenu(false)}>Workflows</a><a href={docs}>Documentation</a><a href={repo}>GitHub</a></nav>}</header>
     <main>
       <div className="page-shell">
         <section className="hero" aria-labelledby="hero-title"><div className="hero-copy">
-          <div className="cloud-note"><span className="small-terminal">$ jira</span><span>Built for Jira Cloud</span></div>
-          <h1 id="hero-title">Your Jira.<br />At your command.</h1>
+          <div className="cloud-note"><span className="small-terminal">$ jira</span><span>Independent CLI for Jira Cloud</span></div>
+          <h1 id="hero-title">Your work.<br />At your command.</h1>
           <p className="hero-description">Find issues, move work forward, and manage sprints. Right where you already work.</p>
           <div className="hero-actions"><a className="text-link" href="#workflows">See it in action <ArrowDown size={16} /></a><a className="release-link" href={latest}>Latest release <ArrowUpRight size={15} /></a></div>
           <div className="hero-proof"><span><Check size={15} /> Any Jira Cloud project</span><span><KeyRound size={15} /> Your existing API token</span></div>
@@ -117,9 +117,10 @@ function App() {
         <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
         <AccordionItem value="support"><AccordionTrigger>Does it support every Jira edition?</AccordionTrigger><AccordionContent>The current release supports standard Jira Cloud issue workflows, plus Software boards and sprints where permissions allow. Data Center and Service Management customer-request APIs are future work.</AccordionContent></AccordionItem>
       </Accordion></section>
-      <section className="bottom-cta page-shell"><div><h2>Your next issue is a command away.</h2><p>Get back to the work, without leaving your terminal.</p></div><a className="primary-link" href="#get-started"><Terminal size={18} /> Install jira</a></section>
+      <section className="bottom-cta page-shell"><div><h2>Your next issue is a command away.</h2><p>Get back to the work, without leaving your terminal.</p></div><a className="primary-link" href="#get-started"><Terminal size={18} /> Install the CLI</a></section>
     </main>
-    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>jira</strong><span>CLI Toolkit</span></a><span>Built for Jira Cloud. Made for your terminal.</span><div><a href={repo}>Source</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Credits</a></div></footer>
+    <footer className="site-footer page-shell"><a className="footer-brand" href="#"><Terminal size={18} /><strong>CLI Toolkit</strong><span>for Jira</span></a><span>Independent tools for your terminal.</span><div><a href={repo}>Source</a><a href={latest}>Releases</a><a href={`${repo}/issues`}>Report an issue</a><a href={`${import.meta.env.BASE_URL}third-party-notices.txt`}>Credits</a></div></footer>
+    <p className="independent-notice page-shell">Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira is a trademark of Atlassian.</p>
   </>
 }
 export default App

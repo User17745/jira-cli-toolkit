@@ -1,17 +1,19 @@
-<a href="https://user17745.github.io/jira-cli-toolkit/"><img src="docs/assets/hero-banner.webp" alt="Jira CLI Toolkit — manage your Jira projects from the terminal" width="100%" /></a>
+<a href="https://user17745.github.io/jira-cli-toolkit/"><img src="docs/assets/cli-toolkit-cover.svg" alt="CLI Toolkit for Jira — independent terminal tools for Jira Cloud" width="100%" /></a>
 
 <p align="center">
-  <a href="https://github.com/User17745/jira-cli-toolkit/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/User17745/jira-cli-toolkit?style=flat-square&color=0069fa" /></a>
+  <a href="https://github.com/User17745/jira-cli-toolkit/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/User17745/jira-cli-toolkit?style=flat-square&color=087f75" /></a>
   <a href="https://github.com/User17745/jira-cli-toolkit/actions/workflows/ci.yml"><img alt="CLI tests" src="https://img.shields.io/github/actions/workflow/status/User17745/jira-cli-toolkit/ci.yml?branch=main&style=flat-square&label=tests" /></a>
   <a href="https://github.com/User17745/jira-cli-toolkit/actions/workflows/release.yml"><img alt="Native builds" src="https://img.shields.io/github/actions/workflow/status/User17745/jira-cli-toolkit/release.yml?branch=main&style=flat-square&label=native%20builds" /></a>
   <img alt="Python 3.10 and later" src="https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white" />
   <img alt="macOS, Linux and Windows" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-526581?style=flat-square" />
-  <a href="https://github.com/User17745/jira-cli-toolkit/releases"><img alt="Release downloads" src="https://img.shields.io/github/downloads/User17745/jira-cli-toolkit/total?style=flat-square&color=0069fa" /></a>
+  <a href="https://github.com/User17745/jira-cli-toolkit/releases"><img alt="Release downloads" src="https://img.shields.io/github/downloads/User17745/jira-cli-toolkit/total?style=flat-square&color=087f75" /></a>
 </p>
 
-# Your Jira. At your command.
+# CLI Toolkit for Jira
 
-**`jira` brings Jira Cloud into your terminal.** Find issues, create and edit work, manage sprints, and automate repeatable workflows using your existing account and project permissions.
+**Independent terminal tools for Jira Cloud, using the `jira` command.** Find issues, create and edit work, manage sprints, and automate repeatable workflows using your existing account and project permissions.
+
+Independent project. Not affiliated with, endorsed by, or sponsored by Atlassian. Jira is a trademark of Atlassian.
 
 [Website](https://user17745.github.io/jira-cli-toolkit/) · [Command reference](docs/usage.md) · [Latest release](https://github.com/User17745/jira-cli-toolkit/releases/latest) · [Migration guides](docs/migration/upgrade-to-v2.md)
 

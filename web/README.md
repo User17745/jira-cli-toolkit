@@ -1,4 +1,4 @@
-# Jira CLI Toolkit landing page
+# CLI Toolkit for Jira landing page
 
 React, TypeScript and Vite, with Tailwind CSS and generated shadcn/ui (Base UI) components. The site is static: no credentials, Jira requests, analytics, or backend. Fonts and visual assets are self-hosted. [Design decisions](DESIGN.md) explain the installation-first layout.
 
