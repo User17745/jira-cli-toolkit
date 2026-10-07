@@ -16,7 +16,7 @@ Every actionable item has a checkbox. Check implementation tasks after the chang
 
 The initial release targets standard issue operations across Jira Cloud project types, within the capabilities and permissions exposed by Jira. Service Management customer requests and Data Center support are separate extensions. Arbitrary app-defined fields and validators cannot be assumed to be fully discoverable.
 
-The repository is [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit), renamed from `jira-support-cli` to reflect the broader product scope. It remains private; the release plan must account for authenticated downloads unless visibility is explicitly changed later. The executable is `jira-cli-toolkit`; the Python package and legacy executable remain `jsup` throughout v2.x. Command examples below use `jira` as shorthand for a user-chosen alias. See the [interface contract](interface-contract.md) for implemented behavior and migration decisions.
+The repository is [User17745/jira-cli-toolkit](https://github.com/User17745/jira-cli-toolkit), renamed from `jira-support-cli` to reflect the broader product scope. The user authorized public visibility on 7 October 2026. V2.1 installs `jira` as the primary command, retaining `jira-cli-toolkit` and `jsup` compatibility aliases throughout v2.x. Public release downloads require no Jira or GitHub token. The Python package remains `jsup`. See the [interface contract](interface-contract.md) for implemented behavior and migration decisions.
 
 ## Tested delivery checkpoints
 
@@ -297,17 +297,19 @@ Completion criteria:
 
 ## Command migration reference
 
-The implemented old/new command mapping now lives in the [developer migration guide](../../migration/legacy-commands.md#old-to-new-command-reference), alongside behavioral differences for queries, creation, JSON, pagination and scripted identity selection. The [upgrade guide](../../migration/upgrade-to-v2.md) covers installation, verified downloads, credential migration and rollback. Both guides use the full installed executable name, `jira-cli-toolkit`; `jira` remains an optional user alias.
+The implemented old/new command mapping now lives in the [developer migration guide](../../migration/legacy-commands.md#old-to-new-command-reference), alongside behavioral differences for queries, creation, JSON, pagination and scripted identity selection. The [upgrade guide](../../migration/upgrade-to-v2.md) covers installation, verified downloads, credential migration and rollback. Both guides now use the installed `jira` command (v2.1), with explicit bootstrap instructions for previous installations and supported legacy aliases.
 
 ## Later extensions — outside the initial release gate
 
-The next planned release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. V2 stable publication and verification are complete. V2.5 will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0.
+After the v2.1 naming/public-distribution release, the next planned feature release is [v2.5 authenticated API access and spec discovery](../v2.5-api/roadmap.md), prioritized by the user on 7 October 2026. V2 stable publication and verification are complete. V2.5 will provide generic endpoint coverage; the commands below become optional conveniences rather than prerequisites for calling each API. The v2.5 interface is planned, not implemented in v2.0.0.
 
 These are candidate work packages. Prioritize them after the foundation is released and user demand is known.
 
 - [ ] Add `filter list/view/create/update` and saved-filter selection in issue searches.
-- [ ] Add `board view`, `board backlog`, and richer board configuration inspection where supported.
-- [ ] Add `sprint view/edit/remove-issues`, including required start/close inputs and capability-aware behavior.
+- [x] Add `board view` (implemented in v2).
+- [ ] Add `board backlog` and richer board configuration inspection where supported.
+- [x] Add `sprint view/edit` and required start/close inputs (implemented in v2).
+- [ ] Add `sprint remove-issues` and richer capability-aware planning operations.
 - [ ] Add `issue clone`, documenting copied fields and excluding comments/attachments unless explicitly supported and selected.
 - [ ] Add `issue watch/unwatch`, `issue history`, and `issue worklog add/list/edit/delete`.
 - [ ] Add `version list/create/edit/release` for applicable project release workflows.
@@ -378,3 +380,24 @@ Migration documentation preparation: all 25 original command names are covered; 
 Migration documentation evidence: initial guide commit `e07e994` passes [CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37573028179) and [all four native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37573028457). [PR #2](https://github.com/User17745/jira-cli-toolkit/pull/2) contains the requested guides and follow-up canonical-link corrections; its checks track the final head before merge.
 
 Publication retry check: rerunning the publisher against the verified existing RC recognized the matching complete release and exited without replacing any published asset.
+
+## V2.1 command and public distribution
+
+- [x] Add the primary `jira` entry point; preserve both existing executable aliases, profiles and credential-store references.
+- [x] Print an early stderr notice on legacy executable invocations, preserving JSON stdout and internal completion/update protocols.
+- [x] Bump package/runtime/lock to 2.1.0 and update current command, installation and migration documentation.
+- [x] Review reachable Git history (181 blobs) and all 57 available Actions run logs before public visibility; no credential leaks detected. Three URL-credential detections were reviewed synthetic rejection fixtures in `tests/test_auth.py`.
+- [x] Test before the milestone push: 132 regressions, offline lock/build, wheel/sdist, all three installed entry points and local macOS arm64 native smoke pass. Documentation QA covers all 25 old command names, 86 parsed invocations, 16 shell blocks, links and checksum/error-handling fixtures.
+- [ ] Push the tested milestone, verify GitHub CI/native builds, and merge into main.
+- [x] Make the repository public and verify anonymous repository/release page and manifest access (HTTP 200). The shared-IP anonymous API quota was exhausted during this check; authenticated API requests and unauthenticated direct downloads work.
+- [ ] Tag the tested main commit, verify the complete v2.1.0 publication and a real v2.0-to-v2.1 update.
+- [ ] Upgrade the local installed CLI and confirm existing native-auth profiles still work.
+
+## Remaining work after v2.1
+
+- [ ] Complete the [v2.5 authenticated API/spec roadmap](../v2.5-api/roadmap.md), including request safety, spec freshness, agent documentation and acceptance/release checks.
+- [ ] Choose and add an explicit reuse/contribution license; public visibility alone does not grant open-source reuse rights.
+- [ ] Enable and verify release attestations, then assess client-side verification, macOS signing/notarization and Windows signing.
+- [ ] Verify interactive Windows Credential Manager and Linux wallet acceptance on user machines; current CI checks do not certify interactive prompts.
+- [ ] Prioritize package-registry/distribution publication (PyPI/Homebrew or equivalents), broader native OS support, Data Center/JSM APIs and optional convenience commands based on demand.
+- [ ] Remove the two previously authorized labeled BUG acceptance issues when an account with Delete Issues permission is available.

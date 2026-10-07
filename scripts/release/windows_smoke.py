@@ -14,7 +14,7 @@ if len(sys.argv)>2 and sys.argv[1]=='driver':
     assert result['pending']
 else:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp:
-        target=Path(temp)/'jira-cli-toolkit.exe'
+        target=Path(temp)/'jira.exe'
         candidate=Path(temp)/'candidate.exe'
         shutil.copy2(sys.argv[1],target); shutil.copy2(sys.argv[1],candidate)
         subprocess.run([sys.executable,__file__,'driver',str(candidate),str(target)],check=True)

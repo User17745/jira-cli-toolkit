@@ -7,7 +7,7 @@ Choose the guide for your migration:
 
 The sections below are a compact reference. The detailed guides use implemented v2.0.0 commands and portable download paths.
 
-The Python package remains `jsup`. Both `jsup` and `jira-cli-toolkit` executables ship throughout v2.x. The repository is now `User17745/jira-cli-toolkit`; old GitHub URLs redirect.
+The Python package remains `jsup`. Both `jsup` and `jira` executables ship throughout v2.x. The repository is now `User17745/jira-cli-toolkit`; old GitHub URLs redirect.
 
 ## One-time bootstrap
 
@@ -20,7 +20,7 @@ uv tool install --force /path/to/jsup-VERSION-py3-none-any.whl
 python -m pip install --upgrade /path/to/jsup-VERSION-py3-none-any.whl
 ```
 
-Choose the command for your installation. Releases are private; use repository-read GitHub authentication. Installing from a checked-out tag with `pipx install --force .` is another supported bootstrap. The package is not published to PyPI, so a bare registry upgrade is not the distribution path.
+Choose the command for your installation. Release downloads are public; Jira credentials are not needed. Installing from a checked-out tag with `pipx install --force .` is another supported bootstrap. The package is not published to PyPI, so a bare registry upgrade is not the distribution path.
 
 If pipx’s uv backend reports that the environment already exists during force installation, `install --force --backend pip` does **not** switch the existing environment’s recorded backend in pipx 1.14.0. Download and verify the desired wheel first, then replace the managed environment:
 
@@ -28,12 +28,12 @@ If pipx’s uv backend reports that the environment already exists during force 
 pipx uninstall jsup
 pipx install --backend pip /path/to/jsup-VERSION-py3-none-any.whl
 jsup --version
-jira-cli-toolkit --version
+jira --version
 ```
 
-Run these one at a time and stop if installation fails. Uninstalling removes the pipx environment and command shims; it preserves `~/.config/jsup/config.json`, including existing Jira credentials. The new install supplies both commands. This recovery was verified starting from a 0.2.0 installation whose recorded backend was uv, with config bytes and permissions unchanged. Older pipx versions using the pip backend do not need the backend option. Do not manually delete the environment or overwrite its shims. `pipx reinstall jsup --backend pip` switches the backend but reuses the original recorded source; it does not necessarily install the downloaded release wheel.
+Run these one at a time and stop if installation fails. Uninstalling removes the pipx environment and command shims; it preserves `~/.config/jsup/config.json`, including existing Jira credentials. V2.1 supplies `jira` and the `jira-cli-toolkit`/`jsup` compatibility commands. This recovery was verified starting from a 0.2.0 installation whose recorded backend was uv, with config bytes and permissions unchanged. Older pipx versions using the pip backend do not need the backend option. Do not manually delete the environment or overwrite its shims. `pipx reinstall jsup --backend pip` switches the backend but reuses the original recorded source; it does not necessarily install the downloaded release wheel.
 
-Both commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases, currently 2.0.0. A release candidate must be requested explicitly with `update --version VERSION --prerelease --check`; selecting an older version also requires `--allow-downgrade`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
+All three package commands support `--version`, `help`, and `update --info`. `update --check` checks published stable releases, currently 2.1.0. A release candidate must be requested explicitly with `update --version VERSION --prerelease --check`; selecting an older version also requires `--allow-downgrade`. Checks never alter the installation. Package users receive manager-specific instructions; standalone users can install with `update --yes` after manifest/checksum and candidate checks.
 
 ## Credentials and contexts
 
@@ -51,7 +51,7 @@ Schema-2 identity selection is atomic: an explicit profile selects the whole ide
 
 The [developer command table](../../migration/legacy-commands.md#old-to-new-command-reference) maps every original command to the grouped interface. Legacy spellings remain accepted.
 
-- New `jira-cli-toolkit` root shows local context; `jsup` root retains the dashboard. Dashboard projects must now be selected explicitly; RP/RD/BUG are never implicit.
+- New `jira` root shows local context; `jsup` root retains the dashboard. Dashboard projects must now be selected explicitly; RP/RD/BUG are never implicit.
 - Grouped `issue create` discovers project/type metadata. Scripts pass a type and required fields; interactive creation guides selection. Legacy `issue-create` retains Task/default payload behavior.
 - Grouped `issue transition` supports required transition fields; legacy `issue-move` retains its old interface.
 - `issue list` includes Done unless `--open` is supplied. Full `--jql` ignores the default project and cannot be mixed with generated filters. Legacy `open --jql` appends an additional filter as before.
@@ -63,4 +63,4 @@ The [developer command table](../../migration/legacy-commands.md#old-to-new-comm
 
 A successful standalone update retains `.previous`; POSIX replacement rolls back automatically if post-install validation fails. Windows reports a pending helper/log path and completes after the old process exits. Do not remove a pending lock or stage while its helper is active. Preserve/remove an old backup deliberately before another update. Executable rollback does not undo a completed config migration: schema-2 preferences require v2, so keep v2 for migrated profiles or restore an independently retained legacy config securely.
 
-Native requirements are in the manifest. CI validates its specific Linux/macOS/Windows runners; older OS versions, app-specific Jira validators, JSM customer requests, and Data Center are not certified by this release. Checksums detect corruption; publisher trust currently uses authenticated GitHub HTTPS, with no independent client-side signature/attestation verification. Stable v2.0.0 is published; [acceptance evidence](acceptance.md) records release/update checks and platform limitations.
+Native requirements are in the manifest. CI validates its specific Linux/macOS/Windows runners; older OS versions, app-specific Jira validators, JSM customer requests, and Data Center are not certified by this release. Checksums detect corruption; publisher trust currently uses GitHub HTTPS, with no independent client-side signature/attestation verification. The initial stable v2.0.0 release is published; v2.1 introduces the shorter `jira` command and public distribution; [acceptance evidence](acceptance.md) records release/update checks and platform limitations.

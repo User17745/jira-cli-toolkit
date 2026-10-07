@@ -21,6 +21,13 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
         from .update import apply_windows_update
         apply_windows_update(raw[1:])
         return
+    if prog in {"jsup", "jira-cli-toolkit"}:
+        ui.err_console.print(
+            f"Warning: the tool has moved to the 'jira' command. '{prog}' is running "
+            "under legacy support (supported throughout v2.x) and may be deprecated "
+            "in a future major release. Update your commands to use 'jira'.",
+            style="yellow", markup=False,
+        )
     parser = build_parser(prog)
     args = parser.parse_args(argv)
     def fail(code, kind, message, **details):
@@ -71,6 +78,10 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
 
 def toolkit_main(argv=None) -> None:
     main(argv, prog="jira-cli-toolkit", default_dashboard=False)
+
+
+def jira_main(argv=None) -> None:
+    main(argv, prog="jira", default_dashboard=False)
 
 
 if __name__ == "__main__":

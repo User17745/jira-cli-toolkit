@@ -69,7 +69,7 @@ Published [release candidate](https://github.com/User17745/jira-cli-toolkit/rele
 
 Published [stable release](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0); [stable tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37569094482) passed all ten required jobs. The merged main tree matches the tested PR head; [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928087) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37568928341) passed before tagging. Release/update tests used temporary installations and did not change the user's installed RC or Keychain profile.
 
-GitHub attestations are optional and disabled until this private repository’s plan eligibility is confirmed. When enabled, publication depends on attestation success; verification uses `gh attestation verify` separately from updater integrity checks. No code-signing or notarization claim is made.
+GitHub attestations remain optional and disabled. The repository becomes public for v2.1; enabling and verifying public-release provenance is tracked as remaining work. When enabled, publication depends on attestation success; verification uses `gh attestation verify` separately from updater integrity checks. No code-signing or notarization claim is made.
 
 ## Stable promotion
 

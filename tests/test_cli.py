@@ -41,10 +41,72 @@ class CLITests(unittest.TestCase):
         self.err.seek(0)
         self.err.truncate()
         try:
-            (cli.main if legacy else cli.toolkit_main)(argv)
+            (cli.main if legacy else cli.jira_main)(argv)
         except SystemExit as error:
             return error.code
         return 0
+
+    def test_command_names_preserve_versions_and_local_root_behavior(self):
+        from jsup import __version__
+        for entry, name in ((cli.jira_main, "jira"),
+                            (cli.toolkit_main, "jira-cli-toolkit"), (cli.main, "jsup")):
+            with self.subTest(name=name):
+                self.out.seek(0)
+                self.out.truncate()
+                self.err.seek(0)
+                self.err.truncate()
+                with self.assertRaises(SystemExit) as result:
+                    entry(["--version"])
+                self.assertEqual(result.exception.code, 0)
+                self.assertEqual(self.out.getvalue().strip(), f"{name} {__version__}")
+                if name == "jira":
+                    self.assertEqual(self.err.getvalue(), "")
+                else:
+                    self.assertIn("the tool has moved to the 'jira' command", self.err.getvalue())
+                    self.assertIn("legacy support", self.err.getvalue())
+        for entry in (cli.jira_main, cli.toolkit_main):
+            self.out.seek(0)
+            self.out.truncate()
+            entry(["--json"])
+            self.assertEqual(json.loads(self.out.getvalue()),
+                             {"site": "https://example.invalid", "project": "ENG"})
+        self.factory.assert_not_called()
+
+    def test_previous_toolkit_alias_keeps_structured_errors(self):
+        self.jira.me.side_effect = JiraError("GET", "/myself", 403, "permission denied")
+        with self.assertRaises(SystemExit) as result:
+            cli.toolkit_main(["user", "me", "--json"])
+        self.assertEqual(result.exception.code, 1)
+        self.assertEqual(json.loads(self.out.getvalue())["error"]["code"], "jira_error")
+        self.assertIn("legacy support", self.err.getvalue())
+        self.assertNotIn("permission denied", self.err.getvalue())
+
+    def test_legacy_notice_preserves_json_and_skips_completion_protocol(self):
+        for entry in (cli.main, cli.toolkit_main):
+            self.out.seek(0)
+            self.out.truncate()
+            self.err.seek(0)
+            self.err.truncate()
+            entry(["context", "show", "--json"])
+            self.assertEqual(json.loads(self.out.getvalue())["project"], "ENG")
+            self.assertIn("legacy support", self.err.getvalue())
+            self.out.seek(0)
+            self.out.truncate()
+            self.err.seek(0)
+            self.err.truncate()
+            entry(["--_complete", "iss"])
+            self.assertIn("issue", self.out.getvalue())
+            self.assertEqual(self.err.getvalue(), "")
+        self.factory.assert_not_called()
+
+    def test_completion_uses_the_invoked_command(self):
+        for entry, name in ((cli.jira_main, "jira"), (cli.toolkit_main, "jira-cli-toolkit")):
+            self.out.seek(0)
+            self.out.truncate()
+            entry(["completion", "bash"])
+            self.assertIn(f"complete -F _jira_cli_toolkit_complete {name}\n", self.out.getvalue())
+            self.assertIn(f"({name} --_complete", self.out.getvalue())
+        self.factory.assert_not_called()
 
     def test_help_and_version_do_not_read_configuration_or_contact_jira(self):
         with patch.object(config, "resolve_config", side_effect=AssertionError("unexpected config")):

@@ -1,8 +1,12 @@
 # Upgrade jsup 0.2 to Jira CLI Toolkit 2.0
 
-This guide upgrades an existing installation to the published stable **2.0.0** release and moves saved credentials into a named profile. For command and script changes, use the [developer migration guide](legacy-commands.md).
+This guide upgrades an existing installation to the published stable **2.1.0** release and moves saved credentials into a named profile. For command and script changes, use the [developer migration guide](legacy-commands.md).
 
-The Python distribution and import package remain `jsup`. V2 installs both `jsup` and `jira-cli-toolkit`; legacy command names remain available throughout v2.x. Upgrading the executable and migrating credentials are separate steps. Neither step changes Jira issues.
+The Python distribution and import package remain `jsup`. V2.1 installs `jira`, `jira-cli-toolkit`, and `jsup`; legacy command names remain available throughout v2.x. Upgrading the executable and migrating credentials are separate steps. Neither step changes Jira issues.
+
+Existing v2.0 users upgrade the executable/package only: saved profiles, configuration paths and the credential-store service name remain unchanged. No second credential migration or new token is needed.
+
+Invoking `jsup` or `jira-cli-toolkit` prints a startup warning on stderr pointing to `jira`. Legacy names remain supported throughout v2.x and may be deprecated in a future major release. JSON stdout remains unchanged; internal completion/update helpers suppress the notice.
 
 ## 1. Identify your existing installation
 
@@ -13,7 +17,7 @@ Use the manager that owns your current installation:
 | pipx | `pipx list` lists `jsup` | Install the verified release wheel through pipx |
 | uv tool | `uv tool list` lists `jsup` | Install the verified wheel through `uv tool` |
 | Python environment | `python -m pip show jsup` in the environment that runs the CLI | Upgrade through that same environment's Python |
-| Standalone v2/RC executable | `jira-cli-toolkit update --info` reports `standalone` | Use the built-in updater |
+| Standalone v2/RC executable | `jira update --info` reports `standalone` | Use the built-in updater |
 
 Version 0.2 has no updater or `--version` flag. Do not start its upgrade with `jsup update`. The standalone/updater instructions below apply only after installing v2 or an RC. Preserve custom `PIPX_HOME`, `PIPX_BIN_DIR`, or uv tool directory settings when invoking your manager.
 
@@ -28,19 +32,19 @@ Run this only when the legacy file exists, using a fresh backup filename so you 
 
 ## 2. Download and verify the stable wheel
 
-Download these three assets from [v2.0.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.0.0):
+Download these three assets from [v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0):
 
-- `jsup-2.0.0-py3-none-any.whl`
+- `jsup-2.1.0-py3-none-any.whl`
 - `manifest.json`
 - `SHA256SUMS`
 
-The repository is private, so your GitHub account needs repository read access. This authentication is separate from your Jira token. If using GitHub CLI, authenticate the account that can access this repository, then run:
+The repository and release assets are public; a Jira token is never needed to download them. Download through your browser, or use GitHub CLI (which may require its own login):
 
 ```sh
 mkdir -p jira-cli-toolkit-v2
-gh release download v2.0.0 --repo User17745/jira-cli-toolkit \
+gh release download v2.1.0 --repo User17745/jira-cli-toolkit \
   --dir ./jira-cli-toolkit-v2 \
-  --pattern 'jsup-2.0.0-py3-none-any.whl' \
+  --pattern 'jsup-2.1.0-py3-none-any.whl' \
   --pattern manifest.json --pattern SHA256SUMS
 ```
 
@@ -57,8 +61,8 @@ from pathlib import Path
 root = Path('jira-cli-toolkit-v2')
 manifest = json.loads((root / 'manifest.json').read_text())
 assert manifest['repository'] == 'User17745/jira-cli-toolkit'
-assert manifest['version'] == '2.0.0' and manifest['channel'] == 'stable'
-wheel = root / 'jsup-2.0.0-py3-none-any.whl'
+assert manifest['version'] == '2.1.0' and manifest['channel'] == 'stable'
+wheel = root / 'jsup-2.1.0-py3-none-any.whl'
 artifact = next(a for a in manifest['artifacts'] if a['name'] == wheel.name)
 assert wheel.stat().st_size == artifact['size']
 assert hashlib.sha256(wheel.read_bytes()).hexdigest() == artifact['sha256']
@@ -73,7 +77,7 @@ PY
 On Windows PowerShell, use `Get-FileHash` for the wheel and manifest, compare the wheel's hash/size with its manifest entry, and compare both hashes with `SHA256SUMS` (hexadecimal letter case does not matter):
 
 ```powershell
-Get-FileHash ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl -Algorithm SHA256
+Get-FileHash ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl -Algorithm SHA256
 Get-FileHash ./jira-cli-toolkit-v2/manifest.json -Algorithm SHA256
 ```
 
@@ -86,14 +90,14 @@ Choose **one** route. Run each command separately and stop on failure. The Pytho
 ### pipx
 
 ```sh
-pipx install --force ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
+pipx install --force ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl
 ```
 
 If your existing environment uses pipx's **uv backend**, pipx 1.14.0 can fail with “a virtual environment already exists”. Adding `--backend pip` to that force-install command does **not** switch the existing environment's recorded backend. After confirming the verified wheel is available, recover with:
 
 ```sh
 pipx uninstall jsup
-pipx install --backend pip ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
+pipx install --backend pip ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl
 ```
 
 Manager uninstall removes the managed environment and command shims, while preserving `~/.config/jsup/config.json` and OS credential-store entries. The new installation supplies both commands. This recovery was tested from an actual uv-backed 0.2.0 installation. Do not manually delete the venv or replace its shims. `pipx reinstall jsup --backend pip` can change the backend, but reuses the original source and may reinstall an old checkout rather than this wheel.
@@ -101,13 +105,13 @@ Manager uninstall removes the managed environment and command shims, while prese
 If you already use the pip backend, including after upgrading to RC1 with the recovery above, this tested RC-to-stable command also works:
 
 ```sh
-pipx install --force --backend pip ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
+pipx install --force --backend pip ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl
 ```
 
 ### uv tool
 
 ```sh
-uv tool install --force ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
+uv tool install --force ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl
 ```
 
 ### Existing Python environment
@@ -115,39 +119,40 @@ uv tool install --force ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
 Activate the environment that owns the old CLI, then use its Python:
 
 ```sh
-python -m pip install --upgrade ./jira-cli-toolkit-v2/jsup-2.0.0-py3-none-any.whl
+python -m pip install --upgrade ./jira-cli-toolkit-v2/jsup-2.1.0-py3-none-any.whl
 ```
 
 ### Standalone v2/RC binary
 
-Use the updater only when `update --info` reports `standalone`:
+Use the updater only when `update --info` reports `standalone`. On an existing v2.0/RC installation use its current executable (`jira-cli-toolkit` or your renamed binary) for the update; `jira` becomes available after installing v2.1. An update replaces the existing binary at its current path, so rename that standalone executable to `jira` (`jira.exe` on Windows) once the update completes. On v2.1:
 
 ```sh
-jira-cli-toolkit update --info
-jira-cli-toolkit update --check
-jira-cli-toolkit update --yes
+jira update --info
+jira update --check
+jira update --yes
 ```
 
-Release lookup/downloads need a repository-read `GH_TOKEN` or an accessible account authenticated with `gh`. The updater verifies the compatible binary and retains `.previous`. Windows may report a pending helper/log; let it finish before checking the new executable. Package installations receive manager instructions instead of having their shims overwritten. For a first standalone installation, choose the binary matching your OS/architecture and the requirements in its release manifest.
+Public release lookup/downloads do not require GitHub credentials; an optional GitHub token increases API rate limits. The updater verifies the compatible binary and retains `.previous`. Windows may report a pending helper/log; let it finish before checking the new executable. Package installations receive manager instructions instead of having their shims overwritten. For a first standalone installation, choose the binary matching your OS/architecture and the requirements in its release manifest. Release filenames retain `jira-cli-toolkit-PLATFORM-ARCH` for update compatibility. Save it as `jira` (`jira.exe` on Windows) in a directory on PATH and make it executable on POSIX. Standalone installation supplies that one binary; the three entry points below apply to Python-package installations.
 
 ### Verify installation
 
 ```sh
+jira --version
 jira-cli-toolkit --version
 jsup --version
-jira-cli-toolkit --help
-jira-cli-toolkit update --info
+jira --help
+jira update --info
 ```
 
-Both version commands should report `2.0.0`. Help and local update information require no Jira credentials. If the command is missing, check the manager's bin directory is on PATH and reopen your terminal. Do not reinstall through a different manager to work around PATH.
+Package installations should report `2.1.0` from all three version commands; standalone installations use `jira --version`. Help and local update information require no Jira credentials. If the command is missing, check the manager's bin directory is on PATH and reopen your terminal. Do not reinstall through a different manager to work around PATH.
 
 ## 4. Migrate credentials once
 
 For a saved 0.2 identity, run these directly in an interactive terminal:
 
 ```sh
-jira-cli-toolkit config migrate --profile work --storage keyring
-jira-cli-toolkit auth status --profile work
+jira config migrate --profile work --storage keyring
+jira auth status --profile work
 ```
 
 Migration validates your saved identity with Jira, reuses its token, stores it in the native OS credential store, and atomically replaces legacy preferences with schema-2 profiles. You do not need to paste a new token. Site, account and default project are retained. Failed validation/storage leaves the legacy config intact.
@@ -158,22 +163,22 @@ If already on RC1/v2 with migrated profiles, **skip migration** and inspect `pro
 
 Preferences remain at `~/.config/jsup/config.json`; schema-2 preferences contain credential references, not tokens. Native storage uses macOS Keychain, Windows Credential Manager, or a supported Linux wallet. Explicit POSIX `--storage file` stores plaintext separately in `~/.config/jsup/credentials.json` with mode 0600; it is never an automatic fallback and is unsupported on Windows. Scripted Linux wallet access is rejected; scripts use environment authentication or the explicit POSIX file option. See [script credential changes](legacy-commands.md#credentials-and-project-selection).
 
-An invalid, expired or revoked token needs replacement. The CLI cannot refresh API tokens or infer their expiry; `expiry: unknown` is expected. If legacy migration fails authentication, use interactive `jira-cli-toolkit config init` to replace the invalid saved identity/token, then retry migration. This retains legacy plaintext storage until migration succeeds; `auth login` refuses to overwrite a legacy file. Already-migrated users replace a token with `auth login --profile work`. Setup links to token creation, hides token input, and explains permissions. Scoped tokens use `auth login --scoped` and the Atlassian API gateway; do not assume a saved legacy site/token is a scoped profile.
+An invalid, expired or revoked token needs replacement. The CLI cannot refresh API tokens or infer their expiry; `expiry: unknown` is expected. If legacy migration fails authentication, use interactive `jira config init` to replace the invalid saved identity/token, then retry migration. This retains legacy plaintext storage until migration succeeds; `auth login` refuses to overwrite a legacy file. Already-migrated users replace a token with `auth login --profile work`. Setup links to token creation, hides token input, and explains permissions. Scoped tokens use `auth login --scoped` and the Atlassian API gateway; do not assume a saved legacy site/token is a scoped profile.
 
 ## 5. Select context and check access
 
 Replace `ENG` and `123` with an accessible project and, optionally, a software board:
 
 ```sh
-jira-cli-toolkit profile use work
-jira-cli-toolkit context use --profile work --project ENG
-jira-cli-toolkit doctor --profile work --project ENG
-jira-cli-toolkit issue list --profile work --project ENG --open --limit 10
+jira profile use work
+jira context use --profile work --project ENG
+jira doctor --profile work --project ENG
+jira issue list --profile work --project ENG --open --limit 10
 ```
 
 Set a board with `context use --profile work --project ENG --board 123`, or choose interactively with `context use --profile work --select`. Changing projects clears a stale default board. These checks read Jira data and update local context; they do not create or edit issues. A token uses your account's Jira permissions, so successful authentication does not guarantee permission to create, transition, or delete.
 
-Your upgrade is complete when both commands report 2.0.0, status authenticates from the intended source, doctor can access the intended project, and a read-only issue query succeeds. Move scripts gradually using the [old-to-new command reference](legacy-commands.md#old-to-new-command-reference).
+Your upgrade is complete when the installed entry point(s) report 2.1.0, status authenticates from the intended source, doctor can access the intended project, and a read-only issue query succeeds. Move scripts gradually using the [old-to-new command reference](legacy-commands.md#old-to-new-command-reference).
 
 ## Rollback and troubleshooting
 
