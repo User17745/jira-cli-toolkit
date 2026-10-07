@@ -405,3 +405,21 @@ Publication retry check: rerunning the publisher against the verified existing R
 V2.1 release evidence: source milestone `d3f1ea9` passes [PR CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742016) and [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742210). Merged commit `0675d21` passes [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953579) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953839); its identical tested tree is tagged `v2.1.0`. The [tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574959673) passes all ten required compatibility/native/package/publication jobs. Published hashes/sizes and manifest commit/version match; native update and package/docs checks use isolated homes and perform no Jira writes.
 
 Local v2.1 acceptance: the actual pipx installation upgrades through its recorded pip backend. `jira` is available on PATH, retained aliases emit the requested notice, installation discovery reports `pipx`, and the existing Keychain profile remains authenticated. The final documentation/evidence milestone reruns full regressions, package build and installed smoke checks before pushing to Git.
+
+## README, website and installation milestone
+
+- [x] Revamp the README with the supplied hero image, relevant release/CI/platform badges, quick start and linked full command reference.
+- [x] Build a responsive shadcn/ui landing page with first-fold OS installation, copy controls, manual releases, migration and examples.
+- [x] Add checksum-verified POSIX and PowerShell installers with platform checks and existing-command protection; document options and recovery.
+- [ ] Verify desktop/mobile UI, accessibility interactions, installer success/failure cases and native Windows/macOS/Linux integration.
+- [x] Before the milestone push, run full CLI regressions, wheel/sdist and installed-CLI smoke checks, docs QA, frontend lint/build/browser tests.
+- [ ] Push the tested milestone promptly, verify CLI/native/site CI, merge, and publish GitHub Pages automatically.
+- [ ] Verify public page/assets/install-script URLs, update repo homepage/topics, and record final build/deployment evidence.
+
+Local website/installer validation: 141 CLI regressions, wheel/sdist builds and all three entry points in an isolated installed wheel pass; documentation QA validates links, 25 old command names, 86 migration invocations and 37 current README/website examples. Eight production-build browser checks pass at desktop/mobile sizes, including first-fold installation and overflow from 320px to 1440px. The verified macOS arm64 release binary passes offline installer success, checksum rejection and conflict checks. Frontend lint/type/build and the full npm dependency audit pass (zero vulnerabilities). Native CI runs installer integration for all four release targets before merge/publication.
+
+The real public latest-stable POSIX installer also passes an isolated macOS arm64 download/install/version/context/update-discovery check, matching the previously verified v2.1 binary byte for byte. Initial PR CI passes website, all compatibility jobs and three native targets; Windows exposed a fixture inheriting PowerShell 7 module paths into Windows PowerShell 5.1. The fixture now selects the tested shell’s own modules; checksum verification remains unchanged.
+
+Release compatibility review keeps RC/development builds available: fresh-installer native success checks apply to stable versions, while all existing native CLI/update checks remain active for prereleases. Installer fixtures explicitly reject RC/development version selections.
+
+Installer requirements match the published manifest, including Windows 10+. Windows native CI also rejects an older-OS fixture before any installation.

@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -28,5 +29,9 @@ with tempfile.TemporaryDirectory() as home:
             info=json.loads(result.stdout)
             assert info['method']=='standalone' and info['os']==os_name and info['arch']==arch,info
 print(f'Native binary verified: {path}')
+if re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', __version__):
+    subprocess.run([sys.executable,'scripts/release/installer_smoke.py',str(path.absolute())],check=True,timeout=240)
+else:
+    print('Fresh installers select stable releases; prerelease builds retain native CLI smoke checks.')
 if os_name=='windows':
     subprocess.run([sys.executable,'scripts/release/windows_smoke.py',str(path.absolute())],check=True,timeout=180)
