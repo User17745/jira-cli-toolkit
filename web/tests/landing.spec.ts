@@ -3,9 +3,17 @@ import { test, expect, type Page } from '@playwright/test'
 const raw = 'https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts'
 const terminal = (page: Page) => page.getByRole('textbox', { name: 'Sandbox command' })
 const log = (page: Page) => page.getByRole('log', { name: 'Sandbox output' })
-const lastEntry = (page: Page) => log(page).locator('.term-entry').last()
+const lastEntry = (page: Page) => log(page).locator('.t-entry').last()
+const exitCode = (page: Page) => page.locator('.t-status .t-exit')
+
+// Below 1100px the terminal is docked and starts collapsed.
+async function openTerminal(page: Page) {
+  const toggle = page.getByRole('button', { name: 'Sandbox terminal' })
+  if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'false') await toggle.click()
+}
 
 async function run(page: Page, command: string) {
+  await openTerminal(page)
   await terminal(page).fill(command)
   await terminal(page).press('Enter')
 }
@@ -38,49 +46,54 @@ test('keyboard tabs switch the installation platform', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Linux', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
 
-test('sandbox opens on the headline command and keeps sample state', async ({ page }) => {
+test('sandbox opens with a command, labels sample data and keeps state', async ({ page }) => {
   await page.goto('./')
-  await expect(page.locator('#hero-title')).toHaveText('$ jira issue list --open')
+  await expect(page.locator('.example-label')).toHaveText('The sandbox terminal runs on sample data from an example site. Nothing reaches Jira.')
+  await openTerminal(page)
   await expect(log(page).getByRole('table', { name: 'Open issues (4 fetched)' })).toBeVisible()
-  await expect(page.locator('.example-label')).toHaveText('Sample data on an example site. Nothing here reaches Jira.')
 
   await run(page, "jira issue transition ENG-43 --to 'In Review'")
-  await expect(lastEntry(page).locator('.term-out')).toHaveText('Moved ENG-43 → In Review')
-  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 0')
+  await expect(lastEntry(page).locator('.t-out')).toHaveText('Moved ENG-43 → In Review')
+  await expect(exitCode(page)).toHaveText('exit 0')
   await run(page, 'jira issue list --open --csv --columns key,status')
-  await expect(lastEntry(page).locator('.term-out')).toContainText('ENG-43,In Review')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('ENG-43,In Review')
 
-  await page.getByRole('button', { name: 'Reset' }).click()
+  await page.getByRole('button', { name: 'Reset sandbox' }).click()
   await run(page, 'jira issue list --open --csv --columns key,status')
-  await expect(lastEntry(page).locator('.term-out')).toContainText('ENG-43,To Do')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('ENG-43,To Do')
 })
 
 test('sandbox reproduces argparse errors, JSON errors and exit codes', async ({ page }) => {
   await page.goto('./')
   await run(page, 'jira issue list --json --csv')
-  await expect(lastEntry(page).locator('.term-err')).toContainText('jira issue list: error: argument --csv: not allowed with argument --json')
-  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 2')
+  await expect(lastEntry(page).locator('.t-err')).toContainText('jira issue list: error: argument --csv: not allowed with argument --json')
+  await expect(lastEntry(page).locator('.t-rprompt')).toHaveText('exit 2')
 
   await run(page, 'jira issue lst')
-  await expect(lastEntry(page).locator('.term-err')).toContainText("argument issue_action: invalid choice: 'lst'")
+  await expect(lastEntry(page).locator('.t-err')).toContainText("argument issue_action: invalid choice: 'lst'")
 
   await run(page, 'jira issue view ENG-99 --json')
-  await expect(lastEntry(page).locator('.term-out')).toContainText('"code": "jira_error"')
-  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 1')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"code": "jira_error"')
+  await expect(exitCode(page)).toHaveText('exit 1')
 
   await terminal(page).fill('jira issue list')
   await terminal(page).press('Control+c')
-  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 130')
+  await expect(exitCode(page)).toHaveText('exit 130')
 })
 
-test('sandbox completes with Tab, recalls with arrows and releases focus after Escape', async ({ page }) => {
+test('sandbox completes with Tab, suggests from history and releases focus after Escape', async ({ page }) => {
   await page.goto('./')
+  await openTerminal(page)
+  await expect(page.locator('.t-ghost')).toHaveText('ira --help')
+  await terminal(page).focus()
+  await terminal(page).press('ArrowRight')
+  await expect(terminal(page)).toHaveValue('jira --help')
   await terminal(page).fill('jira iss')
   await terminal(page).press('Tab')
   await expect(terminal(page)).toHaveValue('jira issue ')
   await terminal(page).pressSequentially('transition ENG-4')
   await terminal(page).press('Tab')
-  await expect(lastEntry(page).locator('.term-options')).toContainText('ENG-42')
+  await expect(lastEntry(page).locator('.t-options')).toContainText('ENG-42')
   await terminal(page).fill('')
   await terminal(page).press('ArrowUp')
   await expect(terminal(page)).toHaveValue('jira issue list --open')
@@ -89,18 +102,26 @@ test('sandbox completes with Tab, recalls with arrows and releases focus after E
   await expect(terminal(page)).not.toBeFocused()
 })
 
-test('suggestions, exit-code examples and the command reference run in the sandbox', async ({ page }) => {
+test('examples, exit-code rows and the command reference type into the terminal without moving the page', async ({ page }, info) => {
   await page.goto('./')
-  await page.getByRole('button', { name: 'jira sprint list' }).click()
+  await page.locator('#try').scrollIntoViewIfNeeded()
+  const before = await page.evaluate(() => scrollY)
+  await page.getByRole('button', { name: 'Run jira sprint list' }).click()
   await expect(log(page).getByRole('table', { name: 'Sprints' })).toBeVisible()
+  if (info.project.name === 'desktop') expect(await page.evaluate(() => scrollY)).toBe(before)
+  await expect(page.getByRole('button', { name: 'Run jira sprint list' })).toHaveAttribute('data-active', 'true')
+  await expect(page.getByText('Example: jira issue view ENG-99 asks for an issue that doesn’t exist', { exact: false })).toBeVisible()
 
+  if (info.project.name === 'mobile') await page.getByRole('button', { name: 'Sandbox terminal' }).click()
   await page.getByRole('button', { name: 'Run jira issue view ENG-99 in the sandbox' }).click()
-  await expect(lastEntry(page).locator('.term-exit')).toHaveText('exit 1')
+  await expect(exitCode(page)).toHaveText('exit 1')
 
+  if (info.project.name === 'mobile') await page.getByRole('button', { name: 'Sandbox terminal' }).click()
   await page.getByLabel('Filter commands').fill('attach')
   await expect(page.locator('.reference-filter [role=status]')).toHaveText(/^4 of \d+ commands$/)
   await page.getByRole('button', { name: /issue attachment upload/ }).click()
-  await expect(lastEntry(page).locator('.term-out')).toContainText('usage: jira issue attachment upload')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('usage: jira issue attachment upload')
+  if (info.project.name === 'mobile') await page.getByRole('button', { name: 'Sandbox terminal' }).click()
   await page.getByLabel('Filter commands').fill('zzz')
   await expect(page.getByText('No command matches “zzz”.', { exact: false })).toBeVisible()
 })
@@ -113,12 +134,12 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   await page.evaluate(() => document.fonts.ready)
   const command = await page.locator('.install-code').boundingBox()
   expect(command).toBeTruthy()
-  expect(command!.y + command!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+  // On narrow screens the docked terminal bar covers the bottom of the viewport.
+  const dock = info.project.name === 'mobile' ? await page.locator('.terminal').boundingBox() : null
+  expect(command!.y + command!.height).toBeLessThanOrEqual(dock ? dock.y : page.viewportSize()!.height)
   for (const width of info.project.name === 'mobile' ? [320, 390, 760] : [768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-    const heading = await page.locator('#hero-title').boundingBox()
-    expect(heading!.height, `headline stays on one line at ${width}px`).toBeLessThan(width < 720 ? 60 : 110)
   }
   await page.setViewportSize(info.project.name === 'mobile' ? { width: 390, height: 844 } : { width: 1440, height: 1000 })
   await page.screenshot({ path: `test-results/landing-${info.project.name}-fold.png` })
@@ -162,8 +183,7 @@ test('ownership, support claims, planned features and sample data are clear', as
   await expect(page.getByRole('link', { name: 'planned for v2.5' })).toBeVisible()
   await page.getByRole('link', { name: 'Third-party notices', exact: true }).click()
   await expect(page.locator('body')).toContainText('SIL OPEN FONT LICENSE')
-  await expect(page.locator('body')).toContainText('The Martian Mono Project Authors')
-  await expect(page.locator('body')).toContainText('The Atkinson Hyperlegible Next Project Authors')
+  await expect(page.locator('body')).toContainText('The Geist Project Authors')
   await expect(page.locator('body')).toContainText('Copyright (c) 2023 shadcn')
   await expect(page.locator('body')).toContainText('macOS is a trademark of Apple Inc.')
   await expect(page.locator('body')).toContainText('Windows and PowerShell are trademarks of the Microsoft group of companies.')
