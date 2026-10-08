@@ -109,6 +109,8 @@ Release evidence, 8 October 2026:
 - The rc2 binary updated itself to 2.5.0 through default stable discovery without `--json`: exit 0, no stderr, previous binary kept, config unchanged, repeat check a no-op.
 - The user's pipx installation upgraded with the verified wheel (`pipx install --force`): all three entry points report 2.5.0, config bytes and mode unchanged, and `jira api /rest/api/3/myself --profile work --no-input` read the keychain silently.
 
+- Live multipart, 8 October 2026: the `work` account can create issues in BUG but not delete them, so no new issue was created. One `jira api … -X POST --form file=@proof.txt --form file=@proof.bin -H 'X-Atlassian-Token: no-check'` call uploaded a text file and a 200 KB binary to the existing acceptance issue BUG-704. Downloads with `--output` matched both SHA-256 hashes; both attachments were deleted with `jira api -X DELETE` and returned 404 afterwards, leaving BUG-704 without attachments. Service Management was also read live (`/rest/servicedeskapi/servicedesk`).
+
 ## Completion criteria
 
 - [x] An agent can inspect a current endpoint spec and make an authenticated call without putting a token in its invocation or prompt.
