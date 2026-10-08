@@ -24,7 +24,11 @@ if existing.returncode==0 and not json.loads(existing.stdout)['isDraft']:
     print('Matching complete release already published; preserving its assets.')
     raise SystemExit(0)
 notes=Path('release-notes.md')
-notes.write_text(f"Jira CLI Toolkit {manifest['version']}\n\nCommit: {manifest['commit']}\n\n"
+# Optional highlights shared by a minor version's candidates and stable release.
+release=Version(manifest['version'])
+highlights=Path('docs/releases')/f"{release.major}.{release.minor}.md"
+extra=highlights.read_text(encoding='utf-8').strip()+'\n\n' if highlights.is_file() else ''
+notes.write_text(f"Jira CLI Toolkit {manifest['version']}\n\nCommit: {manifest['commit']}\n\n{extra}"
                 f"[Migration and roadmap](https://github.com/{repo}/blob/{tag}/docs/sprints/v2-upgrade/roadmap.md).\n\n"
                 'Use the manifest for platform requirements and SHA-256 checksums. Use the short jira command. Python users also retain jsup and jira-cli-toolkit compatibility commands. '
                 'API tokens and local profiles are preserved during executable updates. The repository and release assets are public; downloads do not require GitHub or Jira credentials.\n\n'
