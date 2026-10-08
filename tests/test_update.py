@@ -78,12 +78,25 @@ class UpdateTests(unittest.TestCase):
         with self.assertRaisesRegex(update.UpdateError,'--yes'): update.handle(args(check=False))
 
     def test_package_manager_returns_owning_environment_instructions(self):
+        expected={'pipx':"pipx install --force 'jira-cli-toolkit==",'uv':"uv tool install --force 'jira-cli-toolkit==",
+                  'python':" -m pip install --upgrade 'jira-cli-toolkit=="}
         for method in ('pipx','uv','python'):
-            self.installed['method']=method
+            self.installed.update(method=method,distribution='jira-cli-toolkit')
             with self.subTest(method=method):
                 result=update.handle(args(check=False))
-                self.assertFalse(result['updated']); self.assertIn('instructions',result)
+                self.assertFalse(result['updated'])
+                self.assertIn(expected[method],result['instructions'])
+                self.assertNotIn('migration',result)
         self.assertEqual(self.api.download.call_count,3)
+
+    def test_installs_tracked_as_jsup_get_a_one_time_switch(self):
+        self.installed.update(method='pipx',distribution='jsup')
+        result=update.handle(args(check=False))
+        self.assertIn('pipx uninstall jsup, then pipx install --force',result['migration'])
+        self.installed.update(method='python',distribution='jsup')
+        migration=update.handle(args(check=False))['migration']
+        self.assertIn(' -m pip uninstall jsup, then ',migration)
+        self.assertIn("pip install --upgrade 'jira-cli-toolkit==",migration)
 
     def test_checksum_failure_preserves_target(self):
         with tempfile.TemporaryDirectory() as temp:

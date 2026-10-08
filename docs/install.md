@@ -12,7 +12,7 @@ The [README quick start](../README.md#get-started) installs the latest stable Gi
 
 The POSIX installer prints PATH instructions; the quick-start command adds the default directory to the current shell. To make that persistent, add the export to your own shell startup file. Windows adds its directory to the user PATH without administrator access. Reopen your terminal if necessary.
 
-Unsupported native systems, Linux ARM64, and musl systems should use the verified Python wheel with Python 3.10+. See the [manual installation and verification guide](migration/upgrade-to-v2.md). The package distribution is still `jsup`; it is not published to PyPI.
+Unsupported native systems, Linux ARM64, and musl systems should use the verified Python wheel with Python 3.10+. See the [manual installation and verification guide](migration/upgrade-to-v2.md). From 2.5.1 the package is published on PyPI as `jira-cli-toolkit` (`pipx install jira-cli-toolkit`); earlier releases were distributed as `jsup` wheels only.
 
 ## Pin a version or customize the directory
 

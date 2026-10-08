@@ -50,7 +50,7 @@ irm https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts/in
 
 Windows **10+ x86_64**, PowerShell **5.1+**. Installs to `%LOCALAPPDATA%\JiraCLI\bin\jira.exe` and adds that directory to your user PATH. Open a new terminal if needed.
 
-**Prefer manual installation?** [Open the latest release](https://github.com/User17745/jira-cli-toolkit/releases/latest) and choose a matching binary or Python wheel. The [installation guide](docs/migration/upgrade-to-v2.md) explains verification and pipx/uv/Python installation. The Python distribution remains `jsup` and is not published to PyPI.
+**Prefer manual installation?** [Open the latest release](https://github.com/User17745/jira-cli-toolkit/releases/latest) and choose a matching binary or Python wheel. The [installation guide](docs/migration/upgrade-to-v2.md) explains verification and pipx/uv/Python installation. From 2.5.1 the Python package is also on PyPI as `jira-cli-toolkit`: `pipx install jira-cli-toolkit`, then `pipx upgrade jira-cli-toolkit`. Installations made before 2.5.1 are tracked as `jsup`; switch once with `pipx uninstall jsup` and `pipx install jira-cli-toolkit` (configuration and saved credentials are kept).
 
 **Already installed?** Use [the migration guide](docs/migration/upgrade-to-v2.md). Installers refuse to replace existing CLI commands or managed shims. Custom paths and pinned versions are documented in [installer options](docs/install.md).
 
