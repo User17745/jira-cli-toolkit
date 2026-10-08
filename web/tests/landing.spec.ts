@@ -160,6 +160,16 @@ test('the desktop terminal stays below the header at the end of the page', async
   expect(terminal!.y + terminal!.height).toBeLessThanOrEqual(page.viewportSize()!.height)
 })
 
+test('first fold says the project is open source and links to GitHub and the license', async ({ page }) => {
+  await page.goto('./')
+  const line = page.locator('.hero-open-source')
+  await expect(line).toBeInViewport()
+  await expect(line).toContainText('Open source under the AGPL-3.0 license.')
+  await expect(line.getByRole('link', { name: 'View on GitHub' })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit')
+  await expect(line.locator('svg')).toBeVisible()
+  await expect(line.getByRole('link', { name: 'AGPL-3.0 license' })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
+})
+
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', e => errors.push(e.message))

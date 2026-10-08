@@ -103,3 +103,5 @@ Feedback: the terminal’s title bar and status line blended into the screen, th
 - The window dots use the macOS red, yellow and green.
 - The light palette uses darker status hues (cyan #0e7490, amber #a16207, green #166534, red #b91c1c). Every text color meets WCAG AA (4.5:1) against its background in both themes, except the ghost suggestion on the dark terminal (4.2), which is placeholder-like hint text. Sandbox notes now use the dim color instead of the ghost color.
 - The collapsed mobile dock gets a stronger edge and shadow. In dark mode it is light, so it stands out against the page.
+
+Open-source signal: the first fold says the project is open source, next to the independence line. A “View on GitHub” outline button with GitHub’s mark sits beside “Open source under the AGPL-3.0 license”, which links to LICENSE. The header GitHub button shows the mark too. The mark is the `mark-github` octicon, inlined because Lucide ships no brand icons; its MIT notice and a GitHub trademark line are in the third-party notices. On mobile the group stays above the install box.
