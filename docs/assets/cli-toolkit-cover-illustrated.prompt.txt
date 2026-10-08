@@ -1,0 +1,34 @@
+README illustrated cover — built-in image generation edit prompts
+
+Source: the originally supplied Jira CLI Toolkit Hero Banner.webp, retained
+in Git history before commit 130e2ca. The user requested its illustrated style
+in place of the simple SVG cover, with current command grammar.
+Logo reference: web/public/favicon.svg and web/public/apple-touch-icon.png.
+Only the README cover changes; website and CLI behavior are unchanged.
+
+Initial edit prompt:
+Use case: precise-object-edit.
+Asset type: README hero cover, wide 2048x768 illustrated banner.
+Edit target: supplied older CLI cover image. Preserve its beautiful pale blue/white background, glossy softly shaded illustration, terminal perspective, dashed connector, plants, generic task board, four feature icons and feature captions, composition and overall aesthetic.
+Make only these required branding and text corrections:
+1. Replace BOTH official Jira logos (large left ribbon logo and tiny board logo) with an original terminal glyph: rounded teal square containing a white >_ mark. No Jira/Atlassian logo or similar ribbon shapes anywhere.
+2. Left title reads 'CLI Toolkit' as the large primary title, with 'for Jira' noticeably smaller beneath it, using the same original dark navy / blue style. Preserve the subtitle 'Manage your Jira projects from the terminal'. Board header reads 'Project board' and keeps sample cards.
+3. Terminal command rows read exactly, with a brief correct description in the existing right column:
+jira issue create — Create a new issue
+jira issue list — List and search issues
+jira issue view — View issue details
+jira issue edit — Update issue fields
+jira project list — List projects
+jira sprint list — List sprints
+jira issue comment add — Add a comment
+jira issue transition — Change issue status
+jira --help — Show all commands
+Retain the leading '$ jira --help' illustration if spacing permits. Adjust terminal text font size and column spacing only as needed so the longer commands fit, no clipping or overlaps. Use crisp legible monospaced text.
+4. Add a small readable unobtrusive footer: 'Independent project. Not affiliated with Atlassian.'
+Keep all four original feature captions and original surrounding illustration intact. Do not flatten this into a simple graphic or change its visual style. No extra invented commands, branding, features or logos.
+
+Follow-up edit prompt (supersedes the teal logo choice):
+Use case: precise-object-edit.
+Image 1 is the edit target: our 2048x768 README illustrated cover. Image 2 is the exact logo reference matching the website favicon.
+Replace all THREE teal square terminal icons in Image 1 (large beside the title, small above terminal, tiny beside Project board) with the logo in Image 2: almost-black rounded square, a white right-facing > chevron, then a tall bright green rectangular block cursor. It is NOT a white underscore. Match the reference logo precisely in proportions, shape and colors. The green block is vertical, roughly as tall as the chevron. Black icon background, white chevron, green block. Preserve each icon's existing position and size, with subtle rendering consistent with the illustration. No teal square icons remain.
+Change nothing else. Keep the entire composition, image dimensions/aspect ratio, blue/white background, title, terminal commands and descriptions, board, plants, feature icons, dashed connectors and footer pixel-consistent wherever possible. Preserve exact text including 'CLI Toolkit', 'for Jira', and 'Independent project. Not affiliated with Atlassian.' All terminal command examples must remain exactly as they are in Image 1, including 'jira issue edit', 'jira issue comment add', 'jira issue transition'. No official Jira or Atlassian logos.

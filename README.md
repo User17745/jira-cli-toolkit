@@ -1,4 +1,4 @@
-<a href="https://user17745.github.io/jira-cli-toolkit/"><img src="docs/assets/cli-toolkit-cover.svg" alt="CLI Toolkit for Jira — independent terminal tools for Jira Cloud" width="100%" /></a>
+<a href="https://user17745.github.io/jira-cli-toolkit/"><img src="docs/assets/cli-toolkit-cover-illustrated.png" alt="CLI Toolkit for Jira — independent terminal tools for Jira Cloud, with current issue, project and sprint command examples" width="100%" /></a>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: AGPL v3 only" src="https://img.shields.io/badge/license-AGPL%20v3%20only-087f75?style=flat-square" /></a>
