@@ -1,6 +1,6 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: in progress. `jira api` is implemented on the v2.5 branch with local tests; `--spec` discovery is planned. Neither is available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
+Decision recorded: 7 October 2026. Status: in progress. `jira api` and `--spec` discovery are implemented on the v2.5 branch with local tests and live acceptance; release work remains. Neither is available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
 
 ## Goal and boundaries
 
@@ -77,20 +77,22 @@ Live read acceptance, 8 October 2026, `work` profile on investorsindia.atlassian
 
 ### API discovery and freshness
 
-- [ ] Verify the official OpenAPI sources/formats for Jira platform, Software and Service Management; document covered API families and unsupported sources explicitly.
-- [ ] Add `--spec` lookup by path/method, including template matching and bounded resolution of schema references within approved documents.
-- [ ] Expose parameters, request/response schemas, documented permissions/scopes, operation ID and source metadata without claiming all project-specific validators are represented.
-- [ ] Cache validated documents with source, fetch time, version/hash and conditional-request metadata; support explicit refresh, clear stale/offline behavior and bounded downloads/parsing.
-- [ ] Make specs/help available without resolving secrets or calling an authenticated Jira endpoint. Never fetch arbitrary reference URLs with Jira credentials.
-- [ ] Keep schema discovery advisory for raw requests. A missing/stale spec must not prevent a valid new API call; spec errors must not fabricate an operation definition.
-- [ ] Document that issue fields, transitions, scopes, licenses and project permissions can require separate runtime discovery even when an OpenAPI operation exists.
+- [x] Verify the official OpenAPI sources/formats for Jira platform, Software and Service Management; document covered API families and unsupported sources explicitly.
+- [x] Add `--spec` lookup by path/method, including template matching and bounded resolution of schema references within approved documents.
+- [x] Expose parameters, request/response schemas, documented permissions/scopes, operation ID and source metadata without claiming all project-specific validators are represented.
+- [x] Cache validated documents with source, fetch time, version/hash and conditional-request metadata; support explicit refresh, clear stale/offline behavior and bounded downloads/parsing.
+- [x] Make specs/help available without resolving secrets or calling an authenticated Jira endpoint. Never fetch arbitrary reference URLs with Jira credentials.
+- [x] Keep schema discovery advisory for raw requests. A missing/stale spec must not prevent a valid new API call; spec errors must not fabricate an operation definition.
+- [x] Document that issue fields, transitions, scopes, licenses and project permissions can require separate runtime discovery even when an OpenAPI operation exists.
+
+Discovery notes, 8 October 2026: the official documents are OpenAPI 3.0.1 at developer.atlassian.com — platform (423 paths, `/rest/api/3`, plus Connect and Forge paths), Software (78 paths: `/rest/agile/1.0` and the DevOps `/rest/*` families) and Service Management (50 paths, `/rest/servicedeskapi`). All references are local `#/components/...`. The CDN returns an ETag only for uncompressed responses, so refreshes request `Accept-Encoding: identity` to make conditional checks work. 63 literal platform paths also match a template (for example `/attachment/meta` and `/attachment/{id}`), so literal segments take precedence. Live: lookups for createIssue, getIssue (concrete key), getAttachmentMeta, getAllSprints and getCustomerRequests returned the expected operations, and a second refresh answered 304 for all three documents.
 
 ### Verification, docs and release
 
 - [ ] Test verbs, query encoding, inline/file/stdin JSON, raw/multipart uploads, scalar/array/empty/non-JSON responses, metadata, binary output and errors with local deterministic fixtures.
 - [ ] Test origin/path/header restrictions, credential redaction (including derived auth values), malicious spec references, malformed/stale specs and absence of credentials from child-process arguments/logs.
 - [ ] Test profile isolation, scoped routing, permission denial, rate limits, unknown mutation outcomes and strict noninteractive behavior; do not regress existing commands.
-- [ ] Test cached/refresh/offline operation discovery and a newly introduced endpoint without a CLI-code change.
+- [x] Test cached/refresh/offline operation discovery and a newly introduced endpoint without a CLI-code change.
 - [ ] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
 - [ ] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
 - [ ] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.

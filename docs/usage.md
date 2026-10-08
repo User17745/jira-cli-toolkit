@@ -4,7 +4,7 @@ A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `
 
 The current release is [v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0). The command is `jira`; `jira-cli-toolkit` remains the repository name and a compatibility alias, alongside `jsup`. V2 provides guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and release validation are tracked in the [upgrade roadmap](sprints/v2-upgrade/roadmap.md).
 
-The [v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents. `jira api` is in development for v2.5 and is not part of v2.1.0; `--spec` discovery is still planned.
+The [v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents. `jira api` and `--spec` discovery are in development for v2.5 and are not part of v2.1.0.
 
 ## Install
 
@@ -115,6 +115,27 @@ jira api /rest/api/3/attachment/content/10001 --output proof.png
 - **Output:** the response body goes to stdout exactly as Jira returned it, whatever its JSON shape. On a terminal, JSON is indented and binary bodies are not printed; use `--output FILE` to save a body to a new file (it never overwrites). Empty, 204 and HEAD responses print nothing. `--include` prints the status and response headers to stderr, with cookies redacted.
 - **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
 - **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
+
+### Looking up an endpoint before calling it
+
+`--spec` describes an operation from Atlassian's official OpenAPI documents and sends nothing to Jira. It needs no profile and never reads the credential store.
+
+```bash
+jira api /rest/api/3/issue -X POST --spec
+jira api /rest/api/3/issue/BUG-703 --spec          # concrete paths match /issue/{issueIdOrKey}
+jira api /rest/agile/1.0/board/1523/sprint --spec
+jira api spec refresh                               # check for newer documents
+jira api spec status                                # what is cached, from where, and how old
+```
+
+The output is JSON: the matched template and path parameters, operation ID, summary, the permissions Jira documents, OAuth and Connect scopes, deprecated and experimental flags, parameters, the request body schema with its example, the success response schema, error codes, and the source document's version, hash and fetch time.
+
+- **Sources:** the Jira Cloud platform (`/rest/api/…`), Jira Software (`/rest/agile/…` and related) and Jira Service Management (`/rest/servicedeskapi/…`) documents at developer.atlassian.com. Nothing else is fetched; Data Center APIs and other Atlassian products are not covered.
+- **Matching:** concrete paths match templates, and literal segments win over parameters, so `/rest/api/3/issue/createmeta` is not read as an issue key. If the path is documented but not for the method, the error lists the documented methods.
+- **References:** schema references are expanded only from inside the same document. Recursive schemas are marked once and not repeated, and expansion stops at a fixed depth and size.
+- **Cache:** the first lookup downloads the needed document. `jira api spec refresh` checks all three with conditional requests, so unchanged documents cost one small request. The cache lives in `~/.cache/jira-cli-toolkit/api-specs` (`%LOCALAPPDATA%` on Windows, `XDG_CACHE_HOME` if set), each file is checked against its recorded hash, and a failed or invalid refresh keeps the previous copy. Lookups work offline from the cache; documents older than 30 days are marked `stale` with a note to refresh.
+- **Advisory only:** a missing or stale spec never blocks a request. If an endpoint isn't in the cached documents, `--spec` says so, and `jira api` can still call it.
+- **Your site differs:** a spec describes the API, not your project. Required fields, allowed values, screens, transitions and permissions depend on the project and account, so discover them at runtime with `jira project fields KEY --type TYPE`, `jira issue transitions KEY` or the matching REST endpoints.
 
 ### Setting up an agent or script once
 

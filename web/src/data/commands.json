@@ -2515,7 +2515,15 @@
      "nargs": null,
      "choices": [],
      "type": null,
-     "help": "Jira REST path, for example /rest/api/3/myself"
+     "help": "Jira REST path, for example /rest/api/3/myself; or spec"
+    },
+    {
+     "positional": "spec_action",
+     "metavar": "ACTION",
+     "nargs": "?",
+     "choices": [],
+     "type": null,
+     "help": "after spec: refresh or status"
     },
     {
      "flag": "--method",
@@ -2657,6 +2665,20 @@
      "repeat": false,
      "type": null,
      "help": "save the response body to a new file"
+    },
+    {
+     "flag": "--spec",
+     "names": [
+      "--spec"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "SPEC",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "describe the operation from cached official specs; sends no request"
     }
    ]
   }

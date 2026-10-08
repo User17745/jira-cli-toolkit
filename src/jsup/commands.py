@@ -35,7 +35,8 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         if operation not in {"open", "issue-list", "board-issues"}:
             parser.add_argument("--limit", dest="max", type=positive_int, default=50)
     if operation == "api":
-        parser.add_argument("path", metavar="PATH", help="Jira REST path, for example /rest/api/3/myself")
+        parser.add_argument("path", metavar="PATH", help="Jira REST path, for example /rest/api/3/myself; or spec")
+        parser.add_argument("spec_action", metavar="ACTION", nargs="?", help="after spec: refresh or status")
         parser.add_argument("-X", "--method", type=str.upper, default="GET",
                             choices=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
         parser.add_argument("--query", "-q", action="append", default=[], metavar="KEY=VALUE",
@@ -49,6 +50,8 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
                             help="multipart field or file; repeat for more")
         parser.add_argument("--include", "-i", action="store_true", help="print response status and headers to stderr")
         parser.add_argument("--output", "-o", metavar="FILE", help="save the response body to a new file")
+        parser.add_argument("--spec", action="store_true",
+                            help="describe the operation from cached official specs; sends no request")
         return
     if operation == "issue-edit":
         parser.add_argument("key")

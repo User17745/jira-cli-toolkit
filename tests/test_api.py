@@ -149,7 +149,7 @@ class ApiCommandTests(unittest.TestCase):
     # Destination and header boundaries
 
     def test_paths_that_could_leave_the_site_or_change_the_resource_are_rejected(self):
-        for path in ("https://evil.example/rest/api/3/myself", "//evil.example/rest", "rest/api/3/myself", "spec",
+        for path in ("https://evil.example/rest/api/3/myself", "//evil.example/rest", "rest/api/3/myself",
                      "/api/3/myself", "/rest/../admin", "/rest/api/%2e%2e/x", "/rest/api/3/issue%2fBUG-1",
                      "/rest/api/3/myself?expand=x", "/rest/api/3/my self", "/rest//api", "/rest/api\\3",
                      "/rest/api/3/é", "/rest/api/%zz"):

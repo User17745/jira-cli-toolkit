@@ -291,6 +291,13 @@ def run(args, prog: str) -> None:
     if args.cmd == "api":
         # No credential-replacement prompt or retried writes: the request is the caller's.
         from . import api
+        if args.spec or args.path == "spec":
+            # Discovery is public; no identity or credential store is touched.
+            from . import api_spec
+            api_spec.run(args)
+            return
+        if args.spec_action:
+            raise api.invalid(f"Unexpected argument {args.spec_action!r}; pass query values with --query KEY=VALUE.")
         api.run(args, config.resolve_config(args))
         return
     if args.cmd == "intake":

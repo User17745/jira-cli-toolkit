@@ -36,9 +36,12 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
         # Server errors can echo submitted credentials. Never print them.
         from .config import resolve_config
         secrets = secret_values(getattr(args, "email", None), getattr(args, "token", None))
+        # Spec discovery never resolves an identity, not even to redact an error.
+        discovery = args.cmd == "api" and (getattr(args, "spec", False) or getattr(args, "path", None) == "spec")
         try:
-            cfg = resolve_config(args)
-            secrets += secret_values(cfg.get("email"), cfg.get("token"))
+            if not discovery:
+                cfg = resolve_config(args)
+                secrets += secret_values(cfg.get("email"), cfg.get("token"))
         except (ValueError, OSError):
             pass
 
