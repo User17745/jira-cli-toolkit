@@ -105,3 +105,7 @@ body { -webkit-font-smoothing: antialiased; }
 .agent-logos ul { display: flex; flex-wrap: wrap; gap: 0.45rem 1.1rem; margin-top: 0.6rem; }
 .agent-logos li { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; font-weight: 500; color: color-mix(in oklch, var(--foreground) 80%, transparent); white-space: nowrap; }
 .agent-logo { flex-shrink: 0; width: 15px; height: 15px; background: currentColor; mask: var(--logo) center / contain no-repeat; -webkit-mask: var(--logo) center / contain no-repeat; }
+
+/* The logo's green; dark text keeps it readable in both themes. */
+.brand-button { background: #4ade80; color: #0a0a0a; }
+.brand-button:hover { background: #22c55e; }

@@ -7,11 +7,18 @@ import './Terminal.css'
 
 export type TerminalHandle = { run: (command: string) => void; play: (id: ScenarioId) => void }
 // Entries without a command are parts of an agent session in a replay.
-type Entry = { id: number; command?: string; result: Result; interrupted?: boolean; options?: string[] }
+type Entry = { id: number; command?: string; result: Result; interrupted?: boolean; options?: string[]; running?: boolean }
 type Replay = { skip: boolean; cancelled: boolean }
+// A clicked command that is still typing, waiting for Enter, or running.
+type Pending = { command: string; stage: 'typing' | 'typed' | 'running' }
 
 const HINT = 'jira --help'
 const TYPE_DELAY = 14
+// Replay pacing: the request types fast, but each step pauses long enough to read what just happened.
+const READ_PROMPT = 1200
+const BEFORE_STEP = { message: 1600, tool: 1100 }
+const RUNNING = { Bash: 1500, other: 1000 }
+const BEFORE_ENTER = 600
 const PREVIEW_LINES = 4
 const PREVIEW_WIDTH = 120
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -111,6 +118,8 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
   const screenRef = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<number | undefined>(undefined)
   const replay = useRef<Replay | null>(null)
+  const pending = useRef<Pending | null>(null)
+  const pendingTimer = useRef<number | undefined>(undefined)
   const [playing, setPlaying] = useState<ScenarioId>()
 
   const last = [...entries].reverse().find(e => e.result.exit !== null && !e.options)
@@ -142,6 +151,59 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
     push({ command: line, result: sandbox.current.run(line) })
   }
 
+  // A clicked command types out, waits a beat before Enter, then shows it running, at the replay's pace.
+  function typeOut(command: string) {
+    let i = 0
+    pending.current = { command, stage: 'typing' }
+    setTyping(true)
+    setLine('')
+    typingTimer.current = window.setInterval(() => {
+      i += 2
+      setLine(command.slice(0, i))
+      if (i < command.length) return
+      window.clearInterval(typingTimer.current)
+      pending.current = { command, stage: 'typed' }
+      pendingTimer.current = window.setTimeout(() => enter(command), BEFORE_ENTER)
+    }, TYPE_DELAY)
+  }
+
+  function enter(command: string) {
+    const line = command.trim()
+    if (line === 'clear') { endPending(); run(line); return }
+    setLine('')
+    setCursor(null)
+    remember(line)
+    push({ command: line, result: { blocks: [], exit: null }, running: true })
+    pending.current = { command, stage: 'running' }
+    pendingTimer.current = window.setTimeout(() => finish(line), RUNNING.Bash)
+  }
+
+  function finish(line: string) {
+    const result = sandbox.current.run(line)
+    replaceLast({ result, running: false })
+    endPending()
+  }
+
+  function replaceLast(entry: Partial<Entry>) {
+    setEntries(list => [...list.slice(0, -1), { ...list[list.length - 1], ...entry }])
+  }
+
+  function endPending() {
+    window.clearInterval(typingTimer.current)
+    window.clearTimeout(pendingTimer.current)
+    pending.current = null
+    setTyping(false)
+  }
+
+  /** Jumps a clicked command straight to its output. */
+  function skipPending() {
+    const current = pending.current
+    if (!current) return
+    if (current.stage === 'running') { window.clearTimeout(pendingTimer.current); finish(current.command.trim()); return }
+    endPending()
+    run(current.command)
+  }
+
   function remember(line: string) {
     setHistory(list => [...list.filter(h => h !== line), line].slice(-50))
   }
@@ -156,6 +218,7 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
   // Types the request, then shows each tool call running before its result, unless the visitor skips ahead.
   // Each replay starts from fresh sample data, so its keys and IDs always match the script.
   async function play(id: ScenarioId) {
+    skipPending()
     stopReplay()
     window.clearInterval(typingTimer.current)
     const scenario = scenarios[id]
@@ -174,13 +237,14 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
       if (state.cancelled) return
     }
     updateLast({ kind: 'ask', text: scenario.prompt })
+    if (!state.skip) await wait(READ_PROMPT)
     for (const step of scenario.steps) {
-      if (!state.skip) await wait('say' in step || 'reply' in step ? 550 : 300)
+      if (!state.skip) await wait('say' in step || 'reply' in step ? BEFORE_STEP.message : BEFORE_STEP.tool)
       if (state.cancelled) return
       const block = execute(sandbox.current, step)
       if (block.kind === 'tool' && !state.skip) {
         push(agent({ ...block, output: null }))
-        await wait(block.name === 'Bash' ? 500 : 300)
+        await wait(block.name === 'Bash' ? RUNNING.Bash : RUNNING.other)
         if (state.cancelled) return
         updateLast(block)
       } else push(agent(block))
@@ -199,25 +263,13 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
     run(command) {
       onOpenChange(true)
       if (replay.current) { stopReplay(); setTyping(false) }
-      window.clearInterval(typingTimer.current)
+      skipPending()
       if (reducedMotion()) { run(command); return }
-      // Type the command out so the click visibly becomes input, then press Enter.
-      let i = 0
-      setTyping(true)
-      setLine('')
-      typingTimer.current = window.setInterval(() => {
-        i += 2
-        setLine(command.slice(0, i))
-        if (i >= command.length) {
-          window.clearInterval(typingTimer.current)
-          setTyping(false)
-          run(command)
-        }
-      }, TYPE_DELAY)
+      typeOut(command)
     },
   }))
 
-  useEffect(() => () => window.clearInterval(typingTimer.current), [])
+  useEffect(() => () => { window.clearInterval(typingTimer.current); window.clearTimeout(pendingTimer.current) }, [])
 
   // Follow new output, but open at the top so the first command stays visible.
   const mounted = useRef(false)
@@ -243,6 +295,19 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
         push({ command: input, result: { blocks: [], exit: 130 }, interrupted: true })
         setLine('')
       } else replay.current.skip = true
+      return
+    }
+    if (pending.current) {
+      // Like a replay: Ctrl+C stops the clicked command, any other key skips to its output.
+      if (event.key === 'Tab' || ['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) return
+      event.preventDefault()
+      if (event.ctrlKey && event.key === 'c') {
+        const running = pending.current.stage === 'running'
+        endPending()
+        if (running) replaceLast({ result: { blocks: [], exit: 130 }, interrupted: true, running: false })
+        else push({ command: input, result: { blocks: [], exit: 130 }, interrupted: true })
+        setLine('')
+      } else skipPending()
       return
     }
     if (typing) { event.preventDefault(); return }
@@ -277,8 +342,7 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
 
   function reset() {
     stopReplay()
-    window.clearInterval(typingTimer.current)
-    setTyping(false)
+    endPending()
     sandbox.current.reset()
     setEntries([])
     setHistory([])
@@ -312,6 +376,7 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
               <Prompt failed={previous ? previous.result.exit !== 0 : false} />{entry.command}{entry.interrupted && <span className="t-dim">^C</span>}
             </p>}
             {entry.options && <p className="t-options">{entry.options.join('   ')}</p>}
+            {entry.running && <p className="t-dim t-running">Running…</p>}
             {entry.result.blocks.map((block, j) => <Output key={j} block={block} />)}
           </div>
         })}</div>
@@ -330,6 +395,8 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
       <div className="t-status">
         {playing
           ? <p id="terminal-keys">agent replay <span>any key</span> skip <span>^C</span> stop</p>
+          : typing
+          ? <p id="terminal-keys">running <span>any key</span> skip <span>^C</span> stop</p>
           : <p id="terminal-keys"><span>tab</span> complete <span>↑</span> history <span>→</span> accept <span>^C</span> interrupt <span>esc</span> release</p>}
         {last && <p className="t-exit" data-failed={failed}>exit {last.result.exit}</p>}
       </div>

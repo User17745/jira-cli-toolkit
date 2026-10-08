@@ -192,7 +192,7 @@ function Story({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; playing?
     <dl className="story-stats">
       <div><dt>Time to a checked plan</dt><dd>days → hours</dd></div>
       <div><dt>Streams planned together</dt><dd>5</dd></div>
-      <div><dt>Jira writes before the checks passed</dt><dd>0</dd></div>
+      <div><dt>Jira issues created from the plan</dt><dd>87</dd></div>
     </dl>
     <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2">
       <button type="button" className={cn(buttonVariants(), 'gap-2')} onClick={() => onPlay('plan')} data-active={playing === 'plan'}>
@@ -363,7 +363,7 @@ function App() {
           <p className="order-4 mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:order-none sm:mt-5 sm:text-lg">A Jira Cloud CLI that AI agents can drive: planning sprints, writing standup digests and updating tickets as code merges.</p>
           <div className="hero-actions order-5 mt-6 flex flex-wrap gap-2 sm:order-none">
             <a className={cn(buttonVariants(), 'gap-1.5')} href="#agents">Set up your agent<ArrowRight className="size-4" aria-hidden="true" /></a>
-            <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5')} onClick={() => play('plan')}><Play className="size-4" aria-hidden="true" />Watch an agent plan sprints</button>
+            <button type="button" className={cn(buttonVariants(), 'brand-button gap-1.5')} onClick={() => play('plan')}><Play className="size-4" aria-hidden="true" />Watch an agent plan sprints</button>
           </div>
           <div className="order-2 mt-3 space-y-3 sm:order-none sm:mt-4">
             <p className="hero-independence text-sm font-medium">Independently maintained. Not affiliated with Atlassian.</p>
@@ -452,7 +452,7 @@ function App() {
           <SectionHead id="setup-title" title="From install to your first list" />
           <ol className="steps space-y-6">
             <li><p><a className="link" href="#get-started">Choose your system</a> and run its install command. It puts <code className="inline-code">jira</code> on your PATH.</p></li>
-            <li><p>Sign in with an API token. Guided login links to token creation, explains scopes, and stores the token in your OS credential store by default. For headless use, choose environment authentication or explicit POSIX plaintext file storage.</p><code className="step-code">jira auth login --profile work</code></li>
+            <li><p>Sign in with an API token. Guided login links to token creation, explains scopes, and stores the token in your OS credential store by default. For headless use, choose environment authentication or explicit POSIX plaintext file storage. Each profile is one account, so sign in again with another name to add a second, and switch with <code className="inline-code">jira profile use</code>.</p><code className="step-code">jira auth login --profile work</code></li>
             <li><p>Pick a default project, then list what’s open.</p><code className="step-code">jira context use --project ENG</code><code className="step-code">jira issue list --open</code></li>
           </ol>
         </section>
@@ -477,7 +477,7 @@ function App() {
               <span className="font-semibold tracking-tight">CLI Toolkit</span> <span className="text-sm text-muted-foreground">for Jira</span>
             </a>
             <nav aria-label="Project links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-              <a {...external} className="hover:text-foreground" href={repo}>Source</a><a {...external} className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a {...external} className="hover:text-foreground" href={latest}>Releases</a><a {...external} className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a className="hover:text-foreground" href={notices}>Third-party notices</a>
+              <a {...external} className="hover:text-foreground" href={repo}>Source</a><a {...external} className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a {...external} className="hover:text-foreground" href={latest}>Releases</a><a {...external} className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a {...external} className="hover:text-foreground" href={notices}>Third-party notices</a>
             </nav>
           </div>
           <section className="independent-notice mt-8 max-w-[80ch] space-y-3 text-xs leading-relaxed text-muted-foreground" aria-labelledby="independence-title">
@@ -485,7 +485,7 @@ function App() {
             <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
             <p>References to Jira and Atlassian, including the <code className="font-mono">jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian. The agent names and logos identify tools that can run the CLI; they belong to their respective owners, who do not endorse this project.</p>
             <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
-            <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a {...external} className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a {...external} className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
+            <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a {...external} className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a {...external} className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a {...external} className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
           </section>
         </div>
       </footer>

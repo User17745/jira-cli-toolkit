@@ -398,12 +398,12 @@ test('ownership, support claims, planned features and sample data are clear', as
   await page.getByRole('button', { name: 'Can I call any Jira API endpoint?' }).click()
   await expect(page.getByText('Keeping the token out of the command isn’t isolation', { exact: false })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Read the API and agent guide.' })).toHaveAttribute('href', /docs\/usage\.md#calling-any-rest-endpoint$/)
-  await page.getByRole('link', { name: 'Third-party notices', exact: true }).click()
-  await expect(page.locator('body')).toContainText('SIL OPEN FONT LICENSE')
-  await expect(page.locator('body')).toContainText('The Geist Project Authors')
-  await expect(page.locator('body')).toContainText('Copyright (c) 2023 shadcn')
-  await expect(page.locator('body')).toContainText('macOS is a trademark of Apple Inc.')
-  await expect(page.locator('body')).toContainText('Windows and PowerShell are trademarks of the Microsoft group of companies.')
+  const [notices] = await Promise.all([page.waitForEvent('popup'), page.getByRole('link', { name: 'Third-party notices', exact: true }).click()])
+  await expect(notices.locator('body')).toContainText('SIL OPEN FONT LICENSE')
+  await expect(notices.locator('body')).toContainText('The Geist Project Authors')
+  await expect(notices.locator('body')).toContainText('Copyright (c) 2023 shadcn')
+  await expect(notices.locator('body')).toContainText('macOS is a trademark of Apple Inc.')
+  await expect(notices.locator('body')).toContainText('Windows and PowerShell are trademarks of the Microsoft group of companies.')
 })
 
 test('JavaScript-disabled visitors see independent identity and installation links', async ({ browser, baseURL }) => {
