@@ -224,12 +224,18 @@ def _error_body(response, redact):
         return text
 
 
-def _write_file(response, destination: str) -> int:
+def check_output(destination: str) -> Path:
     output = Path(destination)
     if output.exists():
         raise invalid(f"Destination already exists: {output}")
     if not output.parent.is_dir():
         raise invalid(f"Destination folder does not exist: {output.parent}")
+    return output
+
+
+def _write_file(response, destination: str) -> int:
+    # Checked again here in case the destination appeared during the request.
+    output = check_output(destination)
     fd, temporary = tempfile.mkstemp(prefix=".jira-api-", dir=output.parent)
     received = 0
     try:
@@ -312,9 +318,12 @@ def execute(jira: Jira, request: Request, args, cfg: dict, stdout=None) -> None:
             _print_metadata(response, redact)
         status = response.status_code
         if 300 <= status < 400:
+            # Signed download URLs carry access tokens in the query, so only the address is shown.
+            target = urlsplit(response.headers.get("Location", ""))
             raise ApiError(1, "jira_error", "Jira answered with a redirect, which is not followed so credentials stay "
-                           "on the selected site.", status=status, method=request.method, path=request.path,
-                           location=redact(response.headers.get("Location", "")))
+                           "on the selected site. For endpoints that support it, such as attachment content, "
+                           "pass --query redirect=false.", status=status, method=request.method, path=request.path,
+                           location=redact(f"{target.scheme}://{target.netloc}{target.path}" if target.netloc else target.path))
         if status >= 400:
             raise ApiError(1, "jira_error", f"{request.method} {request.path} -> {status}", status=status,
                            method=request.method, path=request.path, body=_error_body(response, redact))
@@ -331,6 +340,9 @@ def run(args, cfg: dict) -> None:
     if args.csv or args.columns:
         raise invalid("--csv and --columns do not apply to api; the response is written as Jira returns it.")
     request = build_request(args)
+    if args.output:
+        # Fail before sending, so nothing is downloaded or changed for an unusable destination.
+        check_output(args.output)
     if not (cfg["site"] and cfg["email"] and cfg["token"]):
         raise invalid("No Jira identity is configured. Run: jira auth login")
     jira = Jira(cfg.get("api_site", cfg["site"]), cfg["email"], cfg["token"])

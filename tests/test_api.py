@@ -173,12 +173,15 @@ class ApiCommandTests(unittest.TestCase):
         self.assertEqual(headers["X-ExperimentalApi"], "opt-in")
         self.assertEqual(headers["Accept"], "text/plain")
 
-    def test_redirects_are_not_followed(self):
-        code, out, err, request = self.call("/rest/api/3/myself", replies=[response(302, headers={"Location": "https://evil.example/"})])
-        self.assertEqual(code, 1)
-        self.assertEqual(out, b"")
-        self.assertEqual(self.error(err)["status"], 302)
-        self.assertEqual(request.call_count, 1)
+    def test_redirects_are_not_followed_and_signed_locations_are_trimmed(self):
+        location = "https://api.media.atlassian.com/file/abc/binary?token=eyJsigned.jwt&client=x"
+        code, out, err, request = self.call("/rest/api/3/attachment/content/1", replies=[response(303, headers={"Location": location})])
+        self.assertEqual((code, out, request.call_count), (1, b"", 1))
+        error = self.error(err)
+        self.assertEqual(error["status"], 303)
+        self.assertEqual(error["location"], "https://api.media.atlassian.com/file/abc/binary")
+        self.assertNotIn("eyJsigned", err)
+        self.assertIn("redirect=false", error["message"])
 
     # Responses
 
@@ -209,8 +212,9 @@ class ApiCommandTests(unittest.TestCase):
             code, out, err, _ = self.call("/rest/api/3/x", "--output", str(target),
                                           replies=[response(body=b"\x00\x01", headers={"Content-Type": "application/octet-stream"})])
             self.assertEqual((code, out, target.read_bytes()), (0, b"", b"\x00\x01"))
-            code, _, err, _ = self.call("/rest/api/3/x", "-o", str(target), replies=[response(body=b"new")])
+            code, _, err, request = self.call("/rest/api/3/x", "-o", str(target), replies=[response(body=b"new")])
             self.assertEqual(code, 2)
+            request.assert_not_called()
             self.assertEqual(target.read_bytes(), b"\x00\x01")
             self.assertEqual(sorted(os.listdir(folder)), ["body.bin"])
 

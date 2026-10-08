@@ -116,6 +116,20 @@ jira api /rest/api/3/attachment/content/10001 --output proof.png
 - **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
 - **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
 
+### Setting up an agent or script once
+
+Agents and scripts run without a terminal. In that mode the CLI never opens a credential dialog, so a run either reads the saved token silently or fails at once with exit 2 and an `invalid_input` error. It never waits on a prompt nobody will answer. Set it up once, in a terminal:
+
+1. Save the identity: `jira auth login --profile work`. On macOS and Windows the token goes to the OS credential store.
+2. **macOS:** run `jira auth status --profile work` in a terminal. If macOS asks whether `jira` may use the `jira-cli-toolkit` keychain item, choose **Always Allow**. Later runs without a terminal read it silently. Approval belongs to the executable, so after an update replaces `jira`, run this step again if a scripted call starts failing with “Could not read the OS credential store without approved access”.
+3. **Windows:** Credential Manager needs no approval; nothing more to do.
+4. **Linux:** desktop wallets can show an unlock dialog that can't be suppressed, so scripted runs don't use them. Give the agent a complete environment identity (`JIRA_SITE`, `JIRA_EMAIL` and `JIRA_API_TOKEN` together), or create the profile with `jira auth login --profile agent --storage file`, which keeps the token in a mode-600 file.
+5. Point the agent at the profile with `--profile work` or `JIRA_PROFILE=work`, and pass `--no-input` so missing values fail instead of prompting:
+
+```bash
+JIRA_PROFILE=work jira api /rest/api/3/myself --no-input
+```
+
 Keeping the token out of the command reduces accidental exposure. It does not stop an agent that can read your credential store or run programs as you from using it, and the request runs with the full permissions of the Jira account. See the roadmap's trust-boundary notes.
 
 ## Scripts and compatibility
