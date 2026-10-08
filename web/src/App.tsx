@@ -94,6 +94,11 @@ function BrandMark() {
   </svg>
 }
 
+function GitHubMark({ className }: { className?: string }) {
+  // GitHub's mark-github octicon (Primer Octicons, MIT).
+  return <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" /></svg>
+}
+
 function SectionHead({ id, title, children }: { id: string; title: string; children?: React.ReactNode }) {
   return <div className="mb-6 max-w-2xl space-y-2">
     <h2 id={id} className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
@@ -162,7 +167,7 @@ function App() {
           <a className="hover:text-foreground" href={docs}>Docs</a>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <a className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex')} href={repo}>GitHub</a>
+          <a className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex')} href={repo}><GitHubMark className="size-4" />GitHub</a>
           <ThemeToggle />
           <a className={buttonVariants({ size: 'sm' })} href="#get-started">Install the CLI</a>
         </div>
@@ -175,8 +180,14 @@ function App() {
         <section className="hero flex flex-col items-start pt-6 pb-12 sm:pt-16" aria-labelledby="hero-title">
           <h1 id="hero-title" className="max-w-[16ch] text-4xl font-semibold tracking-tighter text-balance sm:text-5xl xl:text-6xl">Jira Cloud, from your terminal.</h1>
           <p className="order-4 mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:order-none sm:mt-5 sm:text-lg">An independent command-line tool for Jira Cloud. List, view, move and assign issues, plan sprints, and script all of it with JSON, CSV and exit codes that mean one thing each.</p>
-          <p className="hero-independence order-2 mt-3 text-sm font-medium sm:order-none sm:mt-4">Independently maintained. Not affiliated with Atlassian.</p>
-          <p className="hero-proof order-5 mt-2 text-sm text-muted-foreground sm:order-none sm:mt-1">Runs within your Jira permissions, using your existing API token.</p>
+          <div className="order-2 mt-3 space-y-3 sm:order-none sm:mt-4">
+            <p className="hero-independence text-sm font-medium">Independently maintained. Not affiliated with Atlassian.</p>
+            <div className="hero-open-source flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+              <a className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
+              <p>Open source under the <a className="link text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0 license</a>.</p>
+            </div>
+          </div>
+          <p className="hero-proof order-5 mt-2 text-sm text-muted-foreground sm:order-none sm:mt-3">Runs within your Jira permissions, using your existing API token.</p>
           <div className="order-3 mt-5 w-full max-w-xl sm:order-none sm:mt-8"><Install /></div>
         </section>
 
