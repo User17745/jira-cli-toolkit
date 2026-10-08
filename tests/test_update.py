@@ -115,6 +115,24 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(target.with_name('jira.previous').read_bytes(),b'old')
             self.assertEqual(cfg.read_text(),'keep'); self.assertEqual(target.stat().st_mode & 0o777,0o755)
 
+    @unittest.skipIf(os.name=='nt','Windows applies updates from a helper after this process exits')
+    def test_output_modules_load_before_the_executable_is_replaced(self):
+        # A frozen 2.1.0 crashed after updating: rich imported rich.pretty from the replaced file.
+        import sys
+        for name in [m for m in sys.modules if m == 'rich.pretty' or m.startswith('rich.pretty.')]:
+            del sys.modules[name]
+        loaded_at_swap = []
+        real_replace = update.os.replace
+        def replace(source, destination):
+            loaded_at_swap.append('rich.pretty' in sys.modules)
+            real_replace(source, destination)
+        with tempfile.TemporaryDirectory() as temp:
+            target=Path(temp)/'jira'; target.write_bytes(b'old'); target.chmod(0o755)
+            candidate=Path(temp)/'candidate'; candidate.write_bytes(b'new')
+            with patch.object(update,'probe'), patch.object(update.os,'replace',side_effect=replace):
+                update.replace_binary(candidate,target,'2.0.0')
+        self.assertTrue(loaded_at_swap and all(loaded_at_swap))
+
     def test_lock_and_backup_prevent_conflicting_updates(self):
         with tempfile.TemporaryDirectory() as temp:
             target=Path(temp)/'jira'; target.write_bytes(b'old'); candidate=Path(temp)/'new'; candidate.write_bytes(b'new')

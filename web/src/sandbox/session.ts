@@ -88,6 +88,8 @@ export class Session {
       return this.dispatch(command, opts, args)
     } catch (error) {
       if (!(error instanceof Failure)) throw error
+      // jira api keeps stdout for response bodies, so its errors are always JSON on stderr.
+      if (command === 'api') return { blocks: [{ kind: 'text', stream: 'stderr', text: JSON.stringify({ error: { code: error.code, message: error.message, ...error.details } }, null, 2) }], exit: error.exit }
       if (opts.json) return { blocks: [{ kind: 'text', stream: 'stdout', text: JSON.stringify({ error: { code: error.code, message: error.message, ...error.details } }, null, 2) }], exit: error.exit }
       return { blocks: [{ kind: 'text', stream: 'stderr', text: error.message }], exit: error.exit }
     }
@@ -104,6 +106,7 @@ export class Session {
       case 'issue assign': return this.assign(args.key as string, opts.user as string, opts)
       case 'issue unassign': return this.assign(args.key as string, null, opts)
       case 'sprint list': return this.sprints(opts)
+      case 'api': return this.api(args.path as string, args.spec_action as string | undefined, opts)
       case 'project list': return this.table(opts, 'Projects', ['key', 'name'], projects)
       case 'board list': return opts.json
         ? json({ maxResults: 50, startAt: 0, isLast: true, values: boards.map(b => ({ id: b.id, name: b.name, type: b.type })), fetched: boards.length })
@@ -111,6 +114,68 @@ export class Session {
     }
     const node = command.split(' ').reduce<Node | undefined>((n, name) => n && child(n, name), root)
     return { blocks: [{ kind: 'note', text: `jira ${command} parsed correctly. The sandbox has no sample data for it, so nothing ran. In your terminal it will ${node?.help || 'run against your Jira site'}.` }], exit: null }
+  }
+
+  // Mirrors the checks and messages in jsup/api.py; responses come from the sample site.
+  private api(path: string, action: string | undefined, opts: Values): Result {
+    const method = String(opts.method ?? 'GET').toUpperCase()
+    if (path === 'spec') {
+      if (action === 'refresh' || action === 'status' || !action)
+        return { blocks: [{ kind: 'note', text: 'The sandbox has no spec cache. In your terminal, jira api spec refresh downloads the official OpenAPI documents and spec status shows their version and age.' }], exit: null }
+      throw invalid(`Unknown spec action '${action}'; use jira api spec refresh or jira api spec status.`)
+    }
+    if (action) throw invalid(`Unexpected argument '${action}'; pass query values with --query KEY=VALUE.`)
+    if (!path.startsWith('/')) throw invalid('PATH must be a Jira REST path such as /rest/api/3/myself. Use jira api spec refresh or jira api spec status for discovery.')
+    if (/[^\x21-\x7e]/.test(path)) throw invalid('PATH must be printable ASCII without spaces; percent-encode other characters.')
+    if (/[?#]/.test(path)) throw invalid('PATH must not contain a query or fragment; pass query values with --query KEY=VALUE.')
+    if (path.includes('\\') || path.includes('//')) throw invalid('PATH must not contain backslashes or empty segments.')
+    if (!path.startsWith('/rest/')) throw invalid('PATH must start with /rest/, for example /rest/api/3/myself or /rest/agile/1.0/board.')
+    if (path.replace(/%2e/gi, '.').split('/').some(s => s === '.' || s === '..')) throw invalid('PATH must not contain . or .. segments.')
+    const body = ['data', 'raw-data', 'form'].find(k => opts[k] !== undefined && !(Array.isArray(opts[k]) && !(opts[k] as string[]).length))
+    if (body && ['GET', 'HEAD', 'OPTIONS'].includes(method)) throw invalid(`--${body} needs an explicit method that accepts a body, such as -X POST.`)
+    if (opts.spec) return this.apiSpec(path, method)
+    const issue = path.match(/^\/rest\/api\/3\/issue\/([^/]+)$/)
+    if (method === 'GET' && path === '/rest/api/3/myself')
+      return json({ accountId: me.accountId, emailAddress: me.emailAddress, displayName: me.displayName, active: true, timeZone: 'UTC' })
+    if (method === 'GET' && issue) {
+      const found = this.issues.find(i => i.key === issue[1].toUpperCase())
+      if (!found) throw new Failure(1, 'jira_error', `GET ${path} -> 404`, { status: 404, method, path,
+        body: { errorMessages: ['Issue does not exist or you do not have permission to see it.'], errors: {} } })
+      return json(this.issueJson(found))
+    }
+    const board = path.match(/^\/rest\/agile\/1\.0\/board\/(\d+)\/sprint$/)
+    if (method === 'GET' && board) {
+      const values = sprints.filter(s => String(s.board) === board[1]).map(({ board: id, ...s }) => ({ ...s, originBoardId: id }))
+      return json({ maxResults: 50, startAt: 0, isLast: true, values })
+    }
+    return { blocks: [{ kind: 'note', text: `jira api ${method} ${path} is valid. The sandbox has sample responses only for /rest/api/3/myself, /rest/api/3/issue/KEY and /rest/agile/1.0/board/12/sprint. In your terminal it calls your Jira site with your saved profile.` }], exit: null }
+  }
+
+  private apiSpec(path: string, method: string): Result {
+    const key = path.match(/^\/rest\/api\/3\/issue\/([^/]+)$/)?.[1]
+    if (path === '/rest/api/3/issue' && method === 'POST') return json({
+      method, path, template: '/rest/api/3/issue', pathParameters: {}, operationId: 'createIssue', summary: 'Create issue',
+      permissions: '*Browse projects* and *Create issues* project permissions for the project in which the issue or subtask is created.',
+      scopes: { oauth2: [{ scheme: 'OAuth2', scopes: ['write:jira-work'], state: 'Current' }], connect: 'WRITE' },
+      parameters: [{ in: 'query', name: 'updateHistory', schema: { type: 'boolean', default: false } }],
+      requestBody: { content: { 'application/json': { schema: { 'x-schema': 'IssueUpdateDetails', type: 'object', properties: { fields: { type: 'object' }, update: { type: 'object' }, transition: { 'x-schema': 'IssueTransition' } } } } } },
+      responses: {
+        201: { description: 'Returned if the request is successful.' },
+        400: { description: 'Returned if the request: * is missing required fields. * contains invalid field values. * contains fields that cannot be set for the issue type. …' },
+        401: { description: 'Returned if the authentication credentials are incorrect or missing.' },
+        403: { description: 'Returned if the user does not have the necessary permission.' },
+        422: { description: 'Returned if a configuration problem prevents the creation of the issue.' },
+      },
+      note: 'Sample excerpt. The real output includes full schemas and examples from the official document, plus its version and fetch time.',
+    })
+    if (key && (method === 'GET' || method === 'DELETE')) return json({
+      method, path, template: '/rest/api/3/issue/{issueIdOrKey}', pathParameters: { issueIdOrKey: key },
+      operationId: method === 'GET' ? 'getIssue' : 'deleteIssue', summary: method === 'GET' ? 'Get issue' : 'Delete issue',
+      permissions: `${method === 'GET' ? '*Browse projects* project permission for the project that the issue is in.' : '*Browse projects* and *Delete issues* project permission for the project containing the issue.'} If issue-level security is configured, issue-level security permission to view the issue.`,
+      scopes: { oauth2: [{ scheme: 'OAuth2', scopes: [method === 'GET' ? 'read:jira-work' : 'write:jira-work'], state: 'Current' }], connect: method === 'GET' ? 'READ' : 'DELETE' },
+      note: 'Sample excerpt. The real output includes every parameter and the full response schema.',
+    })
+    return { blocks: [{ kind: 'note', text: `The sandbox has sample specs only for POST /rest/api/3/issue and GET or DELETE /rest/api/3/issue/KEY. In your terminal, --spec looks up ${method} ${path} in the cached official OpenAPI documents.` }], exit: null }
   }
 
   private help(path: string[] = []) {

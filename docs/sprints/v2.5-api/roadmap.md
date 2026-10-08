@@ -1,6 +1,6 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
+Decision recorded: 7 October 2026. Status: in progress. `jira api` and `--spec` discovery are implemented on the v2.5 branch with local tests and live acceptance; release work remains. Neither is available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
 
 ## Goal and boundaries
 
@@ -59,37 +59,43 @@ Start with one request/one response. Do not promise automatic pagination of arbi
 
 ### Shared request layer and API command
 
-- [ ] Define parser grammar for `api PATH`, explicit methods, repeated query parameters, JSON data/file/stdin, raw bodies, multipart fields/files, response metadata and output files; keep discovery subcommands unambiguous.
-- [ ] Reuse the existing identity resolver and trusted API base, including scoped-token cloud-ID routing. Do not introduce another auth or credential configuration mechanism.
-- [ ] Add a shared request/response path that supports raw bodies, scalar/array JSON, empty responses and non-JSON content without breaking existing grouped/legacy command contracts.
-- [ ] Validate relative paths and trusted origins; reject URL/host/auth/cookie/proxy overrides, control characters and ambiguous path forms. Disable credential-bearing redirects and raw curl argument passthrough.
-- [ ] Support permitted custom headers for API-specific needs while retaining control over authentication, host, content framing and transport settings.
-- [ ] Implement data parsing and bounded file/stdin reads without shell evaluation. Preserve supplied JSON rather than inventing or discarding endpoint fields.
-- [ ] Support generic raw/multipart request bodies with explicit content types and bounded uploads, including Jira's required attachment header, without writing another endpoint wrapper.
-- [ ] Define stdout/stderr, status/headers, JSON/error/exit-code and binary-download contracts; keep secrets out of diagnostics, traces and process arguments.
-- [ ] Preserve bounded safe-read retry/rate-limit handling. Unknown writes are not replayed; raw POST search is not assumed safe merely because some search operations are read-only.
-- [ ] Keep headless behavior deterministic when credential-store access requires OS approval; document onboarding once and agent invocation thereafter.
-- [ ] Confirm that a previously unwrapped endpoint and an unknown-to-the-cached-spec path can be called without adding endpoint-specific Python code.
+- [x] Define parser grammar for `api PATH`, explicit methods, repeated query parameters, JSON data/file/stdin, raw bodies, multipart fields/files, response metadata and output files; keep discovery subcommands unambiguous.
+- [x] Reuse the existing identity resolver and trusted API base, including scoped-token cloud-ID routing. Do not introduce another auth or credential configuration mechanism.
+- [x] Add a shared request/response path that supports raw bodies, scalar/array JSON, empty responses and non-JSON content without breaking existing grouped/legacy command contracts.
+- [x] Validate relative paths and trusted origins; reject URL/host/auth/cookie/proxy overrides, control characters and ambiguous path forms. Disable credential-bearing redirects and raw curl argument passthrough.
+- [x] Support permitted custom headers for API-specific needs while retaining control over authentication, host, content framing and transport settings.
+- [x] Implement data parsing and bounded file/stdin reads without shell evaluation. Preserve supplied JSON rather than inventing or discarding endpoint fields.
+- [x] Support generic raw/multipart request bodies with explicit content types and bounded uploads, including Jira's required attachment header, without writing another endpoint wrapper.
+- [x] Define stdout/stderr, status/headers, JSON/error/exit-code and binary-download contracts; keep secrets out of diagnostics, traces and process arguments.
+- [x] Preserve bounded safe-read retry/rate-limit handling. Unknown writes are not replayed; raw POST search is not assumed safe merely because some search operations are read-only.
+- [x] Keep headless behavior deterministic when credential-store access requires OS approval; document onboarding once and agent invocation thereafter.
+- [x] Confirm that a previously unwrapped endpoint and an unknown-to-the-cached-spec path can be called without adding endpoint-specific Python code.
+
+Implementation notes: `jsup/api.py` validates and sends the request; `Jira._send` in `jsup/client.py` is the shared transport (timeouts, redirect refusal, safe-read retries, unknown-write reporting) under both `jira api` and the existing commands. `PATH` values that are not `/rest/...` paths, including `spec`, are reserved for discovery subcommands. Headless onboarding is documented in [the usage guide](../../usage.md#setting-up-an-agent-or-script-once).
+
+Live read acceptance, 8 October 2026, `work` profile on investorsindia.atlassian.net, run without a terminal (keychain read silently, no dialog): `myself`, `serverInfo`, project BUG, board 1523 and its configuration and active sprint, POST `search/jql` from inline and stdin JSON, project search with repeated `--query`, project statuses (top-level array returned unchanged), `--include` (cookies redacted), HEAD, a 404 as a structured stderr error, and a dot-segment path rejected before sending. An 11.7 MB attachment downloaded with `--output` matched its declared size, and a second save refused to overwrite. No output file contained the token or a derived form. Write acceptance used a reversible issue property on BUG-703 (PUT 201, read back, DELETE 204, then 404) instead of creating issues, comments or attachments, so no one was notified. Fixes from this run: the attachment-content redirect error now suggests `--query redirect=false` and drops the signed token from the reported location, and `--output` destinations are checked before the request is sent.
 
 ### API discovery and freshness
 
-- [ ] Verify the official OpenAPI sources/formats for Jira platform, Software and Service Management; document covered API families and unsupported sources explicitly.
-- [ ] Add `--spec` lookup by path/method, including template matching and bounded resolution of schema references within approved documents.
-- [ ] Expose parameters, request/response schemas, documented permissions/scopes, operation ID and source metadata without claiming all project-specific validators are represented.
-- [ ] Cache validated documents with source, fetch time, version/hash and conditional-request metadata; support explicit refresh, clear stale/offline behavior and bounded downloads/parsing.
-- [ ] Make specs/help available without resolving secrets or calling an authenticated Jira endpoint. Never fetch arbitrary reference URLs with Jira credentials.
-- [ ] Keep schema discovery advisory for raw requests. A missing/stale spec must not prevent a valid new API call; spec errors must not fabricate an operation definition.
-- [ ] Document that issue fields, transitions, scopes, licenses and project permissions can require separate runtime discovery even when an OpenAPI operation exists.
+- [x] Verify the official OpenAPI sources/formats for Jira platform, Software and Service Management; document covered API families and unsupported sources explicitly.
+- [x] Add `--spec` lookup by path/method, including template matching and bounded resolution of schema references within approved documents.
+- [x] Expose parameters, request/response schemas, documented permissions/scopes, operation ID and source metadata without claiming all project-specific validators are represented.
+- [x] Cache validated documents with source, fetch time, version/hash and conditional-request metadata; support explicit refresh, clear stale/offline behavior and bounded downloads/parsing.
+- [x] Make specs/help available without resolving secrets or calling an authenticated Jira endpoint. Never fetch arbitrary reference URLs with Jira credentials.
+- [x] Keep schema discovery advisory for raw requests. A missing/stale spec must not prevent a valid new API call; spec errors must not fabricate an operation definition.
+- [x] Document that issue fields, transitions, scopes, licenses and project permissions can require separate runtime discovery even when an OpenAPI operation exists.
+
+Discovery notes, 8 October 2026: the official documents are OpenAPI 3.0.1 at developer.atlassian.com — platform (423 paths, `/rest/api/3`, plus Connect and Forge paths), Software (78 paths: `/rest/agile/1.0` and the DevOps `/rest/*` families) and Service Management (50 paths, `/rest/servicedeskapi`). All references are local `#/components/...`. The CDN returns an ETag only for uncompressed responses, so refreshes request `Accept-Encoding: identity` to make conditional checks work. 63 literal platform paths also match a template (for example `/attachment/meta` and `/attachment/{id}`), so literal segments take precedence. Live: lookups for createIssue, getIssue (concrete key), getAttachmentMeta, getAllSprints and getCustomerRequests returned the expected operations, and a second refresh answered 304 for all three documents.
 
 ### Verification, docs and release
 
-- [ ] Test verbs, query encoding, inline/file/stdin JSON, raw/multipart uploads, scalar/array/empty/non-JSON responses, metadata, binary output and errors with local deterministic fixtures.
-- [ ] Test origin/path/header restrictions, credential redaction (including derived auth values), malicious spec references, malformed/stale specs and absence of credentials from child-process arguments/logs.
-- [ ] Test profile isolation, scoped routing, permission denial, rate limits, unknown mutation outcomes and strict noninteractive behavior; do not regress existing commands.
-- [ ] Test cached/refresh/offline operation discovery and a newly introduced endpoint without a CLI-code change.
-- [ ] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
-- [ ] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
-- [ ] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.
+- [x] Test verbs, query encoding, inline/file/stdin JSON, raw/multipart uploads, scalar/array/empty/non-JSON responses, metadata, binary output and errors with local deterministic fixtures.
+- [x] Test origin/path/header restrictions, credential redaction (including derived auth values), malicious spec references, malformed/stale specs and absence of credentials from child-process arguments/logs.
+- [x] Test profile isolation, scoped routing, permission denial, rate limits, unknown mutation outcomes and strict noninteractive behavior; do not regress existing commands.
+- [x] Test cached/refresh/offline operation discovery and a newly introduced endpoint without a CLI-code change.
+- [x] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
+- [x] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
+- [x] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.
 - [ ] Run full regressions, wheel/sdist and installed smoke checks before milestone pushes; verify the CI/native matrix, published manifest and real updater on a v2.5 candidate.
 - [ ] Validate the compatibility path from stable v2, then publish a tested v2.5 release through the same GitHub pipeline and verify stable selection.
 

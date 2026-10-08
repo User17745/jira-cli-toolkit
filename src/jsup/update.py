@@ -143,6 +143,21 @@ def probe(path,version):
         raise UpdateError('Candidate executable failed its version/help checks.') from None
 
 
+def _preload_output():
+    """Load everything that reports the result while the original executable is still in place.
+
+    A frozen build imports modules lazily from its own file. Once that file is replaced,
+    a first import fails to decompress, as 2.1.0 does after a successful update.
+    """
+    from . import ui
+    for console in (ui.console, ui.err_console):
+        with console.capture():
+            console.print({'updated': True, 'version': '0.0.0'}, markup=False)
+            console.print('Update failed after replacement.', markup=False)
+    import json, traceback  # noqa: F401  (error reporting paths)
+
+
+
 def replace_binary(candidate,target,version):
     target=Path(target)
     if target.is_symlink(): raise UpdateError('Refusing to overwrite a symbolic-link installation. Update its owning manager.')
@@ -168,6 +183,7 @@ def replace_binary(candidate,target,version):
                                  stdout=log,stderr=log,env=env,creationflags=0x00000008)
             deferred=True
             return {'pending':True,'log':str(staging/'helper.log')}
+        _preload_output()
         os.replace(target,backup)
         try:
             os.replace(candidate,target)

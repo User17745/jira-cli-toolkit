@@ -102,6 +102,20 @@ test('sandbox completes with Tab, suggests from history and releases focus after
   await expect(terminal(page)).not.toBeFocused()
 })
 
+test('sandbox demonstrates jira api requests, spec lookups and their errors', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Run jira api /rest/api/3/issue -X POST --spec' }).click()
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"operationId": "createIssue"')
+  await run(page, 'jira api /rest/api/3/issue/ENG-42')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"key": "ENG-42"')
+  await run(page, 'jira api /rest/api/3/issue/ENG-99')
+  await expect(lastEntry(page).locator('.t-err')).toContainText('"status": 404')
+  await expect(exitCode(page)).toHaveText('exit 1')
+  await run(page, 'jira api /rest/api/3/issue --data {}')
+  await expect(lastEntry(page).locator('.t-err')).toContainText('--data needs an explicit method that accepts a body, such as -X POST.')
+  await expect(exitCode(page)).toHaveText('exit 2')
+})
+
 test('examples, exit-code rows and the command reference type into the terminal without moving the page', async ({ page }, info) => {
   await page.goto('./')
   await page.locator('#try').scrollIntoViewIfNeeded()
@@ -224,7 +238,8 @@ test('ownership, support claims, planned features and sample data are clear', as
   await page.getByRole('button', { name: 'Do I need a new Jira account?' }).click()
   await expect(page.getByText('The CLI uses your account’s Jira permissions.', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: 'Can I call any Jira API endpoint?' }).click()
-  await expect(page.getByRole('link', { name: 'planned for v2.5' })).toBeVisible()
+  await expect(page.getByText('Keeping the token out of the command isn’t isolation', { exact: false })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Read the API and agent guide.' })).toHaveAttribute('href', /docs\/usage\.md#calling-any-rest-endpoint$/)
   await page.getByRole('link', { name: 'Third-party notices', exact: true }).click()
   await expect(page.locator('body')).toContainText('SIL OPEN FONT LICENSE')
   await expect(page.locator('body')).toContainText('The Geist Project Authors')

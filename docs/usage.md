@@ -4,7 +4,7 @@ A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `
 
 The current release is [v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0). The command is `jira`; `jira-cli-toolkit` remains the repository name and a compatibility alias, alongside `jsup`. V2 provides guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and release validation are tracked in the [upgrade roadmap](sprints/v2-upgrade/roadmap.md).
 
-The [planned v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents after v2 is finalized. These commands are not part of v2.1.0.
+v2.5 adds [authenticated requests to any REST endpoint and endpoint-spec discovery](#calling-any-rest-endpoint) for agents and scripts. See the [v2.5 roadmap](sprints/v2.5-api/roadmap.md) for design decisions.
 
 ## Install
 
@@ -95,6 +95,86 @@ jira project list
 
 Software operations require applicable boards and Jira permissions. Feature toggles are under `board feature enable/disable`. Sprint viewing/editing and required start/close inputs are implemented. Operations remain subject to board capabilities and Jira permissions. `view --web` and legacy `browse` require only a site URL and use the browser's session. Board URLs do not guess a project from local configuration.
 
+## Calling any REST endpoint
+
+`jira api` sends one request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
+
+```bash
+jira api /rest/api/3/myself --profile work
+jira api /rest/api/3/project/search --query maxResults=20 --query expand=lead
+jira api /rest/api/3/issue -X POST --data @issue.json
+jira api /rest/api/3/search/jql -X POST --data @- < query.json
+jira api /rest/api/3/issue/BUG-703/attachments -X POST --form file=@proof.txt -H 'X-Atlassian-Token: no-check'
+jira api /rest/api/3/attachment/content/10001 --output proof.png
+```
+
+- **Method:** GET by default. Other methods need `-X`. A body never changes the method, so `--data` without `-X POST`, `PUT`, `PATCH` or `DELETE` is an input error.
+- **Path:** a relative path starting with `/rest/` on the selected site, or on the scoped-token gateway. Absolute URLs, other hosts, query strings in the path, `.`/`..` segments, encoded slashes and non-ASCII characters are rejected. Pass query values with `--query KEY=VALUE`; the CLI encodes them.
+- **Bodies:** `--data` takes JSON inline, from `@file` or from `@-` (stdin). It must parse as JSON and is sent byte for byte. `--raw-data` sends other formats and needs `--content-type`. `--form NAME=VALUE` or `NAME=@FILE` builds a multipart upload. Choose one body option. Data is limited to 10 MiB, uploads to 50 MiB.
+- **Headers:** `-H 'Name: value'` adds headers such as `X-Atlassian-Token` or `X-ExperimentalApi`. The CLI manages authentication, cookies, host, content type and length, proxies and connection headers, and rejects attempts to set them.
+- **Output:** the response body goes to stdout exactly as Jira returned it, whatever its JSON shape. On a terminal, JSON is indented and binary bodies are not printed; use `--output FILE` to save a body to a new file (it never overwrites). Empty, 204 and HEAD responses print nothing. `--include` prints the status and response headers to stderr, with cookies redacted.
+- **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
+- **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
+
+### Looking up an endpoint before calling it
+
+`--spec` describes an operation from Atlassian's official OpenAPI documents and sends nothing to Jira. It needs no profile and never reads the credential store.
+
+```bash
+jira api /rest/api/3/issue -X POST --spec
+jira api /rest/api/3/issue/BUG-703 --spec          # concrete paths match /issue/{issueIdOrKey}
+jira api /rest/agile/1.0/board/1523/sprint --spec
+jira api spec refresh                               # check for newer documents
+jira api spec status                                # what is cached, from where, and how old
+```
+
+The output is JSON: the matched template and path parameters, operation ID, summary, the permissions Jira documents, OAuth and Connect scopes, deprecated and experimental flags, parameters, the request body schema with its example, the success response schema, error codes, and the source document's version, hash and fetch time.
+
+- **Sources:** the Jira Cloud platform (`/rest/api/…`), Jira Software (`/rest/agile/…` and related) and Jira Service Management (`/rest/servicedeskapi/…`) documents at developer.atlassian.com. Nothing else is fetched; Data Center APIs and other Atlassian products are not covered.
+- **Matching:** concrete paths match templates, and literal segments win over parameters, so `/rest/api/3/issue/createmeta` is not read as an issue key. If the path is documented but not for the method, the error lists the documented methods.
+- **References:** schema references are expanded only from inside the same document. Recursive schemas are marked once and not repeated, and expansion stops at a fixed depth and size.
+- **Cache:** the first lookup downloads the needed document. `jira api spec refresh` checks all three with conditional requests, so unchanged documents cost one small request. The cache lives in `~/.cache/jira-cli-toolkit/api-specs` (`%LOCALAPPDATA%` on Windows, `XDG_CACHE_HOME` if set), each file is checked against its recorded hash, and a failed or invalid refresh keeps the previous copy. Lookups work offline from the cache; documents older than 30 days are marked `stale` with a note to refresh.
+- **Advisory only:** a missing or stale spec never blocks a request. If an endpoint isn't in the cached documents, `--spec` says so, and `jira api` can still call it.
+- **Your site differs:** a spec describes the API, not your project. Required fields, allowed values, screens, transitions and permissions depend on the project and account, so discover them at runtime with `jira project fields KEY --type TYPE`, `jira issue transitions KEY` or the matching REST endpoints.
+
+### Setting up an agent or script once
+
+Agents and scripts run without a terminal. In that mode the CLI never opens a credential dialog, so a run either reads the saved token silently or fails at once with exit 2 and an `invalid_input` error. It never waits on a prompt nobody will answer. Set it up once, in a terminal:
+
+1. Save the identity: `jira auth login --profile work`. On macOS and Windows the token goes to the OS credential store.
+2. **macOS:** run `jira auth status --profile work` in a terminal. If macOS asks whether `jira` may use the `jira-cli-toolkit` keychain item, choose **Always Allow**. Later runs without a terminal read it silently. Approval belongs to the executable, so after an update replaces `jira`, run this step again if a scripted call starts failing with “Could not read the OS credential store without approved access”.
+3. **Windows:** Credential Manager needs no approval; nothing more to do.
+4. **Linux:** desktop wallets can show an unlock dialog that can't be suppressed, so scripted runs don't use them. Give the agent a complete environment identity (`JIRA_SITE`, `JIRA_EMAIL` and `JIRA_API_TOKEN` together), or create the profile with `jira auth login --profile agent --storage file`, which keeps the token in a mode-600 file.
+5. Point the agent at the profile with `--profile work` or `JIRA_PROFILE=work`, and pass `--no-input` so missing values fail instead of prompting:
+
+```bash
+JIRA_PROFILE=work jira api /rest/api/3/myself --no-input
+```
+
+### What keeping the token out of the command does and doesn't protect
+
+Keeping the token out of the command keeps it out of prompts, shell history, process listings, logs and generated scripts. It is not isolation: any program running as you, including an agent allowed to run commands, can run `jira api` too, and some can read the credential store or the CLI itself. Every request runs with the full permissions of the Jira account behind the profile.
+
+To limit what an agent can do:
+
+- **Least privilege:** give the agent its own Jira account, added only to the projects it needs, with only the permissions those tasks require. Save it as a separate profile (`jira auth login --profile agent`) and point the agent at that profile.
+- **Scoped tokens:** an API token with scopes (`jira auth login --profile agent --scoped`) limits which API families the token can use, as listed in each operation's `scopes` in `--spec` output. Jira project permissions still apply on top.
+- **Real isolation:** if the agent must not be able to use the token beyond specific calls, run it where it can't reach the credential store, and give it a broker instead: a separate service running under its own OS account that holds the token, allows only approved methods and paths, and forwards those requests. An agent tool policy that only allows specific `jira api` invocations is a lighter version of the same idea; it is enforced by the agent host, not by this CLI.
+
+### Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `invalid_input`: “Could not read the OS credential store without approved access” | macOS hasn't approved keychain access for this `jira` executable. Run `jira auth status --profile work` in a terminal and choose **Always Allow**. Repeat after an update replaces `jira`. |
+| `invalid_input`: “PATH must start with /rest/” or rejects `?` | Pass a relative REST path and put query values in `--query KEY=VALUE`. |
+| `--data needs an explicit method` | Add `-X POST`, `PUT`, `PATCH` or `DELETE`; a body never changes the method. |
+| `jira_error` with status 303 on attachment content | Jira redirects downloads to its file service, which isn't followed. Add `--query redirect=false` and `--output FILE`. |
+| `jira_error` 401 | The token is invalid, revoked or expired. Replace it with `jira auth login --profile NAME`; the CLI never switches identity on its own. |
+| `jira_error` 403 or 404 on an existing resource | The account lacks project permission, or the scoped token lacks the scope in `--spec` output. |
+| `uncertain_outcome` | The connection dropped during a write. Check in Jira whether it happened before sending it again. |
+| `spec_not_found` | The cached documents don't describe that path or method. Run `jira api spec refresh`; the request itself can still be sent. |
+| Binary response not printed | Bodies that aren't text aren't written to a terminal. Use `--output FILE`, or pipe stdout. |
+
 ## Scripts and compatibility
 
 ```bash
@@ -132,6 +212,8 @@ A selected `--profile` owns its full site/account identity. Complete identity fl
 ## Explicit updates and releases
 
 `jira update --info` shows local installation details. `update --check` checks the latest stable GitHub Release without changing the installation. Select a candidate with `update --version VERSION --prerelease --check`; a downgrade needs `--allow-downgrade`. A standalone update needs `--yes` in scripts, verifies the release manifest and binary SHA-256/size, runs version/help checks, and retains a `.previous` executable for rollback. Windows uses a separate helper after the old process exits; pending updates report a log path. Config and credentials are untouched.
+
+**Updating a 2.1.0 standalone binary:** run `jira update --yes --json`. Without `--json`, 2.1.0 replaces itself successfully but then crashes while printing the result (`zlib.error … incorrect header check`); the update has still completed, and `jira --version` shows the new version. From 2.5, the updater loads everything it needs before replacing the executable.
 
 The repository and release downloads are public. The updater works without GitHub login; an optional `GH_TOKEN` or authenticated `gh` account can raise API rate limits. Jira tokens are never used for GitHub. Package installations receive instructions for their owning pipx/uv/Python environment; the updater does not overwrite manager shims. Since the Python package is not published to PyPI, download and verify the wheel from the release and pass its path to that manager (`pipx install --force /path/to/jsup.whl`, `uv tool install --force /path/to/jsup.whl`, or your environment's `python -m pip install --upgrade /path/to/jsup.whl`). Version 0.2.0 needs this one-time bootstrap before it gains an update command.
 
