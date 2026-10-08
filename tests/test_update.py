@@ -115,6 +115,7 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(target.with_name('jira.previous').read_bytes(),b'old')
             self.assertEqual(cfg.read_text(),'keep'); self.assertEqual(target.stat().st_mode & 0o777,0o755)
 
+    @unittest.skipIf(os.name=='nt','Windows applies updates from a helper after this process exits')
     def test_output_modules_load_before_the_executable_is_replaced(self):
         # A frozen 2.1.0 crashed after updating: rich imported rich.pretty from the replaced file.
         import sys
