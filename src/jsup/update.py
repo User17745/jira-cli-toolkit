@@ -262,6 +262,10 @@ def apply_windows_update(values):
 def handle(args):
     installed=installation()
     if args.info: return installed
+    if args.version and installed['method']=='homebrew':
+        # The tap only offers its latest stable release; brew can't install another one.
+        raise UpdateError(f'Homebrew installs follow the tap\'s latest stable release; run brew upgrade {DISTRIBUTION}. '
+                          f'For a specific version, use that release\'s binary or pipx install \'{DISTRIBUTION}==VERSION\'.')
     try: requested=Version(args.version.removeprefix('v')) if args.version else None
     except InvalidVersion: raise UpdateError('Use a valid release version.') from None
     if requested and requested.is_prerelease and not args.prerelease:

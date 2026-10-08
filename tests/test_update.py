@@ -97,6 +97,12 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(result['instructions'],'brew upgrade jira-cli-toolkit')
         self.assertFalse(result['updated'])
 
+    def test_homebrew_installs_reject_explicit_versions(self):
+        self.installed.update(method='homebrew',distribution=None)
+        with self.assertRaisesRegex(update.UpdateError,'latest stable release'):
+            update.handle(args(check=False,version='2.0.0'))
+        self.api.release.assert_not_called()
+
     def test_frozen_binaries_in_a_homebrew_cellar_are_detected(self):
         patch.stopall()  # setUp stubs installation(); this test needs the real one
         with patch.object(update.sys,'frozen',True,create=True), \
