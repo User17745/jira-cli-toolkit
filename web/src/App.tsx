@@ -206,13 +206,15 @@ function Story({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; playing?
 function UseCases({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; playing?: ScenarioId }) {
   return <section className="section" id="use-cases" aria-labelledby="use-cases-title">
     <SectionHead id="use-cases-title" title="What agents do with it">
-      Each replay is a coding-agent session in the sandbox: your request in plain words, the <code className="inline-code">jira</code> commands the agent runs against the sample site, and its answer. Writes stay in the sandbox, so you can inspect them afterwards.
+      Pick a card to watch it in the sandbox terminal. Each replay is a coding-agent session in the sandbox: your request in plain words, the <code className="inline-code">jira</code> commands the agent runs against the sample site, and its answer. Writes stay in the sandbox, so you can inspect them afterwards.
     </SectionHead>
     <TabsPrimitive.Root defaultValue="plan">
-      <TabsPrimitive.List activateOnFocus aria-label="Use cases" className="use-case-picker">
-        {useCases.map(u => <TabsPrimitive.Tab key={u.id} value={u.id} className="use-case-card">
+      {/* Choosing a card also plays it, so the replay is one tap away on small screens. Arrow keys only move focus. */}
+      <TabsPrimitive.List aria-label="Use cases" className="use-case-picker">
+        {useCases.map(u => <TabsPrimitive.Tab key={u.id} value={u.id} className="use-case-card" onClick={() => onPlay(u.id)} data-playing={playing === u.id || undefined}>
           <span className="use-case-persona">{u.persona}</span>
           <span className="use-case-title">{u.title}</span>
+          <span className="use-case-run" aria-hidden="true"><Play className="size-3" />{playing === u.id ? 'Replaying…' : 'Play'}</span>
         </TabsPrimitive.Tab>)}
       </TabsPrimitive.List>
       {useCases.map(u => <TabsPrimitive.Panel key={u.id} value={u.id} className="use-case">
@@ -228,7 +230,7 @@ function UseCases({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; playi
           </div>
         </div>
         <button type="button" className={cn(buttonVariants(), 'mt-6 gap-2')} onClick={() => onPlay(u.id)} data-active={playing === u.id} aria-label={`Play the ${u.persona.toLowerCase()} replay in the sandbox`}>
-          <Play className="size-4" aria-hidden="true" />{playing === u.id ? 'Replaying…' : 'Play in the sandbox'}
+          <Play className="size-4" aria-hidden="true" />{playing === u.id ? 'Replaying…' : 'Play again in the sandbox'}
         </button>
         {u.id === 'merge' && <div className="mt-8">
           <p className="mb-3 text-sm text-muted-foreground">No agent in the loop? The same two commands run from CI after every merge.</p>
@@ -358,7 +360,7 @@ function App() {
       <main>
         <section className="hero flex flex-col items-start pt-6 pb-12 sm:pt-16" aria-labelledby="hero-title">
           <h1 id="hero-title" className="max-w-[16ch] text-4xl font-semibold tracking-tighter text-balance sm:text-5xl xl:text-6xl">Hand Jira to your agents.</h1>
-          <p className="order-4 mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:order-none sm:mt-5 sm:text-lg">A command-line tool for Jira Cloud that AI agents can drive. Have them plan a roadmap into sprints, write the standup digest, or update tickets as code merges. JSON output and exit codes that mean one thing each keep them on track.</p>
+          <p className="order-4 mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:order-none sm:mt-5 sm:text-lg">A Jira Cloud CLI that AI agents can drive: planning sprints, writing standup digests and updating tickets as code merges.</p>
           <div className="hero-actions order-5 mt-6 flex flex-wrap gap-2 sm:order-none">
             <a className={cn(buttonVariants(), 'gap-1.5')} href="#agents">Set up your agent<ArrowRight className="size-4" aria-hidden="true" /></a>
             <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5')} onClick={() => play('plan')}><Play className="size-4" aria-hidden="true" />Watch an agent plan sprints</button>
@@ -366,18 +368,18 @@ function App() {
           <div className="order-2 mt-3 space-y-3 sm:order-none sm:mt-4">
             <p className="hero-independence text-sm font-medium">Independently maintained. Not affiliated with Atlassian.</p>
             <div className="hero-open-source flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-              <a {...external} className={cn(buttonVariants({ size: 'sm' }), 'gh-badge gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
+              <a {...external} className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
               <p>Open source under the <a {...external} className="link text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0 license</a>.</p>
             </div>
           </div>
-          <div className="agent-logos order-6 mt-6 w-full max-w-xl sm:order-none">
+          <p className="hero-proof order-7 mt-3 max-w-xl text-sm text-muted-foreground sm:order-none sm:mt-4">Runs within your Jira permissions, using your existing API token.</p>
+          <div className="order-3 mt-5 w-full max-w-xl sm:order-none sm:mt-8"><Install /></div>
+          <div className="agent-logos order-6 mt-6 w-full sm:mt-7 max-w-xl sm:order-none">
             <p className="text-[13px] text-muted-foreground">Works with any agent that can run a shell command, including</p>
             <ul aria-label="Agents that can use it">{agents.map(a => <li key={a.icon}>
               <span className="agent-logo" aria-hidden="true" style={{ '--logo': `url(${import.meta.env.BASE_URL}agents/${a.icon}.svg)` } as React.CSSProperties} />{a.name}
             </li>)}</ul>
           </div>
-          <p className="hero-proof order-7 mt-3 max-w-xl text-sm text-muted-foreground sm:order-none sm:mt-4">Runs within your Jira permissions, using your existing API token.</p>
-          <div className="order-3 mt-5 w-full max-w-xl sm:order-none sm:mt-8"><Install /></div>
         </section>
 
         <Story onPlay={play} playing={playing} />

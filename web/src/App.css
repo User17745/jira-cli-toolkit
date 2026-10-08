@@ -39,11 +39,6 @@ body { -webkit-font-smoothing: antialiased; }
   .terminal-column .terminal { height: 100%; }
 }
 
-/* Same inverted chrome as the terminal's title bar, so it reads in both themes. */
-.gh-badge { border: 1px solid #3a3a3a !important; background: #232323 !important; color: #ededed !important; }
-.gh-badge:hover { background: #333 !important; }
-.dark .gh-badge { border-color: #c8c8c8 !important; background: #e5e5e5 !important; color: #171717 !important; }
-.dark .gh-badge:hover { background: #d4d4d4 !important; }
 
 /* Code a person copies: shell steps and the agent rules file. Dark like the install block. */
 .dark-code { overflow-x: auto; margin: 0; padding: 0.9rem 3rem 0.9rem 1rem; border: 1px solid #262626; border-radius: 12px; background: #0a0a0a; color: #ededed; font-family: var(--font-mono); font-size: 13px; line-height: 1.65; white-space: pre; scrollbar-width: thin; scrollbar-color: #333 transparent; }
@@ -94,6 +89,9 @@ body { -webkit-font-smoothing: antialiased; }
 .use-case-card:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .use-case-persona { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
 .use-case-title { font-size: 14px; font-weight: 500; line-height: 1.35; text-wrap: pretty; }
+.use-case-run { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: auto; padding-top: 0.45rem; font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.use-case-card:hover .use-case-run, .use-case-card[data-active] .use-case-run { color: var(--foreground); }
+.use-case-card[data-playing] .use-case-run svg { fill: currentColor; }
 @media (max-width: 760px) { .use-case-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .use-case-card { transition: none; } }
 .ask { margin: 1rem 0 1.5rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 10px; background: color-mix(in oklch, var(--muted) 55%, transparent); }

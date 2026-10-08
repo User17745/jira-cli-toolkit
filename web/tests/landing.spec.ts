@@ -148,8 +148,8 @@ test('the sandbox creates sprints, fills them and adds comments, with the real e
 test('use cases replay an agent in the sandbox, and the sample site keeps its writes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('./')
+  // Choosing a card plays its replay.
   await page.getByRole('tab', { name: 'Developers' }).click()
-  await page.getByRole('button', { name: 'Play the developers replay in the sandbox' }).click()
   await expect(log(page).locator('.t-ask').last()).toContainText('PR #142 just merged. Update Jira to match.')
   await expect(log(page).locator('.t-tool-call').filter({ hasText: 'git log' })).toBeVisible()
   await expect(log(page).getByText('Moved ENG-43 → Done')).toBeVisible()
@@ -172,10 +172,19 @@ test('the planning replay fails its checks, re-plans, and skips to the end on an
   await expect(lastEntry(page).locator('.t-out')).toContainText('460,future,APP Week 3')
 })
 
+test('arrow keys move between use-case cards without playing them', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('tab', { name: 'Project managers' }).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('tab', { name: 'Scrum masters' })).toBeFocused()
+  await expect(page.locator('#terminal-keys')).toContainText('tab complete')
+  await page.keyboard.press('Enter')
+  await expect(log(page).locator('.t-ask').last()).toContainText('Nudge whoever can unblock the most.')
+})
+
 test('Ctrl+C stops a replay where it is', async ({ page }) => {
   await page.goto('./')
   await page.getByRole('tab', { name: 'Scrum masters' }).click()
-  await page.getByRole('button', { name: 'Play the scrum masters replay in the sandbox' }).click()
   await terminal(page).press('Control+c')
   await expect(exitCode(page)).toHaveText('exit 130')
   await expect(page.locator('#terminal-keys')).toContainText('tab complete')
@@ -185,22 +194,21 @@ test('Ctrl+C stops a replay where it is', async ({ page }) => {
 test('more replays: backlog cleanup, an incident, release notes and the first run before sign-in', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('./')
-  const play = async (card: string, persona: string) => {
+  const play = async (card: string) => {
     await closeTerminal(page)
     await page.getByRole('tab', { name: card }).click()
-    await page.getByRole('button', { name: `Play the ${persona} replay in the sandbox` }).click()
   }
-  await play('Team leads A backlog', 'team leads')
+  await play('Team leads A backlog')
   await expect(log(page).getByText("✓ {'updated': 'OPS-7', 'fields': ['priority'], 'operations': ['labels']}")).toBeVisible()
   await run(page, 'jira issue view OPS-7 --json')
   await expect(lastEntry(page).locator('.t-out')).toContainText('"name": "Highest"')
 
-  await play('On-call engineers', 'on-call engineers')
+  await play('On-call engineers')
   await expect(log(page).getByText("✓ {'id': '10010', 'key': 'OPS-10'", { exact: false })).toBeVisible()
   await run(page, 'jira issue list -p OPS --open --csv --columns key,summary')
   await expect(lastEntry(page).locator('.t-out')).toContainText('OPS-8,Checkout returns 502 after the 09:10 deploy')
 
-  await play('Release managers', 'release managers')
+  await play('Release managers')
   await expect(log(page).locator('.t-reply').last()).toContainText('Tokens are redacted from error output (ENG-38)')
 
   await closeTerminal(page)

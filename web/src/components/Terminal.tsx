@@ -234,7 +234,8 @@ export function Terminal({ ref, open, onOpenChange, onReplayChange }: Props) {
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (replay.current) {
       // During a replay Ctrl+C stops it where it is; any other key skips to the end.
-      if (event.key === 'Tab') return
+      // Modifiers alone don't count, or the Ctrl of Ctrl+C would skip before C arrives.
+      if (event.key === 'Tab' || ['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) return
       event.preventDefault()
       if (event.ctrlKey && event.key === 'c') {
         stopReplay()
