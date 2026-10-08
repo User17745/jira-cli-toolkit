@@ -255,6 +255,37 @@ class ApiCommandTests(unittest.TestCase):
         code, _, err, request = self.call("/rest/api/3/issue", "-X", "POST", "-d", "{}", replies=[requests.Timeout()])
         self.assertEqual((code, self.error(err)["code"], request.call_count), (1, "uncertain_outcome", 1))
 
+    def test_permission_denial_is_reported_once_without_prompting(self):
+        with patch("jsup.ui.confirm", side_effect=AssertionError("prompted")):
+            code, out, err, request = self.call("/rest/api/3/project/SECRET", tty=True, replies=[response(
+                403, b'{"errorMessages":["You do not have permission"]}', {"Content-Type": "application/json"})])
+        self.assertEqual((code, out, request.call_count), (1, b"", 1))
+        self.assertEqual(self.error(err)["status"], 403)
+
+    def test_rate_limits_retry_only_short_server_requested_waits(self):
+        with patch("jsup.client.time.sleep") as sleep:
+            code, out, _, request = self.call("/rest/api/3/myself", replies=[
+                response(429, headers={"Retry-After": "2"}), response(body=b"{}")])
+        self.assertEqual((code, out, request.call_count), (0, b"{}", 2))
+        sleep.assert_called_once_with(2.0)
+        code, _, err, request = self.call("/rest/api/3/myself", replies=[response(429, headers={"Retry-After": "120"})])
+        self.assertEqual((code, request.call_count, self.error(err)["status"]), (1, 1, 429))
+
+    def test_unapproved_credential_store_fails_fast_without_sending(self):
+        from jsup.credentials import CredentialError
+        with patch("jsup.config.resolve_config", side_effect=CredentialError(
+                "Could not read the OS credential store without approved access.")):
+            code, out, err, request = self.call("/rest/api/3/myself", "--no-input")
+        self.assertEqual((code, out), (2, b""))
+        self.assertEqual(self.error(err)["code"], "invalid_input")
+        request.assert_not_called()
+
+    def test_no_child_process_is_started(self):
+        with patch("subprocess.Popen", side_effect=AssertionError("child process")), \
+                patch("os.system", side_effect=AssertionError("child process")):
+            code, _, _, _ = self.call("/rest/api/3/issue", "-X", "POST", "--data", "{}", replies=[response(201, b"{}")])
+        self.assertEqual(code, 0)
+
     def test_csv_and_columns_are_rejected(self):
         for flag in (["--csv"], ["--columns", "key"]):
             code, _, _, request = self.call("/rest/api/3/myself", *flag)
@@ -267,6 +298,62 @@ class ApiCommandTests(unittest.TestCase):
         self.assertIn("a%2Fb%3D", values)
         self.assertIn(base64.b64encode(f"{EMAIL}:a/b=".encode()).decode(), values)
         self.assertEqual(secret_values(EMAIL, ""), [])
+
+
+class ApiIdentityTests(unittest.TestCase):
+    """Uses the real resolver against a temporary profile file, not a mocked identity."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        config = Path(folder.name, "config.json")
+        config.write_text(json.dumps({"schema_version": 2, "active_profile": "work", "profiles": {"work": {
+            "site": SITE, "email": EMAIL, "storage": "file", "credential_id": "work-id", "project": "BUG"}}}))
+        Path(folder.name, "credentials.json").write_text(json.dumps({"work-id": TOKEN}))
+        for target in (patch("jsup.config.CONFIG_PATH", config),
+                       patch.dict(os.environ, {}, clear=False)):
+            target.start()
+            self.addCleanup(target.stop)
+        for key in ("JIRA_SITE", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROFILE", "JIRA_PROJECT"):
+            os.environ.pop(key, None)
+
+    def call(self, *argv, replies=()):
+        err = io.StringIO()
+        with patch("requests.Session.request", side_effect=list(replies)) as request, \
+                patch("sys.stdout", Pipe()), redirect_stderr(err):
+            try:
+                jira_main(["api", *argv])
+                code = 0
+            except SystemExit as exit:
+                code = exit.code
+        return code, err.getvalue(), request
+
+    def test_saved_profile_is_used(self):
+        code, _, request = self.call("/rest/api/3/myself", "--profile", "work", replies=[response(body=b"{}")])
+        self.assertEqual((code, request.call_args.args[1]), (0, SITE + "/rest/api/3/myself"))
+
+    def test_profile_is_never_mixed_with_identity_flags(self):
+        code, err, request = self.call("/rest/api/3/myself", "--profile", "work", "--token", "other-token")
+        self.assertEqual(code, 2)
+        self.assertIn("cannot be combined", json.loads(err)["error"]["message"])
+        self.assertNotIn("other-token", err)
+        request.assert_not_called()
+
+    def test_environment_identity_is_complete_or_rejected(self):
+        with patch.dict(os.environ, {"JIRA_SITE": "https://other.atlassian.net"}):
+            code, err, request = self.call("/rest/api/3/myself")
+        self.assertEqual(code, 2)
+        request.assert_not_called()
+        with patch.dict(os.environ, {"JIRA_SITE": "https://other.atlassian.net", "JIRA_EMAIL": "bot@example.com",
+                                     "JIRA_API_TOKEN": "env-token"}):
+            code, _, request = self.call("/rest/api/3/myself", replies=[response(body=b"{}", url="https://other.atlassian.net/")])
+        self.assertEqual((code, request.call_args.args[1]), (0, "https://other.atlassian.net/rest/api/3/myself"))
+
+    def test_unknown_profile_is_rejected(self):
+        code, err, request = self.call("/rest/api/3/myself", "--profile", "nope")
+        self.assertEqual(code, 2)
+        self.assertIn("Unknown profile", json.loads(err)["error"]["message"])
+        request.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ class Request:
 def validate_path(path: str) -> str:
     if path == "spec" or not path.startswith("/"):
         raise invalid("PATH must be a Jira REST path such as /rest/api/3/myself. "
-                      "Endpoint spec discovery is planned for a later release.")
+                      "Use jira api spec refresh or jira api spec status for discovery.")
     if any(ord(ch) < 0x21 or ord(ch) > 0x7E for ch in path):
         raise invalid("PATH must be printable ASCII without spaces; percent-encode other characters.")
     if "?" in path or "#" in path:

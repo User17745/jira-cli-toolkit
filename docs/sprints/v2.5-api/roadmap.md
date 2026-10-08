@@ -89,13 +89,13 @@ Discovery notes, 8 October 2026: the official documents are OpenAPI 3.0.1 at dev
 
 ### Verification, docs and release
 
-- [ ] Test verbs, query encoding, inline/file/stdin JSON, raw/multipart uploads, scalar/array/empty/non-JSON responses, metadata, binary output and errors with local deterministic fixtures.
-- [ ] Test origin/path/header restrictions, credential redaction (including derived auth values), malicious spec references, malformed/stale specs and absence of credentials from child-process arguments/logs.
-- [ ] Test profile isolation, scoped routing, permission denial, rate limits, unknown mutation outcomes and strict noninteractive behavior; do not regress existing commands.
+- [x] Test verbs, query encoding, inline/file/stdin JSON, raw/multipart uploads, scalar/array/empty/non-JSON responses, metadata, binary output and errors with local deterministic fixtures.
+- [x] Test origin/path/header restrictions, credential redaction (including derived auth values), malicious spec references, malformed/stale specs and absence of credentials from child-process arguments/logs.
+- [x] Test profile isolation, scoped routing, permission denial, rate limits, unknown mutation outcomes and strict noninteractive behavior; do not regress existing commands.
 - [x] Test cached/refresh/offline operation discovery and a newly introduced endpoint without a CLI-code change.
-- [ ] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
-- [ ] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
-- [ ] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.
+- [x] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
+- [x] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
+- [x] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.
 - [ ] Run full regressions, wheel/sdist and installed smoke checks before milestone pushes; verify the CI/native matrix, published manifest and real updater on a v2.5 candidate.
 - [ ] Validate the compatibility path from stable v2, then publish a tested v2.5 release through the same GitHub pipeline and verify stable selection.
 

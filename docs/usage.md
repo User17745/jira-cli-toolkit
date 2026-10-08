@@ -4,7 +4,7 @@ A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `
 
 The current release is [v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0). The command is `jira`; `jira-cli-toolkit` remains the repository name and a compatibility alias, alongside `jsup`. V2 provides guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and release validation are tracked in the [upgrade roadmap](sprints/v2-upgrade/roadmap.md).
 
-The [v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents. `jira api` and `--spec` discovery are in development for v2.5 and are not part of v2.1.0.
+v2.5 adds [authenticated requests to any REST endpoint and endpoint-spec discovery](#calling-any-rest-endpoint) for agents and scripts. See the [v2.5 roadmap](sprints/v2.5-api/roadmap.md) for design decisions.
 
 ## Install
 
@@ -95,7 +95,7 @@ jira project list
 
 Software operations require applicable boards and Jira permissions. Feature toggles are under `board feature enable/disable`. Sprint viewing/editing and required start/close inputs are implemented. Operations remain subject to board capabilities and Jira permissions. `view --web` and legacy `browse` require only a site URL and use the browser's session. Board URLs do not guess a project from local configuration.
 
-## Calling any REST endpoint (v2.5, in development)
+## Calling any REST endpoint
 
 `jira api` sends one request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
 
@@ -151,7 +151,29 @@ Agents and scripts run without a terminal. In that mode the CLI never opens a cr
 JIRA_PROFILE=work jira api /rest/api/3/myself --no-input
 ```
 
-Keeping the token out of the command reduces accidental exposure. It does not stop an agent that can read your credential store or run programs as you from using it, and the request runs with the full permissions of the Jira account. See the roadmap's trust-boundary notes.
+### What keeping the token out of the command does and doesn't protect
+
+Keeping the token out of the command keeps it out of prompts, shell history, process listings, logs and generated scripts. It is not isolation: any program running as you, including an agent allowed to run commands, can run `jira api` too, and some can read the credential store or the CLI itself. Every request runs with the full permissions of the Jira account behind the profile.
+
+To limit what an agent can do:
+
+- **Least privilege:** give the agent its own Jira account, added only to the projects it needs, with only the permissions those tasks require. Save it as a separate profile (`jira auth login --profile agent`) and point the agent at that profile.
+- **Scoped tokens:** an API token with scopes (`jira auth login --profile agent --scoped`) limits which API families the token can use, as listed in each operation's `scopes` in `--spec` output. Jira project permissions still apply on top.
+- **Real isolation:** if the agent must not be able to use the token beyond specific calls, run it where it can't reach the credential store, and give it a broker instead: a separate service running under its own OS account that holds the token, allows only approved methods and paths, and forwards those requests. An agent tool policy that only allows specific `jira api` invocations is a lighter version of the same idea; it is enforced by the agent host, not by this CLI.
+
+### Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `invalid_input`: “Could not read the OS credential store without approved access” | macOS hasn't approved keychain access for this `jira` executable. Run `jira auth status --profile work` in a terminal and choose **Always Allow**. Repeat after an update replaces `jira`. |
+| `invalid_input`: “PATH must start with /rest/” or rejects `?` | Pass a relative REST path and put query values in `--query KEY=VALUE`. |
+| `--data needs an explicit method` | Add `-X POST`, `PUT`, `PATCH` or `DELETE`; a body never changes the method. |
+| `jira_error` with status 303 on attachment content | Jira redirects downloads to its file service, which isn't followed. Add `--query redirect=false` and `--output FILE`. |
+| `jira_error` 401 | The token is invalid, revoked or expired. Replace it with `jira auth login --profile NAME`; the CLI never switches identity on its own. |
+| `jira_error` 403 or 404 on an existing resource | The account lacks project permission, or the scoped token lacks the scope in `--spec` output. |
+| `uncertain_outcome` | The connection dropped during a write. Check in Jira whether it happened before sending it again. |
+| `spec_not_found` | The cached documents don't describe that path or method. Run `jira api spec refresh`; the request itself can still be sent. |
+| Binary response not printed | Bodies that aren't text aren't written to a terminal. Use `--output FILE`, or pipe stdout. |
 
 ## Scripts and compatibility
 

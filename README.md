@@ -113,7 +113,18 @@ JSON preserves API field structures, CSV supports selected columns, and `--no-in
 
 Templates are declarative JSON with declared variables, not executable hooks. The example callback template has explicit defaults that must fit your project; ordinary creation adds no support-specific fields. [Read scripting and template details](docs/usage.md).
 
-Generic authenticated `jira api` requests and `--spec` discovery are **planned for v2.5**, not available in v2.1. [Follow the checkboxed roadmap](docs/sprints/v2.5-api/roadmap.md).
+### Any REST endpoint, without a token in the command
+
+`jira api` calls any Jira Cloud REST path with your saved profile, so agents and scripts can use endpoints that have no convenience command. `--spec` looks the endpoint up in Atlassian's official OpenAPI documents first, without contacting your site.
+
+```bash
+jira api /rest/api/3/issue -X POST --spec              # permissions, scopes, body schema
+jira api /rest/api/3/issue -X POST --data @issue.json  # then call it
+jira api /rest/api/3/project/search --query maxResults=20
+jira api /rest/agile/1.0/board/12/sprint --profile work | jq '.values[].name'
+```
+
+Response bodies go to stdout exactly as Jira returns them; failures are a JSON object on stderr. Requests stay on your site: no absolute URLs, no redirects, and auth headers can't be overridden. Writes are never retried. For unattended agents, approve keychain access once and give the agent a least-privilege account. [Read the API, discovery and agent setup guide](docs/usage.md#calling-any-rest-endpoint).
 
 ## Explicit updates and releases
 
@@ -165,7 +176,7 @@ npm test
 
 ## Scope and next steps
 
-The current release supports standard **Jira Cloud** issues and applicable Software boards/sprints. Data Center and Service Management customer-request APIs remain future work. Required-field discovery cannot describe every app-specific workflow validator; Jira remains authoritative.
+The current release supports standard **Jira Cloud** issues and applicable Software boards/sprints, and any Jira Cloud REST endpoint through `jira api`, including Service Management. Service Management convenience commands and Data Center remain future work. Required-field discovery cannot describe every app-specific workflow validator; Jira remains authoritative.
 
 Original project code is licensed under **AGPL-3.0-only**. [See completed milestones and remaining work](docs/sprints/v2-upgrade/roadmap.md).
 
