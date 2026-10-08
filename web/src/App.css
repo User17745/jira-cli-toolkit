@@ -38,3 +38,9 @@ body { -webkit-font-smoothing: antialiased; }
   .terminal-column { position: sticky; top: 3.5rem; height: calc(100dvh - 3.5rem); padding-block: 1.5rem; }
   .terminal-column .terminal { height: 100%; }
 }
+
+/* Same inverted chrome as the terminal's title bar, so it reads in both themes. */
+.gh-badge { border: 1px solid #3a3a3a !important; background: #232323 !important; color: #ededed !important; }
+.gh-badge:hover { background: #333 !important; }
+.dark .gh-badge { border-color: #c8c8c8 !important; background: #e5e5e5 !important; color: #171717 !important; }
+.dark .gh-badge:hover { background: #d4d4d4 !important; }

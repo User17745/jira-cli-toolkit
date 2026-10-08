@@ -183,7 +183,7 @@ function App() {
           <div className="order-2 mt-3 space-y-3 sm:order-none sm:mt-4">
             <p className="hero-independence text-sm font-medium">Independently maintained. Not affiliated with Atlassian.</p>
             <div className="hero-open-source flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-              <a className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
+              <a className={cn(buttonVariants({ size: 'sm' }), 'gh-badge gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
               <p>Open source under the <a className="link text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0 license</a>.</p>
             </div>
           </div>
