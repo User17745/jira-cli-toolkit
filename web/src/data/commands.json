@@ -2683,7 +2683,7 @@
    ]
   }
  ],
- "version": "2.5.0rc2",
+ "version": "2.5.0",
  "epilog": "Examples: jira issue list -p ENG --open; jira help issue create",
  "legacy": [
   {
