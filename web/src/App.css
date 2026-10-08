@@ -30,7 +30,7 @@ body { -webkit-font-smoothing: antialiased; }
 .steps li { position: relative; display: grid; justify-items: start; gap: 0.6rem; padding-left: 2.75rem; counter-increment: step; }
 .steps li::before { content: counter(step); position: absolute; left: 0; top: -0.1rem; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--border); border-radius: 50%; background: var(--background); font-size: 0.8125rem; font-weight: 600; }
 .steps li:not(:last-child)::after { content: ''; position: absolute; left: calc(0.875rem - 0.5px); top: 1.9rem; bottom: -1.4rem; width: 1px; background: var(--border); }
-.step-code { max-width: 100%; padding: 0.4rem 0.7rem; border-radius: 8px; background: #0a0a0a; color: #ededed; font-family: var(--font-mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.step-code { max-width: 100%; padding: 0.4rem 0.7rem; border: 1px solid #262626; border-radius: 8px; background: #0a0a0a; color: #ededed; font-family: var(--font-mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
 
 /* Two columns from 1100px: content scrolls, the terminal stays put. */
 @media (min-width: 1100px) {
@@ -44,3 +44,61 @@ body { -webkit-font-smoothing: antialiased; }
 .gh-badge:hover { background: #333 !important; }
 .dark .gh-badge { border-color: #c8c8c8 !important; background: #e5e5e5 !important; color: #171717 !important; }
 .dark .gh-badge:hover { background: #d4d4d4 !important; }
+
+/* Code a person copies: shell steps and the agent rules file. Dark like the install block. */
+.dark-code { overflow-x: auto; margin: 0; padding: 0.9rem 3rem 0.9rem 1rem; border: 1px solid #262626; border-radius: 12px; background: #0a0a0a; color: #ededed; font-family: var(--font-mono); font-size: 13px; line-height: 1.65; white-space: pre; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+.dark-code:focus-visible { outline: 2px solid #22d3ee; outline-offset: -2px; }
+.code-file { overflow: hidden; border: 1px solid #262626; border-radius: 12px; background: #0a0a0a; }
+.code-file-name { padding: 0.55rem 1rem; border-bottom: 1px solid #262626; color: #a1a1a1; font-family: var(--font-mono); font-size: 12px; }
+.code-file .dark-code { border: 0; border-radius: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* The plan loop: four steps in a row, with the failing path drawn back underneath. */
+.plan-loop { container-type: inline-size; margin-top: 2.25rem; }
+.loop-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.75rem; }
+.loop-steps > li { position: relative; display: flex; flex-direction: column; gap: 0.3rem; padding: 0.75rem 0.85rem; border: 1px solid var(--border); border-radius: 10px; background: var(--background); }
+.loop-steps > li + li::before { content: '→'; position: absolute; left: -1.4rem; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); font-family: var(--font-mono); }
+.loop-final::before { content: '✓' !important; color: #16a34a !important; }
+.loop-name { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+.loop-detail { font-size: 12.5px; line-height: 1.5; color: var(--muted-foreground); }
+.loop-check { border-color: var(--foreground) !important; }
+.loop-final { border-color: #16a34a !important; }
+.dark .loop-final { border-color: #4ade80 !important; }
+.dark .loop-final::before { color: #4ade80 !important; }
+/* Drawn under steps 2 and 3, with an arrowhead pointing back up into the draft. */
+.loop-back { position: relative; margin-left: calc(25% + 0.45rem); width: calc(50% - 0.45rem); height: 2.25rem; border: 1.5px dashed color-mix(in oklch, var(--destructive) 70%, transparent); border-top: 0; border-radius: 0 0 10px 10px; }
+.loop-back::before { content: ''; position: absolute; left: -5.5px; top: -2px; border: 5px solid transparent; border-bottom: 7px solid var(--destructive); border-top: 0; }
+.loop-back span { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); padding: 0 0.5rem; background: var(--background); color: var(--destructive); font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+.loop-fail { display: none; color: var(--destructive); font-family: var(--font-mono); font-size: 12px; }
+@container (max-width: 620px) {
+  .loop-steps { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; }
+  .loop-steps > li + li::before { content: '↓'; left: 1rem; top: -1.35rem; transform: none; }
+  .loop-final::before { content: '✓ ↓' !important; }
+  .loop-back { display: none; }
+  .loop-fail { display: block; margin-top: 0.35rem; }
+}
+
+.story-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 2.75rem; border-block: 1px solid var(--border); }
+.story-stats > div { display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 1rem 1rem 0; }
+.story-stats > div + div { padding-left: 1rem; border-left: 1px solid var(--border); }
+.story-stats dt { font-size: 13px; color: var(--muted-foreground); }
+.story-stats dd { margin-top: 0.2rem; font-family: var(--font-mono); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+@media (max-width: 560px) {
+  .story-stats { grid-template-columns: minmax(0, 1fr); }
+  .story-stats > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); }
+}
+
+.use-case-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1.5rem; }
+.use-case-card { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.7rem 0.85rem; border: 1px solid var(--border); border-radius: 10px; background: var(--background); text-align: left; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+.use-case-card:hover { border-color: color-mix(in oklch, var(--foreground) 35%, transparent); }
+.use-case-card[data-active] { border-color: var(--foreground); background: var(--muted); }
+.use-case-card:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.use-case-persona { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.use-case-title { font-size: 14px; font-weight: 500; line-height: 1.35; text-wrap: pretty; }
+@media (max-width: 760px) { .use-case-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .use-case-card { transition: none; } }
+.ask { margin: 1rem 0 1.5rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 10px; background: color-mix(in oklch, var(--muted) 55%, transparent); }
+.ask figcaption { margin-bottom: 0.25rem; font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.ask blockquote { font-size: 15px; line-height: 1.55; }
+.agent-steps { counter-reset: agent; display: grid; gap: 0.6rem; font-size: 14px; color: var(--muted-foreground); }
+.agent-steps li { position: relative; padding-left: 1.75rem; counter-increment: agent; }
+.agent-steps li::before { content: counter(agent); position: absolute; left: 0; top: 0.1rem; display: grid; place-items: center; width: 1.2rem; height: 1.2rem; border: 1px solid var(--border); border-radius: 50%; font-size: 11px; font-weight: 600; color: var(--foreground); }

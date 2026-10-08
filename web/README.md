@@ -21,7 +21,7 @@ The sandbox and command reference read `src/data/commands.json`, which is genera
 python scripts/command_tree.py > web/src/data/commands.json
 ```
 
-`tests/test_website_commands.py` fails in Python CI when the file drifts from the parser. Help text and argument errors in the sandbox are a port of Python's argparse formatting at 80 columns, so `jira <command> --help` on the site matches the installed CLI. Sample issues, users and sprints live in `src/sandbox/sample.ts` and are illustrative. If hosting moves, update the canonical and OG URLs in `index.html` and the repository links in `src/App.tsx` together.
+`tests/test_website_commands.py` fails in Python CI when the file drifts from the parser. Help text and argument errors in the sandbox are a port of Python's argparse formatting at 80 columns, so `jira <command> --help` on the site matches the installed CLI. Sample issues, users and sprints live in `src/sandbox/sample.ts` and are illustrative. The agent replays behind the use cases live in `src/sandbox/scenarios.ts`; their `jira` steps run through the sandbox session, so keep them valid commands when the parser changes. If hosting moves, update the canonical and OG URLs in `index.html` and the repository links in `src/App.tsx` together.
 
 ## Verify
 

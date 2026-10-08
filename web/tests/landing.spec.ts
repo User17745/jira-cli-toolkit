@@ -12,6 +12,12 @@ async function openTerminal(page: Page) {
   if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'false') await toggle.click()
 }
 
+// Collapses the mobile dock so it doesn't cover the page; does nothing on desktop.
+async function closeTerminal(page: Page) {
+  const toggle = page.getByRole('button', { name: 'Sandbox terminal' })
+  if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'true') await toggle.click()
+}
+
 async function run(page: Page, command: string) {
   await openTerminal(page)
   await terminal(page).fill(command)
@@ -46,10 +52,15 @@ test('keyboard tabs switch the installation platform', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Linux', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
 
-test('sandbox opens with a command, labels sample data and keeps state', async ({ page }) => {
+test('sandbox opens on an agent standup digest, labels sample data and keeps state', async ({ page }) => {
   await page.goto('./')
   await expect(page.locator('.example-label')).toHaveText('The sandbox terminal runs on sample data from an example site. Nothing reaches Jira.')
   await openTerminal(page)
+  await expect(log(page).locator('.t-ask')).toContainText('Give me a standup digest for the active ENG sprint')
+  await expect(log(page).locator('.t-tool-call').first()).toContainText('Bash(jira sprint list --state active --json)')
+  await expect(log(page).locator('.t-tool-out').first()).toContainText('"maxResults": 50')
+  await expect(log(page).locator('.t-reply')).toContainText('waits on OPS-7 Rotate the staging API token (Sam, To Do)')
+  await run(page, 'jira issue list --open')
   await expect(log(page).getByRole('table', { name: 'Open issues (4 fetched)' })).toBeVisible()
 
   await run(page, "jira issue transition ENG-43 --to 'In Review'")
@@ -114,6 +125,103 @@ test('sandbox demonstrates jira api requests, spec lookups and their errors', as
   await run(page, 'jira api /rest/api/3/issue --data {}')
   await expect(lastEntry(page).locator('.t-err')).toContainText('--data needs an explicit method that accepts a body, such as -X POST.')
   await expect(exitCode(page)).toHaveText('exit 2')
+})
+
+test('the sandbox creates sprints, fills them and adds comments, with the real errors', async ({ page }) => {
+  await page.goto('./')
+  await run(page, "jira sprint create --board 18 --name 'APP Week 1'")
+  await expect(lastEntry(page).locator('.t-out')).toHaveText("✓ {'id': 458, 'self': 'https://example.atlassian.net/rest/agile/1.0/sprint/458', 'state': 'future', 'name': 'APP Week 1', 'originBoardId': 18}")
+  await run(page, 'jira sprint add-issues 458 APP-1 APP-2')
+  await expect(lastEntry(page).locator('.t-out')).toHaveText('✓ {}')
+  await run(page, 'jira issue list -p APP --json --fields customfield_10020 --limit 1 --order-by key --order asc')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"name": "APP Week 1"')
+  await run(page, 'jira sprint add-issues 999 APP-1')
+  await expect(lastEntry(page).locator('.t-err')).toContainText('-> 404')
+  await expect(exitCode(page)).toHaveText('exit 1')
+  await run(page, 'jira issue comment add ENG-42')
+  await expect(lastEntry(page).locator('.t-err')).toContainText('Supply --message, --message-file, or interactive --editor.')
+  await expect(exitCode(page)).toHaveText('exit 2')
+  await run(page, "jira issue comment add ENG-42 -m 'Looks good' --json")
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"text": "Looks good"')
+})
+
+test('use cases replay an agent in the sandbox, and the sample site keeps its writes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('./')
+  await page.getByRole('tab', { name: 'Developers' }).click()
+  await page.getByRole('button', { name: 'Play the developers replay in the sandbox' }).click()
+  await expect(log(page).locator('.t-ask').last()).toContainText('PR #142 just merged. Update Jira to match.')
+  await expect(log(page).locator('.t-tool-call').filter({ hasText: 'git log' })).toBeVisible()
+  await expect(log(page).getByText('Moved ENG-43 → Done')).toBeVisible()
+  await expect(lastEntry(page).locator('.t-note')).toContainText('ENG-43 is no longer there')
+  await run(page, 'jira issue list --open --csv --columns key')
+  await expect(lastEntry(page).locator('.t-out')).not.toContainText('ENG-43')
+})
+
+test('the planning replay fails its checks, re-plans, and skips to the end on any key', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Watch an agent plan sprints' }).click()
+  await expect(page.locator('#terminal-keys')).toContainText('agent replay')
+  await terminal(page).press('x')
+  await expect(log(page).getByRole('table', { name: 'Sprints' })).toContainText('APP Week 3')
+  await expect(log(page).locator('.t-tool[data-state=failed] .t-tool-call')).toContainText('Bash(pytest tests/test_plan.py -q) exit 1')
+  await expect(log(page).locator('.t-reply').last()).toContainText('Nobody has more than 8 of 10 points in any week')
+  await expect(log(page).getByText('2 failed, 4 passed', { exact: false })).toBeVisible()
+  await expect(page.locator('#terminal-keys')).toContainText('tab complete')
+  await run(page, 'jira sprint list --board 18 --csv')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('460,future,APP Week 3')
+})
+
+test('Ctrl+C stops a replay where it is', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('tab', { name: 'Scrum masters' }).click()
+  await page.getByRole('button', { name: 'Play the scrum masters replay in the sandbox' }).click()
+  await terminal(page).press('Control+c')
+  await expect(exitCode(page)).toHaveText('exit 130')
+  await expect(page.locator('#terminal-keys')).toContainText('tab complete')
+  await expect(log(page).getByText('Try jira issue view OPS-7')).toHaveCount(0)
+})
+
+test('more replays: backlog cleanup, an incident, release notes and the first run before sign-in', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('./')
+  const play = async (card: string, persona: string) => {
+    await closeTerminal(page)
+    await page.getByRole('tab', { name: card }).click()
+    await page.getByRole('button', { name: `Play the ${persona} replay in the sandbox` }).click()
+  }
+  await play('Team leads A backlog', 'team leads')
+  await expect(log(page).getByText("✓ {'updated': 'OPS-7', 'fields': ['priority'], 'operations': ['labels']}")).toBeVisible()
+  await run(page, 'jira issue view OPS-7 --json')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"name": "Highest"')
+
+  await play('On-call engineers', 'on-call engineers')
+  await expect(log(page).getByText("✓ {'id': '10010', 'key': 'OPS-10'", { exact: false })).toBeVisible()
+  await run(page, 'jira issue list -p OPS --open --csv --columns key,summary')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('OPS-8,Checkout returns 502 after the 09:10 deploy')
+
+  await play('Release managers', 'release managers')
+  await expect(log(page).locator('.t-reply').last()).toContainText('Tokens are redacted from error output (ENG-38)')
+
+  await closeTerminal(page)
+  await page.getByRole('button', { name: 'See what it says before you sign in' }).click()
+  await expect(log(page).locator('.t-tool[data-state=failed]').last()).toContainText('No complete credentials. Run auth login or config migrate.')
+  await expect(log(page).locator('.t-reply').last()).toContainText('jira auth login --profile work')
+  await expect(log(page).locator('.t-reply').last()).toContainText('Please don’t paste the token here.')
+})
+
+test('agent rules copy exactly and name the safe defaults', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Copy the agent rules' }).click()
+  await expect(page.locator('#agents [role=status]')).toHaveText('Rules copied to clipboard.')
+  const rules = await page.evaluate(() => navigator.clipboard.readText())
+  expect(rules).toBe(await page.getByLabel('Agent rules for Jira').innerText())
+  expect(rules).toContain('Add `--json --no-input` to every command')
+  expect(rules).toContain('Deletes need `--yes`.')
+  expect(rules).toContain('run `jira auth status --json --no-input`. If it fails, stop and ask me to sign in')
+  expect(rules).toContain('Never ask for my API token')
+  await expect(page.getByRole('link', { name: 'What the profile does and doesn’t protect' })).toHaveAttribute('href', /docs\/usage\.md#what-keeping-the-token/)
 })
 
 test('examples, exit-code rows and the command reference type into the terminal without moving the page', async ({ page }, info) => {
@@ -207,7 +315,7 @@ test('first fold contains installation, assets load and narrow layouts do not ov
 
 test('project identity and installation action clearly distinguish the independent CLI', async ({ page }, info) => {
   await page.goto('./')
-  await expect(page).toHaveTitle('CLI Toolkit for Jira — Jira Cloud from your terminal')
+  await expect(page).toHaveTitle('CLI Toolkit for Jira — Hand Jira Cloud to your AI agents')
   await expect(page.getByRole('link', { name: 'CLI Toolkit for Jira home' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Install the CLI', exact: true })).toHaveAttribute('href', '#get-started')
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(0)
