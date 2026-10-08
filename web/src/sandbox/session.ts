@@ -1,7 +1,7 @@
 // Runs parsed commands against the sample site and formats results the way jira prints them.
 import { help, usage } from './help.ts'
 import { parse, tokenize, type Values } from './parse.ts'
-import { boards, initialIssues, me, profile, projects, site, sprints, statuses, users, type Issue } from './sample.ts'
+import { boards, initialIssues, initialSprints, issueTypes, me, profile, projects, site, statuses, users, type Issue } from './sample.ts'
 import { child, root, type Node } from './tree.ts'
 
 export type Tone = 'new' | 'indeterminate' | 'done' | 'active' | 'future' | 'closed' | 'bold'
@@ -11,10 +11,16 @@ export type Block =
   | { kind: 'table'; title: string; columns: string[]; rows: Cell[][] }
   | { kind: 'panel'; title: string; subtitle: string; heading: [string, string]; lines: string[] }
   | { kind: 'note'; text: string }
+  // An agent session in a replay; never produced by jira itself. A tool with output null is still running.
+  | { kind: 'session' }
+  | { kind: 'ask'; text: string }
+  | { kind: 'say' | 'reply'; text: string }
+  | { kind: 'tool'; name: 'Bash' | 'Write' | 'Edit'; input: string; output: Block[] | null; exit: number }
 export type Result = { blocks: Block[]; exit: number | null }
 
 const LIST_COMMANDS = new Set(['issue list', 'board list', 'board issues', 'project list', 'issue comment list', 'sprint list', 'component list', 'project issue-types', 'project fields', 'issue attachment list'])
 const PRIORITY = ['Highest', 'High', 'Medium', 'Low', 'Lowest']
+const DEFAULT_FIELDS = ['summary', 'status', 'assignee', 'priority', 'updated', 'components', 'labels']
 const TODAY = '2026-10-07'
 
 class Failure extends Error {
@@ -55,8 +61,14 @@ const pyJson = (value: unknown) => JSON.stringify(value).replaceAll('":', '": ')
 
 export class Session {
   issues = initialIssues()
+  sprints = initialSprints()
+  private nextComment = 10200
 
-  reset() { this.issues = initialIssues() }
+  reset() {
+    this.issues = initialIssues()
+    this.sprints = initialSprints()
+    this.nextComment = 10200
+  }
 
   run(line: string): Result {
     const tokens = tokenize(line.trim())
@@ -105,7 +117,12 @@ export class Session {
       case 'issue transition': return this.transition(args.key as string, opts)
       case 'issue assign': return this.assign(args.key as string, opts.user as string, opts)
       case 'issue unassign': return this.assign(args.key as string, null, opts)
-      case 'sprint list': return this.sprints(opts)
+      case 'sprint list': return this.sprintList(opts)
+      case 'sprint create': return this.sprintCreate(opts)
+      case 'sprint add-issues': return this.sprintAdd(args.sprint_id as string, args.keys as string[], opts)
+      case 'issue comment add': return this.comment(args.key as string, opts)
+      case 'issue create': return this.create(opts)
+      case 'issue edit': return this.edit(args.key as string, opts)
       case 'api': return this.api(args.path as string, args.spec_action as string | undefined, opts)
       case 'project list': return this.table(opts, 'Projects', ['key', 'name'], projects)
       case 'board list': return opts.json
@@ -145,7 +162,7 @@ export class Session {
     }
     const board = path.match(/^\/rest\/agile\/1\.0\/board\/(\d+)\/sprint$/)
     if (method === 'GET' && board) {
-      const values = sprints.filter(s => String(s.board) === board[1]).map(({ board: id, ...s }) => ({ ...s, originBoardId: id }))
+      const values = this.sprints.filter(s => String(s.board) === board[1]).map(({ board: id, ...s }) => ({ ...s, originBoardId: id }))
       return json({ maxResults: 50, startAt: 0, isLast: true, values })
     }
     return { blocks: [{ kind: 'note', text: `jira api ${method} ${path} is valid. The sandbox has sample responses only for /rest/api/3/myself, /rest/api/3/issue/KEY and /rest/agile/1.0/board/12/sprint. In your terminal it calls your Jira site with your saved profile.` }], exit: null }
@@ -194,17 +211,25 @@ export class Session {
     return issue
   }
 
-  private issueJson(issue: Issue) {
+  /** Search returns the client's default fields unless --fields names others, as the real search does. */
+  private issueJson(issue: Issue, only?: string[]) {
     const status = statuses.find(s => s.name === issue.status)!
     const assignee = users.find(u => u.accountId === issue.assignee)
+    const sprint = this.sprints.find(s => s.id === issue.sprint)
+    const all: Record<string, unknown> = {
+      summary: issue.summary, issuetype: { name: issue.type }, status: { name: status.name, id: status.id, statusCategory: { key: status.category } },
+      assignee: assignee ? { accountId: assignee.accountId, displayName: assignee.displayName } : null,
+      priority: { name: issue.priority }, updated: `${issue.updated}T09:30:00.000+0000`,
+      components: issue.components.map(name => ({ name })), labels: issue.labels,
+      customfield_10016: issue.points ?? null,
+      customfield_10020: sprint ? [{ id: sprint.id, name: sprint.name, state: sprint.state, boardId: sprint.board }] : null,
+      issuelinks: (issue.blockedBy ?? []).map((key, i) => ({ id: String(20000 + i), type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+        inwardIssue: { key, fields: { summary: this.issues.find(x => x.key === key)?.summary, status: { name: this.issues.find(x => x.key === key)?.status } } } })),
+    }
+    const names = only ?? DEFAULT_FIELDS
     return {
       id: String(10000 + Number(issue.key.split('-')[1])), self: `${site}/rest/api/3/issue/${10000 + Number(issue.key.split('-')[1])}`, key: issue.key,
-      fields: {
-        summary: issue.summary, status: { name: status.name, id: status.id, statusCategory: { key: status.category } },
-        assignee: assignee ? { accountId: assignee.accountId, displayName: assignee.displayName } : null,
-        priority: { name: issue.priority }, updated: `${issue.updated}T09:30:00.000+0000`,
-        components: issue.components.map(name => ({ name })), labels: issue.labels,
-      },
+      fields: Object.fromEntries(names.filter(n => n in all).map(n => [n, all[n]])),
     }
   }
 
@@ -234,7 +259,8 @@ export class Session {
     found = [...found].sort((a, b) => (rank(a) > rank(b) ? 1 : rank(a) < rank(b) ? -1 : 0) * sign)
     if (!opts.all) found = found.slice(0, Number(opts.limit ?? 50))
 
-    const data = { issues: found.map(i => this.issueJson(i)), isLast: true, fetched: found.length }
+    const only = typeof opts.fields === 'string' ? opts.fields.split(',').map(f => f.trim()).filter(Boolean) : undefined
+    const data = { issues: found.map(i => this.issueJson(i, only)), isLast: true, fetched: found.length }
     if (opts.json) return json(data)
     const rows = data.issues.map(({ fields, ...rest }) => ({
       ...rest, ...Object.fromEntries(Object.entries(fields).map(([k, v]) =>
@@ -257,8 +283,8 @@ export class Session {
     const issue = this.find(key, `/rest/api/3/issue/${key}`)
     if (opts.web) return out(`Opening ${site}/browse/${issue.key}`)
     if (opts.json) {
-      const data = this.issueJson(issue)
-      return json({ ...data, fields: { ...data.fields, issuetype: { name: issue.type }, comment: { total: issue.comments } } })
+      const data = this.issueJson(issue, [...DEFAULT_FIELDS, 'issuetype', 'customfield_10016', 'customfield_10020', 'issuelinks'])
+      return json({ ...data, fields: { ...data.fields, comment: { total: issue.comments } } })
     }
     const assignee = users.find(u => u.accountId === issue.assignee)?.displayName ?? '-'
     return {
@@ -312,11 +338,99 @@ export class Session {
     return opts.json ? json(data) : out(`✓ ${pyRepr(data)}`)
   }
 
-  private sprints(opts: Values): Result {
+  /** Mirrors fields.create for the summary, type, priority, assignee and labels the sample metadata offers. */
+  private create(opts: Values): Result {
+    const project = String(opts.project ?? profile.project).toUpperCase()
+    if (!projects.some(p => p.key === project)) throw jiraError('GET', `/rest/api/3/issue/createmeta/${project}/issuetypes`, 404, { errorMessages: [`No project could be found with key '${project}'.`], errors: {} })
+    if (opts.template !== undefined || opts['fields-file'] !== undefined || opts['description-file'] !== undefined || opts.editor)
+      return { blocks: [{ kind: 'note', text: 'The sandbox creates issues from flags only. In your terminal, templates, --fields-file, --description-file and --editor work too.' }], exit: null }
+    const list = issueTypes.map(t => `${t.name} [id:${t.id}]`).join(', ')
+    if (opts.type === undefined) throw invalid(`Pass --type; available values: ${list}`)
+    const raw = String(opts.type).replace(/^id:/, '')
+    const type = issueTypes.find(t => t.id === raw) ?? issueTypes.find(t => t.name.toLowerCase() === raw.toLowerCase())
+    if (!type) throw invalid(`--type ${pyRepr(opts.type)} is unavailable or ambiguous; use an explicit ID. Available: ${list}`)
+    if (!opts.summary) throw invalid('Required fields missing: Summary (summary). Supply --field FIELD=VALUE or --fields-file.')
+    const priority = opts.priority === undefined ? 'Medium' : PRIORITY.find(p => p.toLowerCase() === String(opts.priority).toLowerCase())
+    if (!priority) throw invalid('Priority: value is not allowed.')
+    const number = Math.max(0, ...this.issues.filter(i => i.key.startsWith(`${project}-`)).map(i => Number(i.key.split('-')[1]))) + 1
+    const key = `${project}-${number}`
+    this.issues.push({ key, summary: String(opts.summary), status: 'To Do', type: type.name, priority, assignee: (opts.assignee as string | undefined)?.replace(/^id:/, '') ?? null,
+      labels: (opts.label as string[] | undefined) ?? [], components: (opts.component as string[] | undefined) ?? [], updated: TODAY, description: String(opts.description ?? ''), comments: 0 })
+    const data = { id: String(10000 + number), key, self: `${site}/rest/api/3/issue/${10000 + number}` }
+    return opts.json ? json(data) : out(`✓ ${pyRepr(data)}`)
+  }
+
+  /** Mirrors maintenance.edit for summary, priority and labels, the fields sample issues can edit. */
+  private edit(key: string, opts: Values): Result {
+    const issue = this.find(key, `/rest/api/3/issue/${key}/editmeta`)
+    const list = (name: string) => (opts[name] as string[] | undefined) ?? []
+    const [replace, add, remove] = [list('label'), list('add-label'), list('remove-label')]
+    if (replace.length && (add.length || remove.length)) throw invalid('Use either --label replacement or add/remove operations.')
+    for (const name of ['due-date', 'parent', 'description', 'component', 'add-component', 'remove-component', 'field'])
+      if (opts[name] !== undefined && !(Array.isArray(opts[name]) && !(opts[name] as string[]).length))
+        return { blocks: [{ kind: 'note', text: `The sandbox edits summary, priority and labels only. In your terminal, --${name} is checked against the issue’s edit metadata.` }], exit: null }
+    const fields: string[] = []
+    let priority: string | undefined
+    if (opts.priority !== undefined) {
+      priority = PRIORITY.find(p => p.toLowerCase() === String(opts.priority).toLowerCase())
+      if (!priority) throw invalid('Priority: value is not allowed.')
+      fields.push('priority')
+    }
+    if (opts.summary !== undefined) fields.push('summary')
+    if (replace.length) fields.push('labels')
+    const operations = add.length || remove.length ? ['labels'] : []
+    if (!fields.length && !operations.length) throw invalid('No changes supplied. Use issue edit --help.')
+    if (priority) issue.priority = priority
+    if (opts.summary !== undefined) issue.summary = String(opts.summary)
+    if (replace.length) issue.labels = replace
+    issue.labels = [...issue.labels.filter(l => !remove.includes(l)), ...add.filter(l => !issue.labels.includes(l))]
+    issue.updated = TODAY
+    const data = { updated: issue.key, fields: fields.sort(), operations }
+    return opts.json ? json(data) : out(`✓ ${pyRepr(data)}`)
+  }
+
+  private sprintCreate(opts: Values): Result {
+    const boardId = Number(opts.board ?? profile.board)
+    if (!boards.some(b => b.id === boardId)) throw jiraError('POST', '/rest/agile/1.0/sprint', 400, { errorMessages: [], errors: { originBoardId: 'Board does not exist or you do not have permission to see it.' } })
+    const sprint = { id: Math.max(...this.sprints.map(s => s.id)) + 1, state: 'future', name: String(opts.name), goal: String(opts.goal ?? ''), board: boardId }
+    this.sprints.push(sprint)
+    // Jira answers with the new sprint; an empty goal is sent as null and omitted.
+    const data = { id: sprint.id, self: `${site}/rest/agile/1.0/sprint/${sprint.id}`, state: sprint.state, name: sprint.name, originBoardId: boardId, ...(sprint.goal ? { goal: sprint.goal } : {}) }
+    return opts.json ? json(data) : out(`✓ ${pyRepr(data)}`)
+  }
+
+  private sprintAdd(id: string, keys: string[], opts: Values): Result {
+    const path = `/rest/agile/1.0/sprint/${id}/issue`
+    const sprint = this.sprints.find(s => s.id === Number(id))
+    if (!sprint) throw jiraError('POST', path, 404, { errorMessages: ['Sprint does not exist or you do not have permission to view it.'], errors: {} })
+    const issues = keys.map(key => this.find(key, path))
+    for (const issue of issues) { issue.sprint = sprint.id; issue.updated = TODAY }
+    // Jira answers 204 No Content, which the client returns as an empty dict.
+    return opts.json ? json({}) : out('✓ {}')
+  }
+
+  private comment(key: string, opts: Values): Result {
+    const issue = this.find(key, `/rest/api/3/issue/${key}/comment`)
+    if (opts['message-file'] !== undefined) return { blocks: [{ kind: 'note', text: 'The sandbox cannot read local files. Use --message here; in your terminal --message-file reads the comment from a file.' }], exit: null }
+    if (opts.message === undefined) throw invalid('Supply --message, --message-file, or interactive --editor.')
+    const text = String(opts.message)
+    if (!text.trim()) throw invalid('Comment body cannot be empty.')
+    issue.comments++
+    issue.updated = TODAY
+    const id = String(this.nextComment++)
+    const stamp = `${TODAY}T09:30:00.000+0000`
+    const data = { self: `${site}/rest/api/3/issue/${10000 + Number(issue.key.split('-')[1])}/comment/${id}`, id,
+      author: { accountId: me.accountId, displayName: me.displayName, active: true },
+      body: { type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] },
+      created: stamp, updated: stamp }
+    return opts.json ? json(data) : out(`✓ ${pyRepr(data)}`)
+  }
+
+  private sprintList(opts: Values): Result {
     const boardId = Number(opts.board ?? profile.board)
     if (!boards.some(b => b.id === boardId)) throw jiraError('GET', `/rest/agile/1.0/board/${boardId}/sprint`, 404, { errorMessages: ['The requested board cannot be viewed because it either does not exist or you do not have permission to view it.'], errors: {} })
     const states = String(opts.state ?? 'active,future').split(',')
-    const values = sprints.filter(s => s.board === boardId && states.includes(s.state)).slice(0, Number(opts.limit ?? 50))
+    const values = this.sprints.filter(s => s.board === boardId && states.includes(s.state)).slice(0, Number(opts.limit ?? 50))
     if (opts.json) return json({ maxResults: 50, startAt: 0, isLast: true, values: values.map(({ board, ...s }) => ({ ...s, originBoardId: board })), fetched: values.length })
     if (opts.csv) return out(['id,state,name,goal,originBoardId', ...values.map(s => [s.id, s.state, s.name, s.goal, s.board].map(v => csvCell(String(v))).join(','))].join('\n'))
     return table('Sprints', ['ID', 'State', 'Name', 'Goal'], values.map(s => [{ text: String(s.id) }, { text: s.state, tone: s.state as Tone }, { text: s.name }, { text: s.goal }]))
