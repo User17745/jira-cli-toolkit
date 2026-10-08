@@ -433,7 +433,7 @@ wheels = [
 
 [[package]]
 name = "jsup"
-version = "2.1.0"
+version = "2.5.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "keyring" },

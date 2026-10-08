@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jsup"
-version = "2.1.0"
+version = "2.5.0rc1"
 description = "General-purpose Jira Cloud CLI with a friendly terminal UI"
 readme = "README.md"
 license = "AGPL-3.0-only"
