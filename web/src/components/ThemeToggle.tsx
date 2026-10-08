@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 
 // index.html applies the stored or system theme before first paint; this keeps it in sync afterwards.
+// The icon follows the .dark class in CSS, so the prerendered page shows the right one before hydration.
 export function ThemeToggle() {
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+  const [dark, setDark] = useState(false)
 
   useEffect(() => {
+    setDark(document.documentElement.classList.contains('dark'))
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const follow = () => { if (!localStorage.getItem('theme')) apply(media.matches) }
     media.addEventListener('change', follow)
@@ -24,6 +26,7 @@ export function ThemeToggle() {
 
   return <button type="button" onClick={toggle} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'} title={dark ? 'Light theme' : 'Dark theme'}
     className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
-    {dark ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
+    <Sun className="hidden size-4 dark:block" aria-hidden="true" />
+    <Moon className="size-4 dark:hidden" aria-hidden="true" />
   </button>
 }

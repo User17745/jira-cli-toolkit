@@ -41,7 +41,7 @@ test('OS tabs expose and copy exact working installation commands', async ({ pag
 test('clipboard failures provide recovery without a false success', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) } }))
   await page.goto('./')
-  await page.locator('.install-code button').click()
+  await page.locator('.install-code:visible button').click()
   await expect(page.locator('.install-code:visible [role=status]')).toHaveText('Select the command and copy it manually.')
 })
 
@@ -346,7 +346,7 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`) })
   await page.goto('./')
   await page.evaluate(() => document.fonts.ready)
-  const command = await page.locator('.install-code').boundingBox()
+  const command = await page.locator('.install-code:visible').boundingBox()
   expect(command).toBeTruthy()
   // On narrow screens the docked terminal bar covers the bottom of the viewport.
   const dock = info.project.name === 'mobile' ? await page.locator('.terminal').boundingBox() : null
@@ -412,10 +412,23 @@ test('JavaScript-disabled visitors see independent identity and installation lin
     const page = await context.newPage()
     await page.goto('./')
     await expect(page.locator('body')).toContainText('CLI Toolkit for Jira is independently maintained and is not affiliated with Atlassian.', { useInnerText: true })
-    await expect(page.getByRole('link', { name: 'GitHub', exact: true })).toBeVisible()
+    // The prerendered page is readable too; the noscript note adds the essentials in plain links.
+    await expect(page.getByRole('heading', { name: 'Hand Jira to your agents.' })).toBeVisible()
+    await expect(page.locator('noscript').getByRole('link', { name: 'GitHub', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'GNU AGPL v3 only license.', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
     await expect(page.getByRole('link', { name: 'Download the latest release.', exact: true })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/releases/latest')
   } finally {
     await context.close()
   }
+})
+
+test('llms.txt, robots.txt and the sitemap are served for crawlers and agents', async ({ request }) => {
+  const llms = await request.get('llms.txt')
+  expect(llms.ok()).toBe(true)
+  const text = await llms.text()
+  expect(text.startsWith('# CLI Toolkit for Jira\n\n> ')).toBe(true)
+  expect(text).toContain('jira auth login --profile work')
+  expect(text).toContain('## Docs')
+  expect(await (await request.get('robots.txt')).text()).toContain('Sitemap: https://jira.abhishekaggarwal.com/sitemap.xml')
+  expect(await (await request.get('sitemap.xml')).text()).toContain('<loc>https://jira.abhishekaggarwal.com/</loc>')
 })

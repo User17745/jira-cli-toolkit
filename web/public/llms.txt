@@ -1,0 +1,48 @@
+# CLI Toolkit for Jira
+
+> An independent command-line tool for Jira Cloud, built so AI agents can drive Jira: plan roadmaps into sprints, write standup digests, and update issues as code merges. The command is `jira`. It runs with the user's own Jira permissions and API token, on macOS, Linux and Windows. Not affiliated with Atlassian. Open source under AGPL-3.0-only.
+
+Key facts for agents:
+
+- Install once per machine, then sign in from a human-run terminal: `jira auth login --profile work`. Tokens go to the OS credential store. Never ask the user for their API token.
+- Each profile is one Jira account. Add more with another `--profile NAME`, switch with `jira profile use NAME`, or pass `--profile NAME` to a single command.
+- Before the first Jira task, check access with `jira auth status --json --no-input`.
+- Add `--json --no-input` to every command and read results from stdout. Errors are JSON too.
+- Exit codes: 0 success, 1 Jira or network error, 2 invalid input or configuration, 130 interrupted.
+- Look before writing: `jira project fields KEY --type TYPE` lists required fields, and `jira issue transitions ISSUE` lists valid moves.
+- `jira help <command>` prints the real help for any command, offline and without credentials.
+- For anything without a dedicated command, `jira api <path> --spec` shows an endpoint's permissions, scopes and body schema; then `jira api <path>` calls it with the saved profile.
+- Destructive commands need `--yes` in scripts. Writes are never retried automatically.
+
+Install:
+
+- macOS and Linux: `curl -fsSL https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts/install.sh | bash`, then `export PATH="$HOME/.local/bin:$PATH"`
+- Windows (PowerShell): `irm https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts/install.ps1 | iex`
+
+Everyday commands:
+
+- `jira context use --project ENG` sets the default project
+- `jira issue list --open` lists open issues; add `--jql '...'` for your own query, `--csv --columns key,summary,status` for CSV
+- `jira issue view ENG-42` shows one issue
+- `jira issue create -p ENG --type Bug --summary "Fix login"` creates an issue
+- `jira issue edit ENG-42 --summary "..."` edits one
+- `jira issue transition ENG-42 --to "In Progress"` moves it through its workflow
+- `jira issue assign ENG-42 --user me` assigns it
+- `jira issue comment add ENG-42 -m "Review started"` comments
+- `jira board list -p ENG` and `jira sprint list --board 123` list boards and sprints
+
+## Docs
+
+- [README](https://github.com/User17745/jira-cli-toolkit/blob/main/README.md): overview, installation, everyday workflows, authentication and automation
+- [Command reference and usage guide](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md): every command, profiles, scripting, templates and output formats
+- [Setting up an agent or script](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md#setting-up-an-agent-or-script-once): one-time sign-in, keychain approval and headless options
+- [Calling any REST endpoint](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md#calling-any-rest-endpoint): `jira api`, `--spec` lookups and safety limits
+- [Installer options](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/install.md): custom paths and pinned versions
+- [Upgrading and migration](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/migration/upgrade-to-v2.md): manual installs, verification, and moving from `jsup`
+
+## Optional
+
+- [Latest release](https://github.com/User17745/jira-cli-toolkit/releases/latest): native binaries and the Python wheel
+- [Source code](https://github.com/User17745/jira-cli-toolkit)
+- [License (AGPL-3.0-only)](https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE)
+- [Report an issue](https://github.com/User17745/jira-cli-toolkit/issues)

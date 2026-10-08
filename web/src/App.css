@@ -109,3 +109,8 @@ body { -webkit-font-smoothing: antialiased; }
 /* The logo's green; dark text keeps it readable in both themes. */
 .brand-button { background: #4ade80; color: #0a0a0a; }
 .brand-button:hover { background: #22c55e; }
+
+/* Install panels stack in one cell; hidden ones keep their space but can't be seen, focused or read. */
+.install-panels { display: grid; grid-template-columns: minmax(0, 1fr); }
+.install-panels > * { grid-area: 1 / 1; }
+.install-panels > [hidden] { display: block; visibility: hidden; }

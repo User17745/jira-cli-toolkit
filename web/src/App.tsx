@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, Check, ChevronRight, Copy, CornerDownLeft, Play, Search } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -120,7 +120,9 @@ function CopyButton({ text, label, done = 'Command copied to clipboard.' }: { te
 }
 
 function Install() {
-  const [os, setOS] = useState<OS>(() => /Win/i.test(navigator.userAgent) ? 'windows' : /Linux/i.test(navigator.userAgent) ? 'linux' : 'macos')
+  // The page is prerendered for macOS, then switches to the visitor's system once it hydrates.
+  const [os, setOS] = useState<OS>('macos')
+  useEffect(() => setOS(/Win/i.test(navigator.userAgent) ? 'windows' : /Linux/i.test(navigator.userAgent) ? 'linux' : 'macos'), [])
   return <section id="get-started" aria-labelledby="install-title" className="rounded-xl border bg-card p-4 shadow-xs sm:p-5">
     <Tabs value={os} onValueChange={value => setOS(value as OS)} className="gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -129,7 +131,9 @@ function Install() {
           {(Object.keys(platforms) as OS[]).map(key => <TabsTrigger key={key} value={key} className="px-3">{platforms[key].name}</TabsTrigger>)}
         </TabsList>
       </div>
-      {(Object.keys(platforms) as OS[]).map(key => <TabsContent value={key} key={key}>
+      {/* All panels share one grid cell, so the card keeps its height whichever system is chosen. */}
+      <div className="install-panels">
+      {(Object.keys(platforms) as OS[]).map(key => <TabsContent value={key} key={key} keepMounted>
         {/* Each line gets a prompt drawn by CSS, so the copied and displayed text stay identical. */}
         <div className="install-code relative rounded-lg border border-[#262626] bg-[#0a0a0a] text-[#ededed]">
           <pre tabIndex={0} data-prompt={platforms[key].shell === 'PowerShell' ? 'PS>' : '$'} aria-label={`${platforms[key].shell} command`}
@@ -138,6 +142,7 @@ function Install() {
         </div>
         <p className="mt-2.5 text-[13px] text-muted-foreground">{platforms[key].note} The installer verifies release checksums first.</p>
       </TabsContent>)}
+      </div>
     </Tabs>
     <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
       <a {...external} className="link" href={latest}>Prefer a manual install?</a>
@@ -229,8 +234,9 @@ function UseCases({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; playi
             <ul className="flex flex-wrap gap-1.5">{u.commands.map(c => <li key={c} className="max-w-full"><code className="inline-code">{c}</code></li>)}</ul>
           </div>
         </div>
-        <button type="button" className={cn(buttonVariants(), 'mt-6 gap-2')} onClick={() => onPlay(u.id)} data-active={playing === u.id} aria-label={`Play the ${u.persona.toLowerCase()} replay in the sandbox`}>
-          <Play className="size-4" aria-hidden="true" />{playing === u.id ? 'Replaying…' : 'Play again in the sandbox'}
+        <button type="button" className={cn(buttonVariants(), 'mt-6 gap-2')} onClick={() => onPlay(u.id)} data-active={playing === u.id}>
+          {/* Accessible names start with the visible text, so voice control can target what people see. */}
+          <Play className="size-4" aria-hidden="true" />{playing === u.id ? 'Replaying…' : 'Play again in the sandbox'}<span className="sr-only">: {u.persona.toLowerCase()}</span>
         </button>
         {u.id === 'merge' && <div className="mt-8">
           <p className="mb-3 text-sm text-muted-foreground">No agent in the loop? The same two commands run from CI after every merge.</p>
@@ -335,10 +341,10 @@ function App() {
     <AsciiField />
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-3 sm:gap-6 sm:px-6">
-        <a className="flex items-center gap-2 whitespace-nowrap" href="#" aria-label="CLI Toolkit for Jira home">
+        <a className="flex items-center gap-2 whitespace-nowrap" href="#">
           <BrandMark />
-          <span className="font-semibold tracking-tight">CLI Toolkit</span>
-          <span className="text-sm text-muted-foreground">for Jira</span>
+          <span className="font-semibold tracking-tight">CLI Toolkit</span>{' '}
+          <span className="text-sm text-muted-foreground">for Jira</span><span className="sr-only"> home</span>
         </a>
         <nav aria-label="Main navigation" className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
           <a className="hover:text-foreground" href="#use-cases">Use cases</a>
@@ -391,10 +397,10 @@ function App() {
             <span className="example-label">The sandbox terminal runs on sample data from an example site. Nothing reaches Jira.</span> Pick a command, or type your own.
           </SectionHead>
           <ul className="divide-y overflow-hidden rounded-xl border">{examples.map(e => <li key={e.command}>
-            <button type="button" onClick={() => run(e.command)} data-active={active === e.command} aria-label={`Run ${e.command}`}
+            <button type="button" onClick={() => run(e.command)} data-active={active === e.command}
               className="group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none data-[active=true]:bg-muted">
               <span className="min-w-0 flex-1">
-                <code className="block font-mono text-[13px] font-medium break-words">{e.command}</code>
+                <span className="sr-only">Run </span><code className="block font-mono text-[13px] font-medium break-words">{e.command}</code>{' '}
                 <span className="block text-sm text-muted-foreground">{e.does}</span>
               </span>
               <Kbd className="opacity-60 group-hover:opacity-100 group-data-[active=true]:opacity-100"><CornerDownLeft aria-hidden="true" /></Kbd>
