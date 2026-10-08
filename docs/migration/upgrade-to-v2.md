@@ -85,7 +85,7 @@ Checksums verify integrity against the downloaded release metadata. Publisher tr
 
 ## 3. Upgrade through your installation manager
 
-Choose **one** route. Run each command separately and stop on failure. The Python package is not published to PyPI; a bare registry upgrade is not this release's installation route.
+Choose **one** route. Run each command separately and stop on failure. This guide records the upgrade to v2 with downloaded wheels. From 2.5.1 the package is also published on PyPI as `jira-cli-toolkit`; to move a pipx installation tracked as `jsup` onto it, run `pipx uninstall jsup` and then `pipx install jira-cli-toolkit`.
 
 ### pipx
 

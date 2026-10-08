@@ -3,8 +3,8 @@ requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jsup"
-version = "2.5.0"
+name = "jira-cli-toolkit"
+version = "2.5.1rc1"
 description = "General-purpose Jira Cloud CLI with a friendly terminal UI"
 readme = "README.md"
 license = "AGPL-3.0-only"

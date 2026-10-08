@@ -27,6 +27,21 @@ class UpdateError(ValueError):
     pass
 
 
+DISTRIBUTION='jira-cli-toolkit'
+
+
+def _distribution():
+    """Package name the running code was installed under; jsup before 2.5.1."""
+    from importlib.metadata import PackageNotFoundError, distribution
+    for name in (DISTRIBUTION,'jsup'):
+        try:
+            distribution(name)
+            return name
+        except PackageNotFoundError:
+            continue
+    return None
+
+
 def installation():
     if getattr(sys,'frozen',False):
         method='standalone'
@@ -40,7 +55,7 @@ def installation():
         else:
             method='python'
     arch={'amd64':'x86_64','x86_64':'x86_64','aarch64':'arm64','arm64':'arm64'}.get(platform.machine().lower(),platform.machine().lower())
-    return dict(version=__version__,method=method,os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
+    return dict(version=__version__,method=method,distribution=None if method=='standalone' else _distribution(),os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
                 arch=arch,executable=str(Path(sys.executable).resolve()),python=sys.version.split()[0])
 
 
@@ -271,15 +286,20 @@ def handle(args):
             result={**installed,'available_version':str(version),'update_available':available,'release_url':release.get('html_url'),'updated':False}
             if args.check or not available: return result
             if installed['method']!='standalone':
-                instructions={'pipx': 'pipx install --force /path/to/verified-release.whl', 'uv':'uv tool install --force /path/to/verified-release.whl',
-                              'python':f'{sys.executable} -m pip install --upgrade /path/to/verified-release.whl'}
                 wheel=next((a for a in manifest['artifacts'] if a.get('kind')=='wheel'),None)
                 if not wheel: raise UpdateError('Release has no Python wheel for this installation.')
-                # Never mutate an unrelated Python or manager environment.
+                # Exact versions also select release candidates, which pip skips by default.
+                package=f'{DISTRIBUTION}=={version}'
+                instructions={'pipx':f"pipx install --force '{package}'", 'uv':f"uv tool install --force '{package}'",
+                              'python':f"{sys.executable} -m pip install --upgrade '{package}'"}
+                # Never mutate an unrelated Python or manager environment; the owning manager upgrades it.
                 result.update(instructions=instructions[installed['method']], wheel=wheel['name'],
-                              note='Download the wheel from this release; verify its manifest checksum. For private/unpublished PyPI packages, pass that wheel to the owning manager instead of a registry upgrade.')
-                if installed['method']=='pipx':
-                    result['backend_fallback']='If pipx force-install reports an existing uv venv, --backend pip does not switch that existing environment. After downloading and verifying the wheel, run pipx uninstall jsup, then pipx install --backend pip /path/to/verified-release.whl. This replaces the managed environment and preserves ~/.config/jsup/config.json.'
+                              note=f'{DISTRIBUTION} is published on PyPI. To install offline instead, download {wheel["name"]} '
+                                   'from this release, verify its manifest checksum, and pass its path to the same command.')
+                if installed['method'] in ('pipx','uv') and installed.get('distribution')=='jsup':
+                    tool='pipx' if installed['method']=='pipx' else 'uv tool'
+                    result['migration']=(f"This installation is tracked under its old name, jsup. Switch once: {tool} uninstall jsup, "
+                                         f"then {instructions[installed['method']]}. Configuration and saved credentials are kept.")
                 return result
             match=[a for a in manifest['artifacts'] if a.get('kind')=='binary' and a.get('os')==installed['os'] and a.get('arch')==installed['arch']]
             if len(match)!=1: raise UpdateError('No compatible binary for this platform/architecture.')

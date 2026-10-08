@@ -432,8 +432,8 @@ wheels = [
 ]
 
 [[package]]
-name = "jsup"
-version = "2.5.0"
+name = "jira-cli-toolkit"
+version = "2.5.1rc1"
 source = { editable = "." }
 dependencies = [
     { name = "keyring" },
