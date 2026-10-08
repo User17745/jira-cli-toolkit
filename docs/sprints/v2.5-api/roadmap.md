@@ -1,6 +1,6 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: in progress. `jira api` and `--spec` discovery are implemented on the v2.5 branch with local tests and live acceptance; release work remains. Neither is available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
+Decision recorded: 7 October 2026. Status: released in [v2.5.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.5.0) on 8 October 2026. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
 
 ## Goal and boundaries
 
@@ -96,15 +96,25 @@ Discovery notes, 8 October 2026: the official documents are OpenAPI 3.0.1 at dev
 - [x] Run authorized live read acceptance in BUG. Obtain a disposable issue/cleanup arrangement before adding new write acceptance; do not create more issues under the already-used two-issue test budget.
 - [x] Add README and help examples for agents, scripts, request construction, spec discovery, project metadata, trust boundaries and troubleshooting. Mark when a capability is actually shipped.
 - [x] Document the difference between secret-free invocation and enforced secret isolation; show least-privilege Jira access and an external tool-policy/broker option when stronger isolation is required.
-- [ ] Run full regressions, wheel/sdist and installed smoke checks before milestone pushes; verify the CI/native matrix, published manifest and real updater on a v2.5 candidate.
-- [ ] Validate the compatibility path from stable v2, then publish a tested v2.5 release through the same GitHub pipeline and verify stable selection.
+- [x] Run full regressions, wheel/sdist and installed smoke checks before milestone pushes; verify the CI/native matrix, published manifest and real updater on a v2.5 candidate.
+- [x] Validate the compatibility path from stable v2, then publish a tested v2.5 release through the same GitHub pipeline and verify stable selection.
+
+Release evidence, 8 October 2026:
+
+- Regressions: 190 Python tests, 32 website browser checks, and clean-venv wheel/sdist builds with installed smoke checks for all three entry points.
+- [v2.5.0rc1](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.5.0rc1) was published as a prerelease from the PR branch; all assets matched the manifest and latest stable stayed v2.1.0. Updating a real published 2.1.0 standalone binary in an isolated home succeeded (new binary, `jira.previous` kept, config bytes and mode 600 unchanged, repeat check a no-op), but 2.1.0 then crashed while printing the result: rich lazily imported `rich.pretty` from the replaced executable. `jira update --yes --json` avoids it on 2.1.0, as the release notes and update docs say.
+- [v2.5.0rc2](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.5.0rc2) added the fix: the updater renders a throwaway result before replacing the executable. It also added per-version release notes. 2.1.0 → rc2 with `--json` exited 0 with no stderr.
+- CodeRabbit reviewed [PR #11](https://github.com/User17745/jira-cli-toolkit/pull/11); its one finding (a contradictory website FAQ) was fixed. Main CI, native builds and Pages passed on merge commit `2a8861f`, whose tree matches the tested PR head.
+- [v2.5.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.5.0): all ten tag jobs passed; eight assets match the stable manifest and `SHA256SUMS`; latest stable is v2.5.0; the manifest downloads anonymously.
+- The rc2 binary updated itself to 2.5.0 through default stable discovery without `--json`: exit 0, no stderr, previous binary kept, config unchanged, repeat check a no-op.
+- The user's pipx installation upgraded with the verified wheel (`pipx install --force`): all three entry points report 2.5.0, config bytes and mode unchanged, and `jira api /rest/api/3/myself --profile work --no-input` read the keychain silently.
 
 ## Completion criteria
 
-- [ ] An agent can inspect a current endpoint spec and make an authenticated call without putting a token in its invocation or prompt.
-- [ ] A compatible endpoint absent from the convenience commands works without an endpoint wrapper or CLI upgrade.
-- [ ] HTTP failures and unknown write outcomes are explicit; normal requests do not silently change auth identities, destinations, payloads or pagination.
-- [ ] Existing human workflows remain compatible; documented discovery freshness and security boundaries match verified behavior.
+- [x] An agent can inspect a current endpoint spec and make an authenticated call without putting a token in its invocation or prompt.
+- [x] A compatible endpoint absent from the convenience commands works without an endpoint wrapper or CLI upgrade.
+- [x] HTTP failures and unknown write outcomes are explicit; normal requests do not silently change auth identities, destinations, payloads or pagination.
+- [x] Existing human workflows remain compatible; documented discovery freshness and security boundaries match verified behavior.
 
 ## References
 
