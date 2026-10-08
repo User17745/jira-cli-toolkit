@@ -1,11 +1,13 @@
 """Entry points for Jira CLI Toolkit and the compatible jsup executable."""
 from __future__ import annotations
 
+import json
 import sys
 
 import requests
 
 from . import ui
+from .api import ApiError, secret_values
 from .application import CommandError, run, show_context
 from .client import JiraError, UncertainOutcome
 from .commands import build_parser, help_parser
@@ -33,15 +35,23 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
     def fail(code, kind, message, **details):
         # Server errors can echo submitted credentials. Never print them.
         from .config import resolve_config
-        secrets = [getattr(args, "token", None)]
+        secrets = secret_values(getattr(args, "email", None), getattr(args, "token", None))
         try:
-            secrets.append(resolve_config(args).get("token"))
+            cfg = resolve_config(args)
+            secrets += secret_values(cfg.get("email"), cfg.get("token"))
         except (ValueError, OSError):
             pass
-        for secret in secrets:
-            if secret:
-                message = message.replace(secret, "[redacted]")
-        if args.json and not args.legacy and prog != "jsup":
+
+        def redact(text):
+            for secret in secrets:
+                text = text.replace(secret, "[redacted]")
+            return text
+        message = redact(message)
+        if args.cmd == "api":
+            # stdout carries only response bodies, so api errors always go to stderr as JSON.
+            payload = json.dumps({"error": {"code": kind, "message": message, **details}}, indent=2, ensure_ascii=False)
+            print(redact(payload), file=sys.stderr)
+        elif args.json and not args.legacy and prog != "jsup":
             ui.dump_json({"error": {"code": kind, "message": message, **details}})
         else:
             ui.err_console.print(message, markup=False)
@@ -59,6 +69,8 @@ def main(argv=None, *, prog: str = "jsup", default_dashboard: bool = True) -> No
                 return
             args.cmd, args.projects = "dashboard", None
         run(args, prog)
+    except ApiError as error:
+        fail(error.exit_code, error.code, str(error), **error.details)
     except (CommandError, ValueError) as error:
         fail(2, "invalid_input", str(error))
     except JiraError as error:

@@ -2502,6 +2502,163 @@
      ]
     }
    ]
+  },
+  {
+   "name": "api",
+   "help": "call any Jira REST path with the selected identity",
+   "description": null,
+   "shared": true,
+   "options": [
+    {
+     "positional": "path",
+     "metavar": "PATH",
+     "nargs": null,
+     "choices": [],
+     "type": null,
+     "help": "Jira REST path, for example /rest/api/3/myself"
+    },
+    {
+     "flag": "--method",
+     "names": [
+      "-X",
+      "--method"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "METHOD",
+     "required": false,
+     "choices": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS"
+     ],
+     "repeat": false,
+     "type": "upper",
+     "help": ""
+    },
+    {
+     "flag": "--query",
+     "names": [
+      "--query",
+      "-q"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "KEY=VALUE",
+     "required": false,
+     "choices": [],
+     "repeat": true,
+     "type": null,
+     "help": "query parameter; repeat for more, values are URL-encoded"
+    },
+    {
+     "flag": "--header",
+     "names": [
+      "--header",
+      "-H"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "'NAME: VALUE'",
+     "required": false,
+     "choices": [],
+     "repeat": true,
+     "type": null,
+     "help": "extra request header; auth, host and framing headers are managed"
+    },
+    {
+     "flag": "--data",
+     "names": [
+      "--data",
+      "-d"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "JSON|@FILE|@-",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "JSON body, sent unchanged"
+    },
+    {
+     "flag": "--raw-data",
+     "names": [
+      "--raw-data"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "TEXT|@FILE|@-",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "non-JSON body; needs --content-type"
+    },
+    {
+     "flag": "--content-type",
+     "names": [
+      "--content-type"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "CONTENT_TYPE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "body media type for --data or --raw-data"
+    },
+    {
+     "flag": "--form",
+     "names": [
+      "--form",
+      "-F"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "NAME=VALUE|NAME=@FILE",
+     "required": false,
+     "choices": [],
+     "repeat": true,
+     "type": null,
+     "help": "multipart field or file; repeat for more"
+    },
+    {
+     "flag": "--include",
+     "names": [
+      "--include",
+      "-i"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "INCLUDE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "print response status and headers to stderr"
+    },
+    {
+     "flag": "--output",
+     "names": [
+      "--output",
+      "-o"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "FILE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "save the response body to a new file"
+    }
+   ]
   }
  ],
  "version": "2.1.0",

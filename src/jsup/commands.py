@@ -34,6 +34,22 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         parser.add_argument("--all", action="store_true", help="fetch every page; overrides --limit")
         if operation not in {"open", "issue-list", "board-issues"}:
             parser.add_argument("--limit", dest="max", type=positive_int, default=50)
+    if operation == "api":
+        parser.add_argument("path", metavar="PATH", help="Jira REST path, for example /rest/api/3/myself")
+        parser.add_argument("-X", "--method", type=str.upper, default="GET",
+                            choices=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
+        parser.add_argument("--query", "-q", action="append", default=[], metavar="KEY=VALUE",
+                            help="query parameter; repeat for more, values are URL-encoded")
+        parser.add_argument("--header", "-H", action="append", default=[], metavar="'NAME: VALUE'",
+                            help="extra request header; auth, host and framing headers are managed")
+        parser.add_argument("--data", "-d", metavar="JSON|@FILE|@-", help="JSON body, sent unchanged")
+        parser.add_argument("--raw-data", metavar="TEXT|@FILE|@-", help="non-JSON body; needs --content-type")
+        parser.add_argument("--content-type", help="body media type for --data or --raw-data")
+        parser.add_argument("--form", "-F", action="append", default=[], metavar="NAME=VALUE|NAME=@FILE",
+                            help="multipart field or file; repeat for more")
+        parser.add_argument("--include", "-i", action="store_true", help="print response status and headers to stderr")
+        parser.add_argument("--output", "-o", metavar="FILE", help="save the response body to a new file")
+        return
     if operation == "issue-edit":
         parser.add_argument("key")
         for name in ("summary", "priority", "due-date", "parent"):
@@ -331,6 +347,7 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     _, components = group(root, "component", "project components")
     command(components, "list", "component-list", "list components")
     command(components, "create", "component-create", "create a component")
+    command(root, "api", "api", "call any Jira REST path with the selected identity")
 
     for name, help_text in LEGACY_COMMANDS.items():
         command(root, name, name, f"legacy: {help_text}", legacy=True)

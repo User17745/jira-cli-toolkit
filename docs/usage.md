@@ -4,7 +4,7 @@ A Jira Cloud CLI with grouped commands, Rich terminal output, and a compatible `
 
 The current release is [v2.1.0](https://github.com/User17745/jira-cli-toolkit/releases/tag/v2.1.0). The command is `jira`; `jira-cli-toolkit` remains the repository name and a compatibility alias, alongside `jsup`. V2 provides guided API-token login, profiles, project/field discovery, issue maintenance, templates, completion, updates, and native releases while retaining `jsup` compatibility. Acceptance evidence and release validation are tracked in the [upgrade roadmap](sprints/v2-upgrade/roadmap.md).
 
-The [planned v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents after v2 is finalized. These commands are not part of v2.1.0.
+The [v2.5 roadmap](sprints/v2.5-api/roadmap.md) adds authenticated generic API requests and endpoint-spec discovery for agents. `jira api` is in development for v2.5 and is not part of v2.1.0; `--spec` discovery is still planned.
 
 ## Install
 
@@ -94,6 +94,29 @@ jira project list
 ```
 
 Software operations require applicable boards and Jira permissions. Feature toggles are under `board feature enable/disable`. Sprint viewing/editing and required start/close inputs are implemented. Operations remain subject to board capabilities and Jira permissions. `view --web` and legacy `browse` require only a site URL and use the browser's session. Board URLs do not guess a project from local configuration.
+
+## Calling any REST endpoint (v2.5, in development)
+
+`jira api` sends one request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
+
+```bash
+jira api /rest/api/3/myself --profile work
+jira api /rest/api/3/project/search --query maxResults=20 --query expand=lead
+jira api /rest/api/3/issue -X POST --data @issue.json
+jira api /rest/api/3/search/jql -X POST --data @- < query.json
+jira api /rest/api/3/issue/BUG-703/attachments -X POST --form file=@proof.txt -H 'X-Atlassian-Token: no-check'
+jira api /rest/api/3/attachment/content/10001 --output proof.png
+```
+
+- **Method:** GET by default. Other methods need `-X`. A body never changes the method, so `--data` without `-X POST`, `PUT`, `PATCH` or `DELETE` is an input error.
+- **Path:** a relative path starting with `/rest/` on the selected site, or on the scoped-token gateway. Absolute URLs, other hosts, query strings in the path, `.`/`..` segments, encoded slashes and non-ASCII characters are rejected. Pass query values with `--query KEY=VALUE`; the CLI encodes them.
+- **Bodies:** `--data` takes JSON inline, from `@file` or from `@-` (stdin). It must parse as JSON and is sent byte for byte. `--raw-data` sends other formats and needs `--content-type`. `--form NAME=VALUE` or `NAME=@FILE` builds a multipart upload. Choose one body option. Data is limited to 10 MiB, uploads to 50 MiB.
+- **Headers:** `-H 'Name: value'` adds headers such as `X-Atlassian-Token` or `X-ExperimentalApi`. The CLI manages authentication, cookies, host, content type and length, proxies and connection headers, and rejects attempts to set them.
+- **Output:** the response body goes to stdout exactly as Jira returned it, whatever its JSON shape. On a terminal, JSON is indented and binary bodies are not printed; use `--output FILE` to save a body to a new file (it never overwrites). Empty, 204 and HEAD responses print nothing. `--include` prints the status and response headers to stderr, with cookies redacted.
+- **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
+- **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
+
+Keeping the token out of the command reduces accidental exposure. It does not stop an agent that can read your credential store or run programs as you from using it, and the request runs with the full permissions of the Jira account. See the roadmap's trust-boundary notes.
 
 ## Scripts and compatibility
 

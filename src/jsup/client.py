@@ -62,10 +62,15 @@ class Jira:
         self.s.headers.update({"Accept": "application/json",
                                "Content-Type": "application/json"})
 
-    def _req(self, method: str, path: str, **kw):
-        safe = kw.pop("retry_safe", method in ("GET", "HEAD"))
+    def _send(self, method: str, path: str, *, safe: bool, **kw) -> requests.Response:
+        """Send one request to the trusted site; return the final response unparsed.
+
+        Safe requests retry bounded transient failures. A write whose connection drops
+        raises UncertainOutcome and is never replayed. Redirects are not followed, so
+        credentials never travel to another destination.
+        """
         kw.setdefault("timeout", (10, 30))
-        kw.setdefault("allow_redirects", False)
+        kw["allow_redirects"] = False
         for attempt in range(3):
             try:
                 r = self.s.request(method, self.site + path, **kw)
@@ -84,19 +89,25 @@ class Jira:
                     delay = 2 ** attempt
                 # Do not retry earlier than a long server-requested wait.
                 if 0 <= delay <= 30:
+                    r.close()
                     time.sleep(delay)
                     continue
-            if r.status_code == 204 or (200 <= r.status_code < 300 and not r.text):
-                return {}
-            if 200 <= r.status_code < 300:
-                try:
-                    data = r.json()
-                except ValueError:
-                    raise JiraError(method, path, 502, "Jira returned malformed JSON.") from None
-                if not isinstance(data, (dict, list)):
-                    raise JiraError(method, path, 502, "Jira returned an unexpected response shape.")
-                return data
-            raise JiraError(method, path, r.status_code, r.text)
+            return r
+
+    def _req(self, method: str, path: str, **kw):
+        safe = kw.pop("retry_safe", method in ("GET", "HEAD"))
+        r = self._send(method, path, safe=safe, **kw)
+        if r.status_code == 204 or (200 <= r.status_code < 300 and not r.text):
+            return {}
+        if 200 <= r.status_code < 300:
+            try:
+                data = r.json()
+            except ValueError:
+                raise JiraError(method, path, 502, "Jira returned malformed JSON.") from None
+            if not isinstance(data, (dict, list)):
+                raise JiraError(method, path, 502, "Jira returned an unexpected response shape.")
+            return data
+        raise JiraError(method, path, r.status_code, r.text)
 
     def _offset(self, path, key="values", *, params=None, limit=50, all_results=False):
         """Collect offset pages with a total-result limit, honoring server caps."""

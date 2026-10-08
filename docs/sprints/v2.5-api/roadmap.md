@@ -1,6 +1,6 @@
 # v2.5 — Authenticated API access for agents
 
-Decision recorded: 7 October 2026. Status: planned; the `api` commands below are proposed and are not available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
+Decision recorded: 7 October 2026. Status: in progress. `jira api` is implemented on the v2.5 branch with local tests; `--spec` discovery is planned. Neither is available in v2.1.0. The prerequisite [v2 release gates](../v2-upgrade/acceptance.md#stable-promotion) are complete; the initial v2.0.0 release is published and verified; v2.1 adds the short command and public distribution.
 
 ## Goal and boundaries
 
@@ -59,17 +59,19 @@ Start with one request/one response. Do not promise automatic pagination of arbi
 
 ### Shared request layer and API command
 
-- [ ] Define parser grammar for `api PATH`, explicit methods, repeated query parameters, JSON data/file/stdin, raw bodies, multipart fields/files, response metadata and output files; keep discovery subcommands unambiguous.
-- [ ] Reuse the existing identity resolver and trusted API base, including scoped-token cloud-ID routing. Do not introduce another auth or credential configuration mechanism.
-- [ ] Add a shared request/response path that supports raw bodies, scalar/array JSON, empty responses and non-JSON content without breaking existing grouped/legacy command contracts.
-- [ ] Validate relative paths and trusted origins; reject URL/host/auth/cookie/proxy overrides, control characters and ambiguous path forms. Disable credential-bearing redirects and raw curl argument passthrough.
-- [ ] Support permitted custom headers for API-specific needs while retaining control over authentication, host, content framing and transport settings.
-- [ ] Implement data parsing and bounded file/stdin reads without shell evaluation. Preserve supplied JSON rather than inventing or discarding endpoint fields.
-- [ ] Support generic raw/multipart request bodies with explicit content types and bounded uploads, including Jira's required attachment header, without writing another endpoint wrapper.
-- [ ] Define stdout/stderr, status/headers, JSON/error/exit-code and binary-download contracts; keep secrets out of diagnostics, traces and process arguments.
-- [ ] Preserve bounded safe-read retry/rate-limit handling. Unknown writes are not replayed; raw POST search is not assumed safe merely because some search operations are read-only.
+- [x] Define parser grammar for `api PATH`, explicit methods, repeated query parameters, JSON data/file/stdin, raw bodies, multipart fields/files, response metadata and output files; keep discovery subcommands unambiguous.
+- [x] Reuse the existing identity resolver and trusted API base, including scoped-token cloud-ID routing. Do not introduce another auth or credential configuration mechanism.
+- [x] Add a shared request/response path that supports raw bodies, scalar/array JSON, empty responses and non-JSON content without breaking existing grouped/legacy command contracts.
+- [x] Validate relative paths and trusted origins; reject URL/host/auth/cookie/proxy overrides, control characters and ambiguous path forms. Disable credential-bearing redirects and raw curl argument passthrough.
+- [x] Support permitted custom headers for API-specific needs while retaining control over authentication, host, content framing and transport settings.
+- [x] Implement data parsing and bounded file/stdin reads without shell evaluation. Preserve supplied JSON rather than inventing or discarding endpoint fields.
+- [x] Support generic raw/multipart request bodies with explicit content types and bounded uploads, including Jira's required attachment header, without writing another endpoint wrapper.
+- [x] Define stdout/stderr, status/headers, JSON/error/exit-code and binary-download contracts; keep secrets out of diagnostics, traces and process arguments.
+- [x] Preserve bounded safe-read retry/rate-limit handling. Unknown writes are not replayed; raw POST search is not assumed safe merely because some search operations are read-only.
 - [ ] Keep headless behavior deterministic when credential-store access requires OS approval; document onboarding once and agent invocation thereafter.
-- [ ] Confirm that a previously unwrapped endpoint and an unknown-to-the-cached-spec path can be called without adding endpoint-specific Python code.
+- [x] Confirm that a previously unwrapped endpoint and an unknown-to-the-cached-spec path can be called without adding endpoint-specific Python code.
+
+Implementation notes: `jsup/api.py` validates and sends the request; `Jira._send` in `jsup/client.py` is the shared transport (timeouts, redirect refusal, safe-read retries, unknown-write reporting) under both `jira api` and the existing commands. `PATH` values that are not `/rest/...` paths, including `spec`, are reserved for discovery subcommands. Unchecked here: documenting headless credential-store onboarding, and live acceptance against BUG.
 
 ### API discovery and freshness
 

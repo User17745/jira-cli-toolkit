@@ -288,6 +288,11 @@ def run(args, prog: str) -> None:
         require_input(args, "Pass --yes to confirm deletion when input is unavailable.")
         if not ui.confirm("Permanently delete the selected item?"):
             raise CommandError("Aborted.")
+    if args.cmd == "api":
+        # No credential-replacement prompt or retried writes: the request is the caller's.
+        from . import api
+        api.run(args, config.resolve_config(args))
+        return
     if args.cmd == "intake":
         _prepare_intake(args)
     cfg = config.resolve_config(args)
