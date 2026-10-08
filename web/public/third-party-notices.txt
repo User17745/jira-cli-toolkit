@@ -666,3 +666,22 @@ Windows and PowerShell are trademarks of the Microsoft group of companies.
 GitHub and the GitHub logo are trademarks of GitHub, Inc.
 These names identify compatibility or usage requirements, not affiliation,
 sponsorship, or endorsement of this independent project.
+
+
+Agent names and logos
+=====================
+The first fold shows marks for Claude Code, Pi, OpenCode, Command Code,
+Cursor, GitHub Copilot, Gemini CLI, Cline, Windsurf, Zed, Warp and Qwen Code,
+to identify agents that can run this CLI. These names and logos are
+trademarks of their respective owners. Showing them does not imply
+affiliation with, sponsorship by, or endorsement of this independent project.
+
+Eleven of the marks are single-colour SVGs from Simple Icons 16.34.0
+(https://simpleicons.org), whose icon files are dedicated to the public
+domain under CC0 1.0 Universal
+(https://creativecommons.org/publicdomain/zero/1.0/). CC0 covers the SVG
+files only; it grants no trademark rights. Brand guidelines may still apply.
+
+The Command Code mark is the single-colour pinned-tab icon published at
+https://commandcode.ai/favicon/2024/safari-pinned-tab.svg, unchanged except
+for removing its XML prolog and metadata.

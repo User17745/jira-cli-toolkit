@@ -20,6 +20,8 @@ const docs = `${repo}/blob/main/README.md`
 const latest = `${repo}/releases/latest`
 const raw = 'https://raw.githubusercontent.com/User17745/jira-cli-toolkit/main/scripts'
 const notices = `${import.meta.env.BASE_URL}third-party-notices.txt`
+// Outbound links open in a new tab, so the sandbox keeps its state.
+const external = { target: '_blank', rel: 'noopener noreferrer' } as const
 const agentGuide = `${repo}/blob/main/docs/usage.md#setting-up-an-agent-or-script-once`
 const agentLimits = `${repo}/blob/main/docs/usage.md#what-keeping-the-token-out-of-the-command-does-and-doesnt-protect`
 type OS = 'macos' | 'linux' | 'windows'
@@ -47,6 +49,14 @@ const exitCodes: { code: number; meaning: string; detail: string; example?: stri
   { code: 1, meaning: 'Jira or network error', detail: 'Jira refused the request, or couldn’t be reached.', example: 'jira issue view ENG-99', why: 'asks for an issue that doesn’t exist, so Jira answers 404' },
   { code: 2, meaning: 'Invalid input', detail: 'Bad arguments, missing values or configuration.', example: 'jira issue list --json --csv', why: 'combines two output formats that can’t be used together' },
   { code: 130, meaning: 'Interrupted', detail: 'Ctrl+C stopped the command, or input ended at a prompt.' },
+]
+
+// Single-colour marks from Simple Icons (CC0), and Command Code's own pinned-tab icon; see third-party notices.
+const agents = [
+  { name: 'Claude Code', icon: 'claudecode' }, { name: 'Pi', icon: 'pi' }, { name: 'OpenCode', icon: 'opencode' },
+  { name: 'Command Code', icon: 'commandcode' }, { name: 'Cursor', icon: 'cursor' }, { name: 'GitHub Copilot', icon: 'githubcopilot' },
+  { name: 'Gemini CLI', icon: 'googlegemini' }, { name: 'Cline', icon: 'cline' }, { name: 'Windsurf', icon: 'windsurf' },
+  { name: 'Zed', icon: 'zedindustries' }, { name: 'Warp', icon: 'warp' }, { name: 'Qwen Code', icon: 'qwen' },
 ]
 
 const useCases: { id: ScenarioId; persona: string; title: string; does: string[]; commands: string[] }[] = [
@@ -83,6 +93,15 @@ const agentRules = `## Jira
 - For changes to many issues, write the plan to a file and test it first. Write to Jira only after the checks pass.
 - Never delete issues, comments, links or attachments unless I ask. Deletes need \`--yes\`.
 - If no command covers it, look the endpoint up with \`jira api <path> --spec\` before calling \`jira api\`.`
+
+const skillPrompt = `Create a skill named "jira" so that every future session uses the jira CLI for Jira work, without my asking.
+
+- Save it where you load skills or global rules in every session, not only in this repository. For Claude Code, that's ~/.claude/skills/jira/SKILL.md. If you don't support skills, add it to your global rules file instead.
+- Write its description so it triggers on any Jira work: issues, sprints, boards, backlogs, standups, release notes, and updating tickets after commits or merges.
+- In the body, include the rules below and a short summary of \`jira --help\`.
+- When you're done, show me the file and tell me how to check that it loads.
+
+${agentRules}`
 
 function CopyButton({ text, label, done = 'Command copied to clipboard.' }: { text: string; label: string; done?: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
@@ -121,8 +140,8 @@ function Install() {
       </TabsContent>)}
     </Tabs>
     <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-      <a className="link" href={latest}>Prefer a manual install?</a>
-      <a className="link" href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>Upgrading from jsup?</a>
+      <a {...external} className="link" href={latest}>Prefer a manual install?</a>
+      <a {...external} className="link" href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>Upgrading from jsup?</a>
     </p>
   </section>
 }
@@ -229,20 +248,37 @@ function AgentSetup({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; pla
       Any agent that can run a shell command can use <code className="inline-code">jira</code>. Sign in once yourself, then give the agent the rules below.
     </SectionHead>
     <ol className="steps space-y-6">
-      <li><p><a className="link" href="#get-started">Install</a> the CLI and sign in. On macOS, run <code className="inline-code">jira auth status</code> once and choose <span className="font-medium">Always Allow</span>, so later runs without a terminal can read the keychain. <a className="link" href={agentGuide}>Setup for each system</a>.</p><code className="step-code">jira auth login --profile work</code></li>
-      <li className="min-w-0"><p>Paste these rules into your repository’s <code className="inline-code">AGENTS.md</code> or <code className="inline-code">CLAUDE.md</code>.</p>
-        <div className="code-file relative w-full">
-          <p className="code-file-name" aria-hidden="true">AGENTS.md</p>
-          <pre tabIndex={0} aria-label="Agent rules for Jira" className="dark-code agent-rules"><code>{agentRules}</code></pre>
-          <CopyButton text={agentRules} label="Copy the agent rules" done="Rules copied to clipboard." />
-        </div>
+      <li><p><a className="link" href="#get-started">Install</a> the CLI and sign in. On macOS, run <code className="inline-code">jira auth status</code> once and choose <span className="font-medium">Always Allow</span>, so later runs without a terminal can read the keychain. <a {...external} className="link" href={agentGuide}>Setup for each system</a>.</p><code className="step-code">jira auth login --profile work</code></li>
+      <li className="min-w-0"><p>Teach your agent the rules. A skill loads by itself in every session; <code className="inline-code">AGENTS.md</code> covers one repository.</p>
+        <Tabs defaultValue="skill" className="w-full gap-3">
+          <TabsList activateOnFocus aria-label="Where the agent keeps the rules" className="max-w-full">
+            <TabsTrigger value="skill" className="px-3">Every session</TabsTrigger>
+            <TabsTrigger value="repo" className="px-3">One repository</TabsTrigger>
+          </TabsList>
+          <TabsContent value="skill" className="space-y-3">
+            <p className="text-sm text-muted-foreground">Paste this prompt into your agent once. It writes a skill that triggers whenever a task involves Jira, so later sessions use <code className="inline-code">jira</code> without being told.</p>
+            <div className="code-file relative w-full">
+              <p className="code-file-name" aria-hidden="true">prompt for your agent</p>
+              <pre tabIndex={0} aria-label="Prompt that creates the Jira skill" className="dark-code agent-rules"><code>{skillPrompt}</code></pre>
+              <CopyButton text={skillPrompt} label="Copy the skill prompt" done="Prompt copied to clipboard." />
+            </div>
+          </TabsContent>
+          <TabsContent value="repo" className="space-y-3">
+            <p className="text-sm text-muted-foreground">Paste these rules into the repository’s <code className="inline-code">AGENTS.md</code> or <code className="inline-code">CLAUDE.md</code>.</p>
+            <div className="code-file relative w-full">
+              <p className="code-file-name" aria-hidden="true">AGENTS.md</p>
+              <pre tabIndex={0} aria-label="Agent rules for Jira" className="dark-code agent-rules"><code>{agentRules}</code></pre>
+              <CopyButton text={agentRules} label="Copy the agent rules" done="Rules copied to clipboard." />
+            </div>
+          </TabsContent>
+        </Tabs>
       </li>
-      <li><p>Ask for the work in plain words, as in the use cases above. If the CLI isn’t signed in yet, the rules make the agent stop and walk you through it instead of guessing.</p>
+      <li><p>Ask for the work in plain words, as in the use cases above. If the CLI isn’t signed in yet, the rules make the agent stop and walk you through it instead of guessing. Replay a first run to see what it says.</p>
         <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')} onClick={() => onPlay('setup')} data-active={playing === 'setup'}>
-          <Play className="size-4" aria-hidden="true" />{playing === 'setup' ? 'Replaying…' : 'See what it says before you sign in'}
+          <Play className="size-4" aria-hidden="true" />{playing === 'setup' ? 'Replaying…' : 'Replay a first run'}
         </button></li>
     </ol>
-    <p className="mt-8 max-w-2xl text-sm text-muted-foreground">Your agent acts as you, with every permission your Jira account has. To limit it, give it its own account and profile, or a scoped token. <a className="link" href={agentLimits}>What the profile does and doesn’t protect</a>.</p>
+    <p className="mt-8 max-w-2xl text-sm text-muted-foreground">Your agent acts as you, with every permission your Jira account has. To limit it, give it its own account and profile, or a scoped token. <a {...external} className="link" href={agentLimits}>What the profile does and doesn’t protect</a>.</p>
   </section>
 }
 
@@ -296,7 +332,7 @@ function App() {
     <a className="skip-link" href="#get-started">Skip to installation</a>
     <AsciiField />
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-6 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-3 sm:gap-6 sm:px-6">
         <a className="flex items-center gap-2 whitespace-nowrap" href="#" aria-label="CLI Toolkit for Jira home">
           <BrandMark />
           <span className="font-semibold tracking-tight">CLI Toolkit</span>
@@ -307,12 +343,12 @@ function App() {
           <a className="hover:text-foreground" href="#agents">Agent setup</a>
           <a className="hover:text-foreground" href="#try">Try it</a>
           <a className="hover:text-foreground" href="#commands">Commands</a>
-          <a className="hover:text-foreground" href={docs}>Docs</a>
+          <a {...external} className="hover:text-foreground" href={docs}>Docs</a>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <a className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex')} href={repo}><GitHubMark className="size-4" />GitHub</a>
+          <a {...external} className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex')} href={repo}><GitHubMark className="size-4" />GitHub</a>
           <ThemeToggle />
-          <a className={buttonVariants({ size: 'sm' })} href="#get-started">Install the CLI</a>
+          <a className={buttonVariants({ size: 'sm' })} href="#get-started" aria-label="Install the CLI">Install<span className="max-[379px]:hidden"> the CLI</span></a>
         </div>
       </div>
     </header>
@@ -330,11 +366,17 @@ function App() {
           <div className="order-2 mt-3 space-y-3 sm:order-none sm:mt-4">
             <p className="hero-independence text-sm font-medium">Independently maintained. Not affiliated with Atlassian.</p>
             <div className="hero-open-source flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-              <a className={cn(buttonVariants({ size: 'sm' }), 'gh-badge gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
-              <p>Open source under the <a className="link text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0 license</a>.</p>
+              <a {...external} className={cn(buttonVariants({ size: 'sm' }), 'gh-badge gap-1.5')} href={repo}><GitHubMark className="size-4" />View on GitHub</a>
+              <p>Open source under the <a {...external} className="link text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0 license</a>.</p>
             </div>
           </div>
-          <p className="hero-proof order-6 mt-3 max-w-xl text-sm text-muted-foreground sm:order-none sm:mt-4">Works with any agent that can run a shell command. Runs within your Jira permissions, using your existing API token.</p>
+          <div className="agent-logos order-6 mt-6 w-full max-w-xl sm:order-none">
+            <p className="text-[13px] text-muted-foreground">Works with any agent that can run a shell command, including</p>
+            <ul aria-label="Agents that can use it">{agents.map(a => <li key={a.icon}>
+              <span className="agent-logo" aria-hidden="true" style={{ '--logo': `url(${import.meta.env.BASE_URL}agents/${a.icon}.svg)` } as React.CSSProperties} />{a.name}
+            </li>)}</ul>
+          </div>
+          <p className="hero-proof order-7 mt-3 max-w-xl text-sm text-muted-foreground sm:order-none sm:mt-4">Runs within your Jira permissions, using your existing API token.</p>
           <div className="order-3 mt-5 w-full max-w-xl sm:order-none sm:mt-8"><Install /></div>
         </section>
 
@@ -416,12 +458,12 @@ function App() {
         <section className="section" id="faq" aria-labelledby="questions-title">
           <SectionHead id="questions-title" title="Before you install">What it supports today, and what it doesn’t yet.</SectionHead>
           <Accordion className="faq max-w-2xl">
-            <AccordionItem value="independent"><AccordionTrigger>Is this an official Atlassian tool?</AccordionTrigger><AccordionContent>No. CLI Toolkit for Jira is independently maintained by <a className="link" href="https://github.com/User17745">User17745</a> and is not affiliated with, endorsed by, or sponsored by Atlassian. The <code className="inline-code">jira</code> command runs this toolkit and connects to your Jira Cloud account.</AccordionContent></AccordionItem>
+            <AccordionItem value="independent"><AccordionTrigger>Is this an official Atlassian tool?</AccordionTrigger><AccordionContent>No. CLI Toolkit for Jira is independently maintained by <a {...external} className="link" href="https://github.com/User17745">User17745</a> and is not affiliated with, endorsed by, or sponsored by Atlassian. The <code className="inline-code">jira</code> command runs this toolkit and connects to your Jira Cloud account.</AccordionContent></AccordionItem>
             <AccordionItem value="auth"><AccordionTrigger>Do I need a new Jira account?</AccordionTrigger><AccordionContent>No. Use your existing Jira Cloud site, email, and API token. The CLI uses your account’s Jira permissions. Guided login links to token creation and explains scopes; tokens cannot refresh automatically.</AccordionContent></AccordionItem>
             <AccordionItem value="support"><AccordionTrigger>Does it support every Jira edition?</AccordionTrigger><AccordionContent>The current release supports standard Jira Cloud issue workflows, plus Software boards and sprints where permissions allow. Any Jira Cloud REST endpoint, including Service Management, works through <code className="inline-code">jira api</code>. Service Management convenience commands and Data Center are future work.</AccordionContent></AccordionItem>
-            <AccordionItem value="api"><AccordionTrigger>Can I call any Jira API endpoint?</AccordionTrigger><AccordionContent>Yes. <code className="inline-code">jira api</code> calls any Jira Cloud REST path with your saved profile, so the token never appears in the command, and <code className="inline-code">--spec</code> looks the endpoint up in Atlassian’s official OpenAPI documents first. Requests stay on your site, redirects aren’t followed, and writes are never retried. Keeping the token out of the command isn’t isolation: anything running as you can use the profile, with the account’s full permissions. <a className="link" href={`${repo}/blob/main/docs/usage.md#calling-any-rest-endpoint`}>Read the API and agent guide.</a></AccordionContent></AccordionItem>
-            <AccordionItem value="platform"><AccordionTrigger>Which systems can run it?</AccordionTrigger><AccordionContent>Native releases support macOS 15+ on Apple Silicon and Intel, Linux x86_64 with glibc 2.39+, and Windows 10+ x86_64. For other compatible systems, install the verified Python wheel with Python 3.10 or later. <a className="link" href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>See installation options.</a></AccordionContent></AccordionItem>
-            <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a className="link" href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
+            <AccordionItem value="api"><AccordionTrigger>Can I call any Jira API endpoint?</AccordionTrigger><AccordionContent>Yes. <code className="inline-code">jira api</code> calls any Jira Cloud REST path with your saved profile, so the token never appears in the command, and <code className="inline-code">--spec</code> looks the endpoint up in Atlassian’s official OpenAPI documents first. Requests stay on your site, redirects aren’t followed, and writes are never retried. Keeping the token out of the command isn’t isolation: anything running as you can use the profile, with the account’s full permissions. <a {...external} className="link" href={`${repo}/blob/main/docs/usage.md#calling-any-rest-endpoint`}>Read the API and agent guide.</a></AccordionContent></AccordionItem>
+            <AccordionItem value="platform"><AccordionTrigger>Which systems can run it?</AccordionTrigger><AccordionContent>Native releases support macOS 15+ on Apple Silicon and Intel, Linux x86_64 with glibc 2.39+, and Windows 10+ x86_64. For other compatible systems, install the verified Python wheel with Python 3.10 or later. <a {...external} className="link" href={`${repo}/blob/main/docs/migration/upgrade-to-v2.md`}>See installation options.</a></AccordionContent></AccordionItem>
+            <AccordionItem value="upgrade"><AccordionTrigger>Already using jsup or jira-cli-toolkit?</AccordionTrigger><AccordionContent>Your configuration and credential references stay the same. Upgrade through the manager that owns your installation. Existing command names still work in v2.x and show a migration notice. <a {...external} className="link" href={`${repo}/blob/main/docs/migration/legacy-commands.md`}>Use the migration guide.</a></AccordionContent></AccordionItem>
           </Accordion>
         </section>
       </main>
@@ -433,15 +475,15 @@ function App() {
               <span className="font-semibold tracking-tight">CLI Toolkit</span> <span className="text-sm text-muted-foreground">for Jira</span>
             </a>
             <nav aria-label="Project links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-              <a className="hover:text-foreground" href={repo}>Source</a><a className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a className="hover:text-foreground" href={latest}>Releases</a><a className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a className="hover:text-foreground" href={notices}>Third-party notices</a>
+              <a {...external} className="hover:text-foreground" href={repo}>Source</a><a {...external} className="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>License</a><a {...external} className="hover:text-foreground" href={latest}>Releases</a><a {...external} className="hover:text-foreground" href={`${repo}/issues`}>Report an issue</a><a className="hover:text-foreground" href={notices}>Third-party notices</a>
             </nav>
           </div>
           <section className="independent-notice mt-8 max-w-[80ch] space-y-3 text-xs leading-relaxed text-muted-foreground" aria-labelledby="independence-title">
             <h2 id="independence-title" className="text-sm font-medium text-foreground">Independent project and intellectual property notice</h2>
             <p>CLI Toolkit for Jira is independently developed and maintained. It is not affiliated with, sponsored by, endorsed by, or otherwise associated with Atlassian or any of its affiliated business entities. It is not an official Jira product.</p>
-            <p>References to Jira and Atlassian, including the <code className="font-mono">jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian.</p>
+            <p>References to Jira and Atlassian, including the <code className="font-mono">jira</code> command name, identify the external service and describe compatibility and usage. They do not claim ownership of those names or imply an official relationship. Jira and Atlassian are trademarks of Atlassian. The agent names and logos identify tools that can run the CLI; they belong to their respective owners, who do not endorse this project.</p>
             <p>No infringement of third-party trademarks, copyrights, patents, or other intellectual property rights is intended. This statement does not establish that a particular use is non-infringing or replace any permission that may be required.</p>
-            <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
+            <p className="project-license border-t pt-3">Copyright © 2026 Abhishek Aggarwal. Original project code is licensed under <a {...external} className="link" href={`${repo}/blob/main/LICENSE`}>GNU AGPL v3 only (AGPL-3.0-only)</a>. You may redistribute and modify it under that license. Provided without warranty, including merchantability or fitness for a particular purpose. <a {...external} className="link" href={`${repo}/blob/main/NOTICE`}>Project notice</a>. <a className="link" href={notices}>Third-party licenses</a>. Third-party components and assets retain their applicable license terms. The project license does not grant rights to third-party trademarks.</p>
           </section>
         </div>
       </footer>

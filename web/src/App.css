@@ -102,3 +102,8 @@ body { -webkit-font-smoothing: antialiased; }
 .agent-steps { counter-reset: agent; display: grid; gap: 0.6rem; font-size: 14px; color: var(--muted-foreground); }
 .agent-steps li { position: relative; padding-left: 1.75rem; counter-increment: agent; }
 .agent-steps li::before { content: counter(agent); position: absolute; left: 0; top: 0.1rem; display: grid; place-items: center; width: 1.2rem; height: 1.2rem; border: 1px solid var(--border); border-radius: 50%; font-size: 11px; font-weight: 600; color: var(--foreground); }
+
+/* Agent marks are single-colour masks, so they follow the text colour in both themes. */
+.agent-logos ul { display: flex; flex-wrap: wrap; gap: 0.45rem 1.1rem; margin-top: 0.6rem; }
+.agent-logos li { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; font-weight: 500; color: color-mix(in oklch, var(--foreground) 80%, transparent); white-space: nowrap; }
+.agent-logo { flex-shrink: 0; width: 15px; height: 15px; background: currentColor; mask: var(--logo) center / contain no-repeat; -webkit-mask: var(--logo) center / contain no-repeat; }
