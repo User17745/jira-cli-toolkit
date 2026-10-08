@@ -185,6 +185,8 @@ test('arrow keys move between use-case cards without playing them', async ({ pag
 test('Ctrl+C stops a replay where it is', async ({ page }) => {
   await page.goto('./')
   await page.getByRole('tab', { name: 'Scrum masters' }).click()
+  // Press only once the replay is running; earlier, Ctrl+C can land before it starts listening.
+  await expect(page.locator('#terminal-keys')).toContainText('agent replay')
   await terminal(page).press('Control+c')
   await expect(exitCode(page)).toHaveText('exit 130')
   await expect(page.locator('#terminal-keys')).toContainText('tab complete')
