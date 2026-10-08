@@ -296,9 +296,12 @@ def handle(args):
                 result.update(instructions=instructions[installed['method']], wheel=wheel['name'],
                               note=f'{DISTRIBUTION} is published on PyPI. To install offline instead, download {wheel["name"]} '
                                    'from this release, verify its manifest checksum, and pass its path to the same command.')
-                if installed['method'] in ('pipx','uv') and installed.get('distribution')=='jsup':
-                    tool='pipx' if installed['method']=='pipx' else 'uv tool'
-                    result['migration']=(f"This installation is tracked under its old name, jsup. Switch once: {tool} uninstall jsup, "
+                if installed.get('distribution')=='jsup':
+                    # Both distributions ship the jsup module, so the old one must go first; side by side,
+                    # uninstalling either later would remove files the other still uses.
+                    remove={'pipx':'pipx uninstall jsup','uv':'uv tool uninstall jsup',
+                            'python':f'{sys.executable} -m pip uninstall jsup'}[installed['method']]
+                    result['migration']=(f"This installation uses the package's old name, jsup. Switch once: {remove}, "
                                          f"then {instructions[installed['method']]}. Configuration and saved credentials are kept.")
                 return result
             match=[a for a in manifest['artifacts'] if a.get('kind')=='binary' and a.get('os')==installed['os'] and a.get('arch')==installed['arch']]

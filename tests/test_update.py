@@ -94,7 +94,9 @@ class UpdateTests(unittest.TestCase):
         result=update.handle(args(check=False))
         self.assertIn('pipx uninstall jsup, then pipx install --force',result['migration'])
         self.installed.update(method='python',distribution='jsup')
-        self.assertNotIn('migration',update.handle(args(check=False)))
+        migration=update.handle(args(check=False))['migration']
+        self.assertIn(' -m pip uninstall jsup, then ',migration)
+        self.assertIn("pip install --upgrade 'jira-cli-toolkit==",migration)
 
     def test_checksum_failure_preserves_target(self):
         with tempfile.TemporaryDirectory() as temp:
