@@ -89,6 +89,23 @@ class UpdateTests(unittest.TestCase):
                 self.assertNotIn('migration',result)
         self.assertEqual(self.api.download.call_count,3)
 
+    def test_homebrew_installs_are_upgraded_by_brew_not_replaced(self):
+        self.installed.update(method='homebrew',distribution=None)
+        with patch.object(update,'replace_binary') as replace:
+            result=update.handle(args(check=False))
+        replace.assert_not_called()
+        self.assertEqual(result['instructions'],'brew upgrade jira-cli-toolkit')
+        self.assertFalse(result['updated'])
+
+    def test_frozen_binaries_in_a_homebrew_cellar_are_detected(self):
+        patch.stopall()  # setUp stubs installation(); this test needs the real one
+        with patch.object(update.sys,'frozen',True,create=True), \
+                patch.object(update.sys,'executable','/opt/homebrew/Cellar/jira-cli-toolkit/2.5.2/bin/jira'):
+            self.assertEqual(update.installation()['method'],'homebrew')
+        with patch.object(update.sys,'frozen',True,create=True), \
+                patch.object(update.sys,'executable','/Users/me/.local/bin/jira'):
+            self.assertEqual(update.installation()['method'],'standalone')
+
     def test_installs_tracked_as_jsup_get_a_one_time_switch(self):
         self.installed.update(method='pipx',distribution='jsup')
         result=update.handle(args(check=False))

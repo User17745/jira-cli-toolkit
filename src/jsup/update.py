@@ -44,7 +44,8 @@ def _distribution():
 
 def installation():
     if getattr(sys,'frozen',False):
-        method='standalone'
+        # Homebrew owns files under its Cellar; replacing them would break `brew upgrade`.
+        method='homebrew' if '/Cellar/' in str(Path(sys.executable).resolve()).replace('\\','/') else 'standalone'
     else:
         prefix=Path(sys.prefix)
         executable=str(Path(sys.executable).absolute()).replace('\\','/')
@@ -55,7 +56,7 @@ def installation():
         else:
             method='python'
     arch={'amd64':'x86_64','x86_64':'x86_64','aarch64':'arm64','arm64':'arm64'}.get(platform.machine().lower(),platform.machine().lower())
-    return dict(version=__version__,method=method,distribution=None if method=='standalone' else _distribution(),os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
+    return dict(version=__version__,method=method,distribution=None if method in ('standalone','homebrew') else _distribution(),os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
                 arch=arch,executable=str(Path(sys.executable).resolve()),python=sys.version.split()[0])
 
 
@@ -285,6 +286,10 @@ def handle(args):
             available=version!=Version(__version__)
             result={**installed,'available_version':str(version),'update_available':available,'release_url':release.get('html_url'),'updated':False}
             if args.check or not available: return result
+            if installed['method']=='homebrew':
+                result.update(instructions=f'brew upgrade {DISTRIBUTION}',
+                              note='Homebrew manages this installation; the tap picks up new releases within a day.')
+                return result
             if installed['method']!='standalone':
                 wheel=next((a for a in manifest['artifacts'] if a.get('kind')=='wheel'),None)
                 if not wheel: raise UpdateError('Release has no Python wheel for this installation.')
