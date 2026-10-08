@@ -204,7 +204,7 @@ test('more replays: backlog cleanup, an incident, release notes and the first ru
   await expect(log(page).locator('.t-reply').last()).toContainText('Tokens are redacted from error output (ENG-38)')
 
   await closeTerminal(page)
-  await page.getByRole('button', { name: 'See what it says before you sign in' }).click()
+  await page.getByRole('button', { name: 'Replay a first run' }).click()
   await expect(log(page).locator('.t-tool[data-state=failed]').last()).toContainText('No complete credentials. Run auth login or config migrate.')
   await expect(log(page).locator('.t-reply').last()).toContainText('jira auth login --profile work')
   await expect(log(page).locator('.t-reply').last()).toContainText('Please don’t paste the token here.')
@@ -213,8 +213,17 @@ test('more replays: backlog cleanup, an incident, release notes and the first ru
 test('agent rules copy exactly and name the safe defaults', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto('./')
+  await page.getByRole('button', { name: 'Copy the skill prompt' }).click()
+  await expect(page.locator('#agents [role=status]:visible')).toHaveText('Prompt copied to clipboard.')
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  expect(prompt).toBe(await page.getByLabel('Prompt that creates the Jira skill').innerText())
+  expect(prompt).toContain('Create a skill named "jira"')
+  expect(prompt).toContain('~/.claude/skills/jira/SKILL.md')
+  expect(prompt).toContain('Add `--json --no-input` to every command')
+
+  await page.getByRole('tab', { name: 'One repository' }).click()
   await page.getByRole('button', { name: 'Copy the agent rules' }).click()
-  await expect(page.locator('#agents [role=status]')).toHaveText('Rules copied to clipboard.')
+  await expect(page.locator('#agents [role=status]:visible')).toHaveText('Rules copied to clipboard.')
   const rules = await page.evaluate(() => navigator.clipboard.readText())
   expect(rules).toBe(await page.getByLabel('Agent rules for Jira').innerText())
   expect(rules).toContain('Add `--json --no-input` to every command')
@@ -222,6 +231,35 @@ test('agent rules copy exactly and name the safe defaults', async ({ page, conte
   expect(rules).toContain('run `jira auth status --json --no-input`. If it fails, stop and ask me to sign in')
   expect(rules).toContain('Never ask for my API token')
   await expect(page.getByRole('link', { name: 'What the profile does and doesn’t protect' })).toHaveAttribute('href', /docs\/usage\.md#what-keeping-the-token/)
+})
+
+test('the first fold names the agents that can use it, with their marks', async ({ page }, info) => {
+  const errors: string[] = []
+  page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`) })
+  await page.goto('./')
+  const list = page.getByRole('list', { name: 'Agents that can use it' })
+  await expect(list.getByRole('listitem')).toHaveCount(12)
+  for (const name of ['Claude Code', 'Pi', 'OpenCode', 'Command Code', 'Cursor', 'GitHub Copilot', 'Gemini CLI', 'Cline', 'Windsurf', 'Zed', 'Warp', 'Qwen Code'])
+    await expect(list.getByText(name, { exact: true })).toBeVisible()
+  if (info.project.name === 'desktop') await expect(list).toBeInViewport()
+  // Each mark loads, and the footer and notices say they belong to their owners.
+  const loaded = await page.locator('.agent-logo').evaluateAll(spans => Promise.all(spans.map(span => {
+    const url = getComputedStyle(span).maskImage.slice(5, -2)
+    return fetch(url).then(r => r.ok && r.headers.get('content-type')?.includes('svg'))
+  })))
+  expect(loaded.every(Boolean)).toBe(true)
+  await expect(page.locator('.independent-notice')).toContainText('The agent names and logos identify tools that can run the CLI')
+  expect(errors).toEqual([])
+})
+
+test('outbound links open in a new tab without access to this page', async ({ page }) => {
+  await page.goto('./')
+  const outbound = page.locator('a[href^="http"]')
+  expect(await outbound.count()).toBeGreaterThan(10)
+  for (const link of await outbound.all()) {
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  }
 })
 
 test('examples, exit-code rows and the command reference type into the terminal without moving the page', async ({ page }, info) => {
@@ -306,6 +344,8 @@ test('first fold contains installation, assets load and narrow layouts do not ov
   for (const width of info.project.name === 'mobile' ? [320, 390, 760] : [768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    // Mobile emulation widens the layout viewport instead of scrolling, so compare with the device width too.
+    expect(await page.evaluate(() => window.innerWidth)).toBe(width)
   }
   await page.setViewportSize(info.project.name === 'mobile' ? { width: 390, height: 844 } : { width: 1440, height: 1000 })
   await page.screenshot({ path: `test-results/landing-${info.project.name}-fold.png` })
