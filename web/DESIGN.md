@@ -93,3 +93,13 @@ Feedback: the version pill above the headline looked cheap; the install block br
 - Dark mode uses shadcn’s `.dark` tokens. An inline script in `index.html` applies the saved choice, or the system setting, before first paint. The header toggle saves an explicit choice; without one, the page follows system changes. There are theme-color metas for both schemes. The terminal and install block stay dark in both themes.
 - Mark: a chevron followed by the sandbox’s green block cursor, on a near-black tile. The favicon is SVG with a subtle edge for dark tab bars. The Apple touch icon is a full-bleed 180px PNG, and iOS rounds it.
 - ASCII field: a fixed canvas behind the content, faded out toward the bottom. Three interfering waves, one of them radial around a drifting center, pick characters from a density ramp. Scrolling moves the field at a third of the page speed and shifts the wave phases, so it visibly answers the scroll. Each row is a single `fillText` call. It runs at about 15 frames a second, pauses in hidden tabs, and under reduced motion draws once and ignores scroll. It is `aria-hidden`, at 8% (light) or 6% (dark) opacity.
+
+## Terminal contrast pass (October 2026)
+
+Feedback: the terminal’s title bar and status line blended into the screen, the window dots were grey, and in dark mode a dark terminal on a dark page, including the collapsed mobile dock, was hard to see.
+
+- The terminal now inverts the page theme: a dark terminal on the light page, a light terminal on the dark page. All terminal colors are theme variables in `Terminal.css`; no hard-coded hex values remain outside the two palettes.
+- The title bar and status line sit a visible step away from the screen (#232323 on #0a0a0a; #e5e5e5 on #fafafa), separated by a stronger rule, with their own text colors.
+- The window dots use the macOS red, yellow and green.
+- The light palette uses darker status hues (cyan #0e7490, amber #a16207, green #166534, red #b91c1c). Every text color meets WCAG AA (4.5:1) against its background in both themes, except the ghost suggestion on the dark terminal (4.2), which is placeholder-like hint text. Sandbox notes now use the dim color instead of the ghost color.
+- The collapsed mobile dock gets a stronger edge and shadow. In dark mode it is light, so it stands out against the page.

@@ -1,15 +1,24 @@
+/* The terminal inverts the page: dark on the light page, light on the dark page.
+   Header and status bar sit a clear step away from the screen so they read as chrome. */
 .terminal {
   --t-bg: #0a0a0a;
-  --t-bar: #141414;
-  --t-line: #262626;
+  --t-bar: #232323;
+  --t-bar-text: #d4d4d4;
+  --t-bar-dim: #9a9a9a;
+  --t-line: #3a3a3a;
+  --t-frame: #2e2e2e;
+  --t-hover: #333;
   --t-text: #ededed;
   --t-dim: #a1a1a1;
-  --t-ghost: #6e6e6e;
+  --t-ghost: #737373;
+  --t-rule: #3f3f3f;
+  --t-rule-strong: #737373;
   --t-path: #22d3ee;
   --t-new: #67e8f9;
   --t-progress: #fbbf24;
   --t-done: #4ade80;
   --t-error: #f87171;
+  --t-shadow: 0 24px 60px -24px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 12%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -20,23 +29,49 @@
   font-family: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 1.6;
-  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 12%);
+  border-color: var(--t-frame);
+  box-shadow: var(--t-shadow);
 }
-.terminal:focus-within { border-color: #404040; }
+.terminal:focus-within { border-color: var(--t-rule-strong); }
+
+.dark .terminal {
+  --t-bg: #fafafa;
+  --t-bar: #e5e5e5;
+  --t-bar-text: #262626;
+  --t-bar-dim: #525252;
+  --t-line: #c8c8c8;
+  --t-frame: #d4d4d4;
+  --t-hover: #d4d4d4;
+  --t-text: #171717;
+  --t-dim: #525252;
+  --t-ghost: #737373;
+  --t-rule: #d4d4d4;
+  --t-rule-strong: #737373;
+  /* Darker status hues keep AA contrast on the light screen. */
+  --t-path: #0e7490;
+  --t-new: #0e7490;
+  --t-progress: #a16207;
+  --t-done: #166534;
+  --t-error: #b91c1c;
+  --t-shadow: 0 24px 60px -24px rgb(0 0 0 / 70%), 0 0 0 1px rgb(255 255 255 / 4%);
+}
 
 .t-bar { display: grid; grid-template-columns: 4rem 1fr 4rem; align-items: center; height: 40px; padding: 0 0.6rem 0 0.9rem; border-bottom: 1px solid var(--t-line); background: var(--t-bar); }
 .t-dots { display: flex; gap: 7px; }
-.t-dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a3a; }
-.t-title { justify-self: center; min-width: 0; font-size: 12px; font-weight: 500; color: var(--t-dim); white-space: nowrap; }
-.t-title-desktop span { color: #6e6e6e; }
+.t-dots i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 22%); }
+.t-dots i:nth-child(1) { background: #ff5f57; }
+.t-dots i:nth-child(2) { background: #febc2e; }
+.t-dots i:nth-child(3) { background: #28c840; }
+.t-title { justify-self: center; min-width: 0; font-size: 12px; font-weight: 500; color: var(--t-bar-text); white-space: nowrap; }
+.t-title-desktop span { color: var(--t-bar-dim); }
 .t-dock-toggle { display: none; }
-.t-icon { justify-self: end; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--t-dim); cursor: pointer; }
-.t-icon:hover { background: #262626; color: var(--t-text); }
+.t-icon { justify-self: end; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--t-bar-dim); cursor: pointer; }
+.t-icon:hover { background: var(--t-hover); color: var(--t-bar-text); }
 .t-icon svg { width: 14px; height: 14px; }
 .terminal button:focus-visible { outline: 2px solid var(--t-path); outline-offset: 1px; }
 
 .t-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.t-screen { flex: 1; min-height: 0; overflow: auto; padding: 0.85rem 1rem 1rem; cursor: text; overscroll-behavior: contain; scrollbar-color: #333 transparent; }
+.t-screen { flex: 1; min-height: 0; overflow: auto; padding: 0.85rem 1rem 1rem; cursor: text; overscroll-behavior: contain; scrollbar-color: var(--t-rule) transparent; }
 .t-screen pre { margin: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .t-entry { margin-bottom: 0.75rem; }
 .t-entry > * + * { margin-top: 0.25rem; }
@@ -49,7 +84,7 @@
 .t-options { white-space: pre-wrap; }
 .t-out { color: var(--t-text); }
 .t-err { color: var(--t-error); }
-.t-note { color: var(--t-ghost); font-style: italic; }
+.t-note { color: var(--t-dim); font-style: italic; }
 
 .t-line { display: flex; }
 .t-input-wrap { position: relative; flex: 1; min-width: 0; }
@@ -62,10 +97,10 @@
 }
 @keyframes t-blink { 50% { background: transparent; color: inherit; } }
 
-.t-status { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0.9rem; border-top: 1px solid var(--t-line); background: var(--t-bar); font-size: 11px; color: #8a8a8a; }
+.t-status { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0.9rem; border-top: 1px solid var(--t-line); background: var(--t-bar); font-size: 11px; color: var(--t-bar-dim); }
 .t-status .t-exit { flex-shrink: 0; }
 .t-status p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.t-status #terminal-keys span { color: var(--t-text); }
+.t-status #terminal-keys span { color: var(--t-bar-text); font-weight: 600; }
 .t-exit { color: var(--t-done); }
 .t-exit[data-failed='true'] { color: var(--t-error); }
 
@@ -74,15 +109,15 @@
 .t-scroll:focus-visible { outline: 1px solid var(--t-path); }
 .t-table { border-collapse: collapse; }
 .t-table caption { padding-bottom: 0.1rem; font-style: italic; text-align: center; color: var(--t-text); }
-.t-table th, .t-table td { padding: 0 0.75rem; border: 1px solid #3a3a3a; text-align: left; vertical-align: top; white-space: nowrap; }
+.t-table th, .t-table td { padding: 0 0.75rem; border: 1px solid var(--t-rule); text-align: left; vertical-align: top; white-space: nowrap; }
 .t-table td:nth-child(3), .t-table td:nth-child(4):last-child { white-space: normal; min-width: 12ch; }
-.t-table th { font-weight: 700; border-bottom-color: #6e6e6e; }
+.t-table th { font-weight: 700; border-bottom-color: var(--t-rule-strong); }
 .t-table [data-tone='bold'] { font-weight: 700; }
 .t-table [data-tone='new'], .t-table [data-tone='future'] { color: var(--t-new); }
 .t-table [data-tone='indeterminate'] { color: var(--t-progress); }
 .t-table [data-tone='done'], .t-table [data-tone='active'] { color: var(--t-done); }
-.t-table [data-tone='closed'] { color: #737373; }
-.t-panel { position: relative; max-width: 80ch; margin-top: 0.75rem !important; padding: 0.7rem 1rem; border: 1px solid #6e6e6e; }
+.t-table [data-tone='closed'] { color: var(--t-ghost); }
+.t-panel { position: relative; max-width: 80ch; margin-top: 0.75rem !important; padding: 0.7rem 1rem; border: 1px solid var(--t-rule-strong); }
 .t-panel-title, .t-panel-subtitle { position: absolute; left: 50%; padding: 0 0.4rem; background: var(--t-bg); transform: translateX(-50%); white-space: nowrap; }
 .t-panel-title { top: -0.8em; }
 .t-panel-subtitle { bottom: -0.8em; }
@@ -92,7 +127,7 @@
   .terminal { position: fixed; z-index: 40; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; max-height: calc(100dvh - 5rem); }
   .t-bar { grid-template-columns: 2.5rem 1fr 2.5rem; }
   .t-title-desktop { display: none; }
-  .t-dock-toggle { display: inline-flex; align-items: center; gap: 0.45rem; height: 32px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: transparent; color: var(--t-text); font: inherit; font-size: 12.5px; cursor: pointer; }
+  .t-dock-toggle { display: inline-flex; align-items: center; gap: 0.45rem; height: 32px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: transparent; color: var(--t-bar-text); font: inherit; font-size: 12.5px; cursor: pointer; }
   .t-dock-toggle svg { width: 15px; height: 15px; }
   .t-dock-chevron { transition: transform 0.15s; }
   .terminal[data-open='false'] .t-dock-chevron { transform: rotate(180deg); }
@@ -100,6 +135,8 @@
   .terminal[data-open='false'] .t-bar { border-bottom: 0; }
   .t-body { height: min(68dvh, 34rem); }
   .t-dots { visibility: hidden; }
+  /* The collapsed dock floats over content, so it needs its own edge. */
+  .terminal { border-color: var(--t-rule-strong); box-shadow: 0 -8px 30px -12px rgb(0 0 0 / 35%), 0 10px 30px -10px rgb(0 0 0 / 50%); }
 }
 @media (max-width: 1099px) and (prefers-reduced-motion: reduce) {
   .t-dock-chevron { transition: none; }
