@@ -46,6 +46,7 @@ body { -webkit-font-smoothing: antialiased; }
 .code-file { overflow: hidden; border: 1px solid #262626; border-radius: 12px; background: #0a0a0a; }
 .code-file-name { padding: 0.55rem 1rem; border-bottom: 1px solid #262626; color: #a1a1a1; font-family: var(--font-mono); font-size: 12px; }
 .code-file .dark-code { border: 0; border-radius: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent-rules { max-height: 20rem; overflow-y: auto; }
 
 /* The plan loop: four steps in a row, with the failing path drawn back underneath. */
 .plan-loop { container-type: inline-size; margin-top: 2.25rem; }
