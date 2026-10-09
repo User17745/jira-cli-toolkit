@@ -111,6 +111,13 @@ class UpdateTests(unittest.TestCase):
         replace.assert_not_called(); self.api.release.assert_not_called()
         self.assertEqual(result['instructions'],'winget upgrade --id User17745.JiraCliToolkit --exact')
         self.assertEqual(pinned['instructions'],'winget install --id User17745.JiraCliToolkit --exact --version 2.0.0 --force')
+        # Version policy applies before any manager-specific advice.
+        with patch.object(update,'__version__','3.0.0'), self.assertRaisesRegex(update.UpdateError,'--allow-downgrade'):
+            update.handle(args(check=False,version='2.0.0'))
+        with self.assertRaisesRegex(update.UpdateError,'--prerelease'):
+            update.handle(args(check=False,version='2.1.0rc1'))
+        with self.assertRaisesRegex(update.UpdateError,'valid release version'):
+            update.handle(args(check=False,version='latest'))
 
     def test_frozen_binaries_in_a_homebrew_cellar_are_detected(self):
         patch.stopall()  # setUp stubs installation(); this test needs the real one
@@ -122,6 +129,13 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(update.installation()['method'],'standalone')
         winget='C:/Users/me/AppData/Local/Microsoft/WinGet/Packages/User17745.JiraCliToolkit_Microsoft.Winget.Source_8wekyb3d8bbwe/jira-cli-toolkit-windows-x86_64.exe'
         with patch.object(update.sys,'frozen',True,create=True), patch.object(update.sys,'executable',winget):
+            self.assertEqual(update.installation()['method'],'winget')
+        machine='C:/Program Files/WinGet/Packages/User17745.JiraCliToolkit_x/jira-cli-toolkit-windows-x86_64.exe'
+        with patch.object(update.sys,'frozen',True,create=True), patch.object(update.sys,'executable',machine):
+            self.assertEqual(update.installation()['method'],'winget')
+        custom='D:/Tools/jira/jira-cli-toolkit-windows-x86_64.exe'
+        with patch.object(update.sys,'frozen',True,create=True), patch.object(update.sys,'executable',custom), \
+                patch.object(update,'_winget_owns',return_value=True):
             self.assertEqual(update.installation()['method'],'winget')
 
     def test_installs_tracked_as_jsup_get_a_one_time_switch(self):

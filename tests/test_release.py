@@ -52,6 +52,7 @@ class WingetManifestTests(unittest.TestCase):
         self.assertIn("InstallerUrl: https://github.com/User17745/jira-cli-toolkit/releases/download/v2.6.0/jira-cli-toolkit-windows-x86_64.exe", installer)
         self.assertIn("InstallerSha256: " + "AB" * 32, installer)
         self.assertIn("Commands:\n- jira\n", installer)
+        self.assertIn("  PortableCommandAlias: jira\n", installer)
         self.assertIn("PackageVersion: 2.6.0", files["User17745.JiraCliToolkit.yaml"])
         self.assertIn("not affiliated with or endorsed by Atlassian", files["User17745.JiraCliToolkit.locale.en-US.yaml"])
         with self.assertRaises(SystemExit):

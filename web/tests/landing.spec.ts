@@ -347,6 +347,11 @@ test('sandbox shows service desk commands with sample data', async ({ page }) =>
   await run(page, 'jira request view HELP-12')
   await expect(lastEntry(page)).toContainText('VPN drops every 10 minutes')
   await expect(lastEntry(page)).toContainText('participants=Priya Shah')
+  await run(page, 'jira desk list --csv')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('id,key,name')
+  await run(page, 'jira request list --json')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"issueKey": "HELP-12"')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"isLastPage": true')
 })
 
 test('agent setup offers the bundled skill install command', async ({ page, context }) => {

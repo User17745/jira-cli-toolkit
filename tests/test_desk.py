@@ -130,6 +130,21 @@ class DeskCommandTests(unittest.TestCase):
         self.assertIn("Resolve this issue [id:761]", err)
         self.assertFalse(any(c[0] == "POST" for c in calls))
 
+    def test_pagination_limit_is_an_error_not_a_partial_result(self):
+        routes = {("GET", "/rest/servicedeskapi/servicedesk"): lambda kw: page([{"id": str(kw["params"]["start"])}], kw["params"]["start"], False)}
+        code, out, err, calls = self.call("desk", "list", "--all", routes=routes)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("exceeded 1,000 pages", err)
+        self.assertEqual(len(calls), 1000)
+
+    def test_request_text_is_shown_literally_not_as_markup(self):
+        request = {"issueKey": "TS-1", "summary": "Broken [/] tag [link=https://evil.example]click[/link]",
+                   "currentStatus": {"status": "Open"}, "requestFieldValues": [{"label": "Body", "value": "[bold]x[/bold] [/]"}]}
+        code, out, err, _ = self.call("request", "view", "TS-1", routes={("GET", "/rest/servicedeskapi/request/TS-1"): request})
+        self.assertEqual(code, 0, err)
+        self.assertIn("[link=https://evil.example]click[/link]", out)
+        self.assertIn("[bold]x[/bold] [/]", out)
+
     def test_empty_transitions_say_so(self):
         routes = {("GET", "/rest/servicedeskapi/request/TS-1/transition"): page([])}
         _, out, _, _ = self.call("request", "transitions", "TS-1", routes=routes)

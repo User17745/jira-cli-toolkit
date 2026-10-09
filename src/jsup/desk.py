@@ -5,6 +5,7 @@ JSON output keeps the Service Management API's own shapes; tables and CSV use fl
 from __future__ import annotations
 
 from rich.panel import Panel
+from rich.text import Text
 
 from . import ui
 from .client import Jira, identifier
@@ -28,6 +29,8 @@ def _pages(j: Jira, path, params=None, limit=50, all_results=False):
         start += len(batch)
         if page.get("isLastPage") is not False or not batch or (not all_results and len(values) >= limit):
             break
+    else:
+        raise ValueError("Service Management pagination exceeded 1,000 pages; narrow the request.")
     return {**last, "values": values, "start": 0, "size": len(values), "fetched": len(values),
             "isLastPage": last.get("isLastPage") is not False and len(values) == start}
 
@@ -149,8 +152,11 @@ def render(data, args) -> None:
         ui.simple_table(title, rows(data, cmd), args.columns.split(",") if args.columns else COLUMNS[cmd])
         return
     if cmd == "request-view":
-        lines = [f"[bold]{data.get('issueKey')}[/]: {data.get('summary', '')}",
-                 f"status={_status(data)}  desk={data.get('serviceDeskId', '')}  "
+        # Request text comes from customers, so it is shown literally, never parsed as markup.
+        body = Text()
+        body.append(str(data.get("issueKey", "")), style="bold")
+        body.append(f": {data.get('summary', '')}")
+        lines = [f"status={_status(data)}  desk={data.get('serviceDeskId', '')}  "
                  f"reporter={(data.get('reporter') or {}).get('displayName', '-')}  "
                  f"created={((data.get('createdDate') or {}).get('friendly') or '')}"]
         participants = [p.get("displayName", "") for p in (data.get("participants") or {}).get("values", [])]
@@ -166,7 +172,8 @@ def render(data, args) -> None:
             text = value if isinstance(value, str) else (value or {}).get("name") if isinstance(value, dict) else None
             if text:
                 lines.append(f"\n{field.get('label')}:\n{text[:1500]}")
-        ui.console.print(Panel("\n".join(lines), title="Request"))
+        body.append("\n" + "\n".join(lines))
+        ui.console.print(Panel(body, title="Request"))
         return
     if cmd == "request-comment":
         kind = "customer-visible" if data.get("public") else "internal"

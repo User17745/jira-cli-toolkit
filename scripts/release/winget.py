@@ -43,6 +43,8 @@ Installers:
 - Architecture: x64
   InstallerUrl: {url}
   InstallerSha256: {binary['sha256'].upper()}
+  # Creates the `jira` link; `Commands` alone only describes the package.
+  PortableCommandAlias: jira
 ManifestType: installer
 ManifestVersion: {SCHEMA}
 """,

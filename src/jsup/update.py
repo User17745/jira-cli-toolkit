@@ -43,13 +43,43 @@ def _distribution():
     return None
 
 
+def _winget_owns(executable) -> bool:
+    """True when a winget portable install registered this executable (covers custom package roots)."""
+    if os.name != 'nt':
+        return False
+    try:
+        import winreg
+    except ImportError:
+        return False
+    target=os.path.normcase(os.path.realpath(executable))
+    path=r'Software\Microsoft\Windows\CurrentVersion\Uninstall'
+    for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            root=winreg.OpenKey(hive,path)
+        except OSError:
+            continue
+        with root:
+            for index in range(winreg.QueryInfoKey(root)[0]):
+                try:
+                    with winreg.OpenKey(root,winreg.EnumKey(root,index)) as entry:
+                        if winreg.QueryValueEx(entry,'WinGetPackageIdentifier')[0]!=WINGET_ID: continue
+                        for name in ('TargetFullPath','InstallLocation'):
+                            try: value=os.path.normcase(os.path.realpath(winreg.QueryValueEx(entry,name)[0]))
+                            except OSError: continue
+                            if target==value or target.startswith(value.rstrip('\\')+os.sep):
+                                return True
+                except OSError:
+                    continue
+    return False
+
+
 def installation():
     if getattr(sys,'frozen',False):
         # Homebrew owns files under its Cellar; replacing them would break `brew upgrade`.
         location=str(Path(sys.executable).resolve()).replace('\\','/')
         # Package managers own these files; replacing them would break their own upgrades.
         method=('homebrew' if '/Cellar/' in location else
-                'winget' if '/Microsoft/WinGet/Packages/' in location else 'standalone')
+                'winget' if '/winget/packages/' in location.lower() or _winget_owns(sys.executable) else 'standalone')
     else:
         prefix=Path(sys.prefix)
         executable=str(Path(sys.executable).absolute()).replace('\\','/')
@@ -266,12 +296,6 @@ def apply_windows_update(values):
 def handle(args):
     installed=installation()
     if args.info: return installed
-    if installed['method']=='winget':
-        # winget can install a specific published version itself.
-        target=f" --version {args.version.removeprefix('v')}" if args.version else ''
-        command=(f'winget install --id {WINGET_ID} --exact{target} --force' if target else f'winget upgrade --id {WINGET_ID} --exact')
-        return {**installed,'updated':False,'instructions':command,
-                'note':'winget manages this installation, so jira does not replace its own file.'}
     if args.version and installed['method']=='homebrew':
         # The tap only offers its latest stable release; brew can't install another one.
         raise UpdateError(f'Homebrew installs follow the tap\'s latest stable release; run brew upgrade {DISTRIBUTION}. '
@@ -282,6 +306,12 @@ def handle(args):
         raise UpdateError('Prerelease versions require --prerelease.')
     if requested and requested<Version(__version__) and not args.allow_downgrade:
         raise UpdateError('Downgrades require --allow-downgrade.')
+    if installed['method']=='winget':
+        # winget can install a specific published version itself.
+        target=f" --version {args.version.removeprefix('v')}" if args.version else ''
+        command=(f'winget install --id {WINGET_ID} --exact{target} --force' if target else f'winget upgrade --id {WINGET_ID} --exact')
+        return {**installed,'updated':False,'instructions':command,
+                'note':'winget manages this installation, so jira does not replace its own file.'}
     api=Releases()
     try:
         release=api.release(args.version)

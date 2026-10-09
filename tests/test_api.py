@@ -373,6 +373,19 @@ class ApiPaginateTests(ApiTestBase):
         self.assertEqual((code, out), (1, b""))
         self.assertIn("changed its paging format", self.error(err)["message"])
 
+    def test_cursor_page_without_token_but_not_last_fails(self):
+        code, out, err, _ = self.call("/rest/api/3/search/jql", "--paginate", replies=[
+            self.page({"issues": [{"key": "A"}], "isLast": False})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("gave no cursor", self.error(err)["message"])
+
+    def test_offset_that_does_not_advance_fails(self):
+        code, out, err, _ = self.call("/rest/api/3/project/search", "--paginate", "--max-items", "10", replies=[
+            self.page({"startAt": 0, "maxResults": 2, "total": 9, "values": [{"id": 1}, {"id": 2}]}),
+            self.page({"startAt": 0, "maxResults": 2, "total": 9, "values": [{"id": 1}, {"id": 2}]})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("started at 0 instead of 2", self.error(err)["message"])
+
     def test_errors_on_a_later_page_name_the_page(self):
         code, out, err, _ = self.call("/rest/api/3/project/search", "--paginate", replies=[
             self.page({"startAt": 0, "maxResults": 1, "total": 2, "values": [{"id": 1}]}),
@@ -383,6 +396,7 @@ class ApiPaginateTests(ApiTestBase):
 
     def test_page_limit_stops_runaway_offsets(self):
         endless = [self.page({"startAt": i, "maxResults": 1, "values": [{"id": i}]}) for i in range(4)]
+        # Offsets advance correctly here, so only the page limit stops it.
         with patch("jsup.api.MAX_PAGES", 3):
             code, out, err, request = self.call("/rest/api/3/project/search", "--paginate", replies=endless)
         self.assertEqual((code, out, request.call_count), (1, b"", 3))

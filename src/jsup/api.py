@@ -381,7 +381,7 @@ def _paginate(jira: Jira, request: Request, args, redact, stdout) -> None:
     """Follow Jira's page protocols and print one merged JSON result."""
     limit = args.max_items
     params, body = list(request.params), request.body
-    items, merged, protocol, key, total_bytes, complete = [], None, None, None, 0, False
+    items, merged, protocol, key, total_bytes, complete, expected = [], None, None, None, 0, False, 0
     seen = set()
     for number in range(1, MAX_PAGES + 1):
         with _send(jira, request, redact, params=params, body=body, page=number) as response:
@@ -409,9 +409,11 @@ def _paginate(jira: Jira, request: Request, args, redact, stdout) -> None:
             break
         if protocol == "cursor":
             token = page.get("nextPageToken")
-            if page.get("isLast") is True or not token:
+            if page.get("isLast") is True or (not token and page.get("isLast") is not False):
                 complete = True
                 break
+            if not token:
+                raise ApiError(1, "jira_error", f"Page {number} said more pages exist but gave no cursor.", page=number)
             if token in seen:
                 raise ApiError(1, "jira_error", f"Page {number} repeated a cursor; stopped to avoid a loop.", page=number)
             seen.add(token)
@@ -426,6 +428,10 @@ def _paginate(jira: Jira, request: Request, args, redact, stdout) -> None:
         start = page.get(start_name)
         if not isinstance(start, int):
             raise ApiError(1, "jira_error", f"Page {number} has no numeric {start_name}.", page=number)
+        if number > 1 and start != expected:
+            # A server that ignores the offset would otherwise repeat the same page.
+            raise ApiError(1, "jira_error", f"Page {number} started at {start} instead of {expected}; "
+                           "stopped to avoid repeating items.", page=number)
         if protocol == "service-desk":
             done = page.get("isLastPage") is True
         else:
@@ -436,7 +442,8 @@ def _paginate(jira: Jira, request: Request, args, redact, stdout) -> None:
         if done or not batch:
             complete = True
             break
-        params = _with_param(params, start_name, start + len(batch))
+        expected = start + len(batch)
+        params = _with_param(params, start_name, expected)
     else:
         raise ApiError(1, "jira_error", f"Stopped after {MAX_PAGES} pages; use --max-items or narrow the query.")
     merged = dict(merged)

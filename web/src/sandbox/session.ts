@@ -18,7 +18,7 @@ export type Block =
   | { kind: 'tool'; name: 'Bash' | 'Write' | 'Edit'; input: string; output: Block[] | null; exit: number }
 export type Result = { blocks: Block[]; exit: number | null }
 
-const LIST_COMMANDS = new Set(['issue list', 'board list', 'board issues', 'project list', 'issue comment list', 'sprint list', 'component list', 'project issue-types', 'project fields', 'issue attachment list'])
+const LIST_COMMANDS = new Set(['issue list', 'board list', 'board issues', 'project list', 'issue comment list', 'sprint list', 'component list', 'project issue-types', 'project fields', 'issue attachment list', 'desk list', 'request list'])
 const PRIORITY = ['Highest', 'High', 'Medium', 'Low', 'Lowest']
 const DEFAULT_FIELDS = ['summary', 'status', 'assignee', 'priority', 'updated', 'components', 'labels']
 const TODAY = '2026-10-07'
@@ -124,8 +124,14 @@ export class Session {
       case 'issue create': return this.create(opts)
       case 'issue edit': return this.edit(args.key as string, opts)
       case 'api': return this.api(args.path as string, args.spec_action as string | undefined, opts)
-      case 'desk list': return this.table(opts, 'Service desks (2 fetched)', ['id', 'key', 'name'], desks.map(d => ({ id: d.id, key: d.projectKey, name: d.projectName })))
-      case 'request list': return this.table(opts, `Requests (${requests.length} fetched)`, ['key', 'status', 'summary', 'reporter', 'created', 'desk'], requests.map(({ key, status, summary, reporter, created, desk }) => ({ key, status, summary, reporter, created, desk })))
+      // --json mirrors the Service Management page shape that the CLI prints; tables and CSV use flat rows.
+      case 'desk list': return opts.json
+        ? json(deskPage(desks))
+        : this.table(opts, 'Service desks (2 fetched)', ['id', 'key', 'name'], desks.map(d => ({ id: d.id, key: d.projectKey, name: d.projectName })))
+      case 'request list': return opts.json
+        ? json(deskPage(requests.map(r => ({ issueKey: r.key, summary: r.summary, serviceDeskId: r.desk, currentStatus: { status: r.status },
+          reporter: { displayName: r.reporter }, createdDate: { iso8601: `${r.created}T09:00:00+0000` } }))))
+        : this.table(opts, `Requests (${requests.length} fetched)`, ['key', 'status', 'summary', 'reporter', 'created', 'desk'], requests.map(({ key, status, summary, reporter, created, desk }) => ({ key, status, summary, reporter, created, desk })))
       case 'request view': return this.requestView(args.key as string, opts)
       case 'project list': return this.table(opts, 'Projects', ['key', 'name'], projects)
       case 'board list': return opts.json
@@ -458,6 +464,10 @@ export class Session {
     if (opts.csv) return out([columns.join(','), ...rows.map(r => columns.map(c => csvCell(r[c])).join(','))].join('\n'))
     return table(title, columns, rows.map(r => columns.map(c => ({ text: r[c] }))))
   }
+}
+
+function deskPage<T>(values: T[]) {
+  return { size: values.length, start: 0, limit: 50, isLastPage: true, values, fetched: values.length }
 }
 
 function out(text: string): Result {
