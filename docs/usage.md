@@ -97,7 +97,7 @@ Software operations require applicable boards and Jira permissions. Feature togg
 
 ## Calling any REST endpoint
 
-`jira api` sends one request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
+`jira api` sends a request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
 
 ```bash
 jira api /rest/api/3/myself --profile work
@@ -115,6 +115,21 @@ jira api /rest/api/3/attachment/content/10001 --output proof.png
 - **Output:** the response body goes to stdout exactly as Jira returned it, whatever its JSON shape. On a terminal, JSON is indented and binary bodies are not printed; use `--output FILE` to save a body to a new file (it never overwrites). Empty, 204 and HEAD responses print nothing. `--include` prints the status and response headers to stderr, with cookies redacted.
 - **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
 - **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
+
+### Fetching every page
+
+Jira splits long results into pages, using three different protocols. `--paginate` follows whichever one the endpoint uses and prints a single merged JSON result.
+
+```bash
+jira api /rest/api/3/project/search --paginate
+jira api /rest/api/3/search/jql -X POST --data '{"jql":"project = ENG","fields":["summary"]}' --paginate --max-items 500
+jira api /rest/servicedeskapi/servicedesk --paginate
+```
+
+- **Protocols:** offset pages (`startAt`, `maxResults`, `total` or `isLast`), cursor pages (`nextPageToken`, used by issue search) and Service Management pages (`start`, `limit`, `isLastPage`). The items can be in `values`, `issues`, `comments` or `worklogs`.
+- **Result:** the first page's JSON object, with every item in its list, `fetched` set to the item count, and `isLast` (or `isLastPage`) false if `--max-items` stopped it early. Page size still comes from your own `--query maxResults=` (or `limit=`, or `maxResults` in the search body).
+- **Methods:** GET, and POST only for `/rest/api/3/search/jql`, where the cursor goes into the JSON body. `--output` and `--include` can't be combined with it.
+- **Limits:** `--max-items N` stops after N items. It also stops after 1,000 pages, and if a cursor repeats or the format changes between pages. A failure on any page prints nothing on stdout and names the page in the error.
 
 ### Looking up an endpoint before calling it
 

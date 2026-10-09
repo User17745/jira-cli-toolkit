@@ -300,7 +300,8 @@ def run(args) -> None:
         raise invalid(f"Unexpected argument {args.spec_action!r}; pass query values with --query KEY=VALUE.")
     used = [flag for flag, value in (("--query", args.query), ("--header", args.header), ("--data", args.data),
                                       ("--raw-data", args.raw_data), ("--form", args.form), ("--include", args.include),
-                                      ("--output", args.output), ("--content-type", args.content_type)) if value]
+                                      ("--output", args.output), ("--content-type", args.content_type),
+                                      ("--paginate", args.paginate), ("--max-items", args.max_items)) if value]
     if used:
         raise invalid(f"--spec describes an operation and sends nothing; remove {', '.join(used)}.")
     result = describe(validate_path(args.path), args.method.upper())

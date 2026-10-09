@@ -25,12 +25,14 @@ jira api /rest/servicedeskapi/servicedesk --paginate        # start / limit / is
 jira api /rest/api/3/project/search --paginate --max-items 200
 ```
 
-- [ ] Detect the protocol from the first response: Jira offset pages (`startAt`, `maxResults`, `total` or `isLast`, with `values`, `issues`, `comments` or `worklogs`), cursor pages (`nextPageToken`, with `issues`), and Service Management pages (`start`, `limit`, `isLastPage`, with `values`).
-- [ ] Merge into one JSON object of the first page's shape: the item array holds every item, paging fields describe the merged result, and `fetched` gives the count. A response that is not a recognized page fails with `invalid_input` instead of guessing.
-- [ ] Allowed for GET, and for POST only on `/rest/api/3/search/jql` (where the cursor goes in the JSON body). Other methods and bodies fail before sending.
-- [ ] Bounds: `--max-items` (optional) and a hard limit of 1,000 pages; a repeated cursor or offset that doesn't advance fails as `jira_error` instead of looping. Each page request keeps the existing retry rules (GET retries, POST never does).
-- [ ] Not combinable with `--output`, `--include` or `--spec`. Errors on a later page report the page number; no partial output is printed.
-- [ ] Tests for every protocol, the limits, non-advancing pages, mid-run errors and rejected combinations; live read acceptance on BUG, board 1523 and the service desk endpoint.
+- [x] Detect the protocol from the first response: Jira offset pages (`startAt`, `maxResults`, `total` or `isLast`, with `values`, `issues`, `comments` or `worklogs`), cursor pages (`nextPageToken`, with `issues`), and Service Management pages (`start`, `limit`, `isLastPage`, with `values`).
+- [x] Merge into one JSON object of the first page's shape: the item array holds every item, paging fields describe the merged result, and `fetched` gives the count. A response that is not a recognized page fails with `invalid_input` instead of guessing.
+- [x] Allowed for GET, and for POST only on `/rest/api/3/search/jql` (where the cursor goes in the JSON body). Other methods and bodies fail before sending.
+- [x] Bounds: `--max-items` (optional) and a hard limit of 1,000 pages; a repeated cursor or offset that doesn't advance fails as `jira_error` instead of looping. Each page request keeps the existing retry rules (GET retries, POST never does).
+- [x] Not combinable with `--output`, `--include` or `--spec`. Errors on a later page report the page number; no partial output is printed.
+- [x] Tests for every protocol, the limits, non-advancing pages, mid-run errors and rejected combinations; live read acceptance on BUG, board 1523 and the service desk endpoint.
+
+Live, 9 October 2026 (`work` profile): project search over 2 offset pages (9 projects), POST and GET issue search over 5 cursor pages (30 and 10 unique issues, stopped by `--max-items`), and service desks over 3 pages of 1. Board 1523 has a single sprint, so its offset run stopped after one page as expected.
 
 ## 3. Service desk commands
 

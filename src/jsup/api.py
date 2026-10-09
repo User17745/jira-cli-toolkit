@@ -291,30 +291,31 @@ def _print_metadata(response, redact) -> None:
     print(file=sys.stderr)
 
 
-def execute(jira: Jira, request: Request, args, cfg: dict, stdout=None) -> None:
-    stdout = stdout or sys.stdout
-    redact = _redactor(cfg)
+def _send(jira: Jira, request: Request, redact, *, params=None, body=None, include=False, page=None):
+    """Send one request and return its successful response; failures raise ApiError."""
     headers = dict(request.headers)
     headers.setdefault("Accept", "application/json")
-    kw = dict(params=request.params, headers=headers, stream=True)
+    kw = dict(params=request.params if params is None else params, headers=headers, stream=True)
+    body = request.body if body is None else body
     with ExitStack() as stack:
         if request.form:
             # requests writes the multipart boundary itself.
             headers["Content-Type"] = None
             kw["files"] = [(name, (path.name, stack.enter_context(path.open("rb")), "application/octet-stream")) if path
                            else (name, (None, value)) for name, value, path in request.form]
-        elif request.body is not None:
+        elif body is not None:
             headers["Content-Type"] = request.content_type
-            kw["data"] = request.body
+            kw["data"] = body
         else:
             headers["Content-Type"] = None
         response = jira._send(request.method, request.path, safe=request.method in SAFE_METHODS, **kw)
-    with response:
+    where = {} if page is None else {"page": page}
+    try:
         # The prepared URL must still point at the trusted base after encoding.
         sent, base = urlsplit(response.request.url if response.request else jira.site + request.path), urlsplit(jira.site)
         if (sent.scheme, sent.netloc) != (base.scheme, base.netloc):
             raise ApiError(2, "invalid_input", "The request did not resolve to the selected Jira site.")
-        if args.include:
+        if include:
             _print_metadata(response, redact)
         status = response.status_code
         if 300 <= status < 400:
@@ -323,11 +324,26 @@ def execute(jira: Jira, request: Request, args, cfg: dict, stdout=None) -> None:
             raise ApiError(1, "jira_error", "Jira answered with a redirect, which is not followed so credentials stay "
                            "on the selected site. For endpoints that support it, such as attachment content, "
                            "pass --query redirect=false.", status=status, method=request.method, path=request.path,
-                           location=redact(f"{target.scheme}://{target.netloc}{target.path}" if target.netloc else target.path))
+                           location=redact(f"{target.scheme}://{target.netloc}{target.path}" if target.netloc else target.path),
+                           **where)
         if status >= 400:
-            raise ApiError(1, "jira_error", f"{request.method} {request.path} -> {status}", status=status,
-                           method=request.method, path=request.path, body=_error_body(response, redact))
-        if request.method == "HEAD" or status == 204:
+            prefix = f"Page {page}: " if page else ""
+            raise ApiError(1, "jira_error", f"{prefix}{request.method} {request.path} -> {status}", status=status,
+                           method=request.method, path=request.path, body=_error_body(response, redact), **where)
+    except BaseException:
+        response.close()
+        raise
+    return response
+
+
+def execute(jira: Jira, request: Request, args, cfg: dict, stdout=None) -> None:
+    stdout = stdout or sys.stdout
+    redact = _redactor(cfg)
+    if args.paginate:
+        _paginate(jira, request, args, redact, stdout)
+        return
+    with _send(jira, request, redact, include=args.include) as response:
+        if request.method == "HEAD" or response.status_code == 204:
             return
         if args.output:
             received = _write_file(response, args.output)
@@ -336,10 +352,130 @@ def execute(jira: Jira, request: Request, args, cfg: dict, stdout=None) -> None:
             _write_stdout(response, stdout)
 
 
+PAGE_ITEMS = ("values", "issues", "comments", "worklogs")
+MAX_PAGES = 1000
+CURSOR_PATH = "/rest/api/3/search/jql"
+
+
+def _page_shape(page):
+    """Return (protocol, item key) for a recognized Jira page, else (None, None)."""
+    if not isinstance(page, dict):
+        return None, None
+    key = next((k for k in PAGE_ITEMS if isinstance(page.get(k), list)), None)
+    if key is None:
+        return None, None
+    if "isLastPage" in page and "start" in page:
+        return "service-desk", key
+    if "startAt" in page:
+        return "offset", key
+    if "nextPageToken" in page or "isLast" in page:
+        return "cursor", key
+    return None, None
+
+
+def _with_param(params, name, value):
+    return [(k, v) for k, v in params if k != name] + [(name, str(value))]
+
+
+def _paginate(jira: Jira, request: Request, args, redact, stdout) -> None:
+    """Follow Jira's page protocols and print one merged JSON result."""
+    limit = args.max_items
+    params, body = list(request.params), request.body
+    items, merged, protocol, key, total_bytes, complete = [], None, None, None, 0, False
+    seen = set()
+    for number in range(1, MAX_PAGES + 1):
+        with _send(jira, request, redact, params=params, body=body, page=number) as response:
+            raw, truncated = _read(response, MAX_RESPONSE - total_bytes)
+        total_bytes += len(raw)
+        if truncated:
+            raise ApiError(1, "response_too_large", f"Pages exceed {MAX_RESPONSE} bytes in total; nothing was printed.")
+        try:
+            page = json.loads(raw) if raw else None
+        except ValueError:
+            raise ApiError(1, "jira_error", f"Page {number} is not JSON.", page=number) from None
+        shape = _page_shape(page)
+        if number == 1:
+            protocol, key = shape
+            if protocol is None:
+                raise invalid("--paginate needs a paged JSON response (with values, issues, comments or worklogs "
+                              "and startAt, start or nextPageToken); this endpoint returned something else.")
+            merged = page
+        elif shape != (protocol, key):
+            raise ApiError(1, "jira_error", f"Page {number} changed its paging format; nothing was printed.", page=number)
+        batch = page[key]
+        items.extend(batch)
+        if limit is not None and len(items) >= limit:
+            items = items[:limit]
+            break
+        if protocol == "cursor":
+            token = page.get("nextPageToken")
+            if page.get("isLast") is True or not token:
+                complete = True
+                break
+            if token in seen:
+                raise ApiError(1, "jira_error", f"Page {number} repeated a cursor; stopped to avoid a loop.", page=number)
+            seen.add(token)
+            if request.method == "POST":
+                payload = json.loads(body)
+                payload["nextPageToken"] = token
+                body = json.dumps(payload).encode("utf-8")
+            else:
+                params = _with_param(params, "nextPageToken", token)
+            continue
+        start_name = "start" if protocol == "service-desk" else "startAt"
+        start = page.get(start_name)
+        if not isinstance(start, int):
+            raise ApiError(1, "jira_error", f"Page {number} has no numeric {start_name}.", page=number)
+        if protocol == "service-desk":
+            done = page.get("isLastPage") is True
+        else:
+            size = page.get("maxResults")
+            done = (page.get("isLast") is True
+                    or (isinstance(page.get("total"), int) and start + len(batch) >= page["total"])
+                    or ("isLast" not in page and "total" not in page and isinstance(size, int) and len(batch) < size))
+        if done or not batch:
+            complete = True
+            break
+        params = _with_param(params, start_name, start + len(batch))
+    else:
+        raise ApiError(1, "jira_error", f"Stopped after {MAX_PAGES} pages; use --max-items or narrow the query.")
+    merged = dict(merged)
+    merged[key] = items
+    if protocol == "cursor":
+        merged.pop("nextPageToken", None)
+        merged["isLast"] = complete
+    elif protocol == "service-desk":
+        merged.update(size=len(items), isLastPage=complete)
+    else:
+        merged["isLast"] = complete
+        if "maxResults" in merged:
+            merged["maxResults"] = len(items)
+    merged["fetched"] = len(items)
+    terminal = getattr(stdout, "isatty", lambda: False)()
+    text = json.dumps(merged, indent=2 if terminal else None, ensure_ascii=False) + "\n"
+    buffer = stdout.buffer if hasattr(stdout, "buffer") else stdout
+    buffer.write(text.encode("utf-8"))
+    buffer.flush()
+
+
 def run(args, cfg: dict) -> None:
     if args.csv or args.columns:
         raise invalid("--csv and --columns do not apply to api; the response is written as Jira returns it.")
     request = build_request(args)
+    if args.max_items is not None and not args.paginate:
+        raise invalid("--max-items applies only with --paginate.")
+    if args.paginate:
+        used = [flag for flag, value in (("--output", args.output), ("--include", args.include)) if value]
+        if used:
+            raise invalid(f"--paginate prints one merged JSON result; remove {', '.join(used)}.")
+        if request.method == "POST" and request.path == CURSOR_PATH:
+            try:
+                if not isinstance(json.loads(request.body or b"null"), dict):
+                    raise ValueError
+            except ValueError:
+                raise invalid("--paginate with POST needs a JSON object body from --data.") from None
+        elif request.method != "GET":
+            raise invalid(f"--paginate supports GET, and POST only on {CURSOR_PATH}.")
     if args.output:
         # Fail before sending, so nothing is downloaded or changed for an unusable destination.
         check_output(args.output)

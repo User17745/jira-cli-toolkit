@@ -2667,6 +2667,34 @@
      "help": "save the response body to a new file"
     },
     {
+     "flag": "--paginate",
+     "names": [
+      "--paginate"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "PAGINATE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "follow every page and print one merged JSON result"
+    },
+    {
+     "flag": "--max-items",
+     "names": [
+      "--max-items"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "N",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": "positive_int",
+     "help": "stop --paginate after N items"
+    },
+    {
      "flag": "--spec",
      "names": [
       "--spec"

@@ -50,6 +50,9 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
                             help="multipart field or file; repeat for more")
         parser.add_argument("--include", "-i", action="store_true", help="print response status and headers to stderr")
         parser.add_argument("--output", "-o", metavar="FILE", help="save the response body to a new file")
+        parser.add_argument("--paginate", action="store_true",
+                            help="follow every page and print one merged JSON result")
+        parser.add_argument("--max-items", type=positive_int, metavar="N", help="stop --paginate after N items")
         parser.add_argument("--spec", action="store_true",
                             help="describe the operation from cached official specs; sends no request")
         return
