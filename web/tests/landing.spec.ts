@@ -349,6 +349,13 @@ test('sandbox shows service desk commands with sample data', async ({ page }) =>
   await expect(lastEntry(page)).toContainText('participants=Priya Shah')
 })
 
+test('agent setup offers the bundled skill install command', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Copy the skill install command' }).click()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('jira skill install')
+})
+
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', e => errors.push(e.message))

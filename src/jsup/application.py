@@ -296,6 +296,19 @@ def run(args, prog: str) -> None:
         require_input(args, "Pass --yes to confirm deletion when input is unavailable.")
         if not ui.confirm("Permanently delete the selected item?"):
             raise CommandError("Aborted.")
+    if args.cmd in {"skill-show", "skill-install"}:
+        # Local files only; no identity or network.
+        from . import skill
+        if args.cmd == "skill-show":
+            print(skill.text(), end="")
+            return
+        data = skill.install(args.path, args.force)
+        if args.json:
+            ui.dump_json(data)
+        else:
+            verb = "Already up to date" if data["status"] == "unchanged" else "Wrote"
+            ui.console.print(f"{verb}: {data['path']}", markup=False, soft_wrap=True)
+        return
     if args.cmd == "api":
         # No credential-replacement prompt or retried writes: the request is the caller's.
         from . import api

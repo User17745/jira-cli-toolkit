@@ -67,10 +67,10 @@ jira skill install                 # write ~/.claude/skills/jira/SKILL.md
 jira skill install --path DIR      # any agent's skills or rules folder
 ```
 
-- [ ] `SKILL.md` covers when to use `jira` versus `jira api`, `--spec` before building a payload, `--json --no-input`, exit codes and the error object, pagination, the trust boundary, and safe defaults (no writes without the user asking, never print tokens).
-- [ ] Installed as package data, so pipx, Homebrew and the native binaries all carry it. `install` refuses to overwrite a changed file without `--force` and reports the path it wrote.
-- [ ] Tests check that every command the skill mentions exists in the parser, so the skill can't drift from the CLI.
-- [ ] Website setup step offers `jira skill install` next to the existing prompt.
+- [x] `SKILL.md` covers when to use `jira` versus `jira api`, `--spec` before building a payload, `--json --no-input`, exit codes and the error object, pagination, the trust boundary, and safe defaults (no writes without the user asking, never print tokens).
+- [x] Installed as package data, so pipx, Homebrew and the native binaries all carry it. `install` refuses to overwrite a changed file without `--force` and reports the path it wrote.
+- [x] Tests check that every command the skill mentions exists in the parser, so the skill can't drift from the CLI.
+- [x] Website setup step offers `jira skill install` next to the existing prompt.
 
 ## 5. Windows Package Manager (winget)
 

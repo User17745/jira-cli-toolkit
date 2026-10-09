@@ -186,6 +186,18 @@ Agents and scripts run without a terminal. In that mode the CLI never opens a cr
 JIRA_PROFILE=work jira api /rest/api/3/myself --no-input
 ```
 
+### The bundled agent skill
+
+`jira skill install` writes a `SKILL.md` that teaches coding agents to use this CLI: check sign-in first, add `--json --no-input`, look before writing, use `--spec` and `--paginate` with `jira api`, and never handle tokens. It ships with each release, so it always describes the commands you have installed.
+
+```bash
+jira skill install                         # ~/.claude/skills/jira/SKILL.md, for Claude Code
+jira skill install --path ~/.codex/skills/jira
+jira skill show                            # print it, for example to paste into AGENTS.md
+```
+
+An existing `SKILL.md` that matches is left alone. One you've edited is never overwritten unless you pass `--force`; compare it with `jira skill show` first. Run `jira skill install` again after upgrading to pick up the new version.
+
 ### What keeping the token out of the command does and doesn't protect
 
 Keeping the token out of the command keeps it out of prompts, shell history, process listings, logs and generated scripts. It is not isolation: any program running as you, including an agent allowed to run commands, can run `jira api` too, and some can read the credential store or the CLI itself. Every request runs with the full permissions of the Jira account behind the profile.

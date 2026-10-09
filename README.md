@@ -141,7 +141,7 @@ jira api /rest/api/3/project/search --query maxResults=20
 jira api /rest/agile/1.0/board/12/sprint --profile work | jq '.values[].name'
 ```
 
-Response bodies go to stdout exactly as Jira returns them; failures are a JSON object on stderr. Requests stay on your site: no absolute URLs, no redirects, and auth headers can't be overridden. Writes are never retried. For unattended agents, approve keychain access once and give the agent a least-privilege account. [Read the API, discovery and agent setup guide](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md#calling-any-rest-endpoint).
+Response bodies go to stdout exactly as Jira returns them; failures are a JSON object on stderr. Requests stay on your site: no absolute URLs, no redirects, and auth headers can't be overridden. Writes are never retried. `jira skill install` gives Claude Code (or, with `--path`, any agent) a skill that matches your installed version. For unattended agents, approve keychain access once and give the agent a least-privilege account. [Read the API, discovery and agent setup guide](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md#calling-any-rest-endpoint).
 
 ## Explicit updates and releases
 

@@ -55,6 +55,10 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
             parser.add_argument("--to", help="transition name or ID")
             parser.add_argument("--message", "-m", help="comment added with the transition, visible to the customer")
         return
+    if operation == "skill-install":
+        parser.add_argument("--path", metavar="DIR", help="folder to write SKILL.md into (default ~/.claude/skills/jira)")
+        parser.add_argument("--force", action="store_true", help="replace a SKILL.md that has been changed")
+        return
     if operation == "api":
         parser.add_argument("path", metavar="PATH", help="Jira REST path, for example /rest/api/3/myself; or spec")
         parser.add_argument("spec_action", metavar="ACTION", nargs="?", help="after spec: refresh or status")
@@ -375,6 +379,9 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     command(components, "list", "component-list", "list components")
     command(components, "create", "component-create", "create a component")
     command(root, "api", "api", "call any Jira REST path with the selected identity")
+    _, skills = group(root, "skill", "agent skill that teaches coding agents to use jira")
+    command(skills, "show", "skill-show", "print the bundled SKILL.md")
+    command(skills, "install", "skill-install", "write SKILL.md where an agent loads skills")
     _, desks = group(root, "desk", "Jira Service Management desks and queues")
     command(desks, "list", "desk-list", "list service desks you can see")
     command(desks, "queues", "desk-queues", "list a desk's queues with issue counts")
