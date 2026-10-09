@@ -34,6 +34,27 @@ def _options(parser: argparse.ArgumentParser, operation: str) -> None:
         parser.add_argument("--all", action="store_true", help="fetch every page; overrides --limit")
         if operation not in {"open", "issue-list", "board-issues"}:
             parser.add_argument("--limit", dest="max", type=positive_int, default=50)
+    if operation.startswith(("desk-", "request-")):
+        if operation in {"desk-list", "desk-queues", "desk-queue", "request-list"}:
+            parser.add_argument("--all", action="store_true", help="fetch every page; overrides --limit")
+            parser.add_argument("--limit", "--max", dest="max", type=positive_int, default=50)
+        if operation in {"desk-queues", "desk-queue"}:
+            parser.add_argument("desk", help="service desk ID, project key or name")
+        if operation == "desk-queue":
+            parser.add_argument("queue", help="queue ID or name")
+        if operation == "request-list":
+            parser.add_argument("--desk", help="only this service desk (ID, project key or name)")
+            parser.add_argument("--status", choices=["open", "closed", "all"], default="open")
+        if operation in {"request-view", "request-comment", "request-transitions", "request-transition"}:
+            parser.add_argument("key", help="request key, for example HELP-12")
+        if operation == "request-comment":
+            parser.add_argument("--message", "-m", required=True)
+            parser.add_argument("--internal", action="store_true",
+                                help="visible to agents only; without it the customer sees the comment")
+        if operation == "request-transition":
+            parser.add_argument("--to", help="transition name or ID")
+            parser.add_argument("--message", "-m", help="comment added with the transition, visible to the customer")
+        return
     if operation == "api":
         parser.add_argument("path", metavar="PATH", help="Jira REST path, for example /rest/api/3/myself; or spec")
         parser.add_argument("spec_action", metavar="ACTION", nargs="?", help="after spec: refresh or status")
@@ -354,6 +375,16 @@ def build_parser(prog: str = "jsup") -> argparse.ArgumentParser:
     command(components, "list", "component-list", "list components")
     command(components, "create", "component-create", "create a component")
     command(root, "api", "api", "call any Jira REST path with the selected identity")
+    _, desks = group(root, "desk", "Jira Service Management desks and queues")
+    command(desks, "list", "desk-list", "list service desks you can see")
+    command(desks, "queues", "desk-queues", "list a desk's queues with issue counts")
+    command(desks, "queue", "desk-queue", "list the issues in a queue")
+    _, requests_ = group(root, "request", "Jira Service Management customer requests")
+    command(requests_, "list", "request-list", "list requests you can see, open by default")
+    command(requests_, "view", "request-view", "show a request with status, participants and SLAs")
+    command(requests_, "comment", "request-comment", "reply to the customer, or add an internal note")
+    command(requests_, "transitions", "request-transitions", "list a request's available transitions")
+    command(requests_, "transition", "request-transition", "move a request, optionally with a comment")
 
     for name, help_text in LEGACY_COMMANDS.items():
         command(root, name, name, f"legacy: {help_text}", legacy=True)

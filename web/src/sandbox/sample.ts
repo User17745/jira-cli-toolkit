@@ -48,6 +48,18 @@ export const boards = [
   { id: 18, type: 'scrum', name: 'APP board', project: 'APP' },
 ]
 
+export const desks = [
+  { id: '4', projectKey: 'HELP', projectName: 'IT Help' },
+  { id: '7', projectKey: 'HR', projectName: 'People Ops' },
+]
+
+export const requests = [
+  { key: 'HELP-12', summary: 'VPN drops every 10 minutes', status: 'Waiting for support', desk: '4', reporter: 'Noor Haddad', created: '2026-10-08',
+    participants: ['Priya Shah'], sla: 'Time to first response: 2 h 10 m left', description: 'Since the client update the VPN disconnects every 10 minutes on Wi-Fi.' },
+  { key: 'HELP-11', summary: 'New starter laptop for Monday', status: 'In progress', desk: '4', reporter: 'Jamie Lee', created: '2026-10-07',
+    participants: [], sla: 'Time to resolution: 1 d 4 h left', description: 'MacBook with the engineering image, ready by 9 am.' },
+]
+
 export const initialSprints = (): Sprint[] => [
   { id: 455, state: 'closed', name: 'ENG Sprint 13', goal: 'Release v2.0 installers', board: 12 },
   { id: 456, state: 'active', name: 'ENG Sprint 14', goal: 'Ship onboarding and keyboard fixes', board: 12 },

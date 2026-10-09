@@ -120,6 +120,16 @@ JSON preserves API field structures, CSV supports selected columns, and `--no-in
 
 Templates are declarative JSON with declared variables, not executable hooks. The example callback template has explicit defaults that must fit your project; ordinary creation adds no support-specific fields. [Read scripting and template details](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md).
 
+### Service desks
+
+```bash
+jira desk queues HELP
+jira request view HELP-12
+jira request comment HELP-12 -m "Restarted the service; please retry."
+```
+
+Desks, queues and customer requests from Jira Service Management, with `--internal` for agent-only notes. [Read the service desk guide](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/usage.md#service-desks-and-customer-requests).
+
 ### Any REST endpoint, without a token in the command
 
 `jira api` calls any Jira Cloud REST path with your saved profile, so agents and scripts can use endpoints that have no convenience command. `--spec` looks the endpoint up in Atlassian's official OpenAPI documents first, without contacting your site.
@@ -183,7 +193,7 @@ npm test
 
 ## Scope and next steps
 
-The current release supports standard **Jira Cloud** issues and applicable Software boards/sprints, and any Jira Cloud REST endpoint through `jira api`, including Service Management. Service Management convenience commands and Data Center remain future work. Required-field discovery cannot describe every app-specific workflow validator; Jira remains authoritative.
+The current release supports standard **Jira Cloud** issues and applicable Software boards/sprints, Service Management desks, queues and requests, and any Jira Cloud REST endpoint through `jira api`. Data Center remains future work. Required-field discovery cannot describe every app-specific workflow validator; Jira remains authoritative.
 
 Original project code is licensed under **AGPL-3.0-only**. [See completed milestones and remaining work](https://github.com/User17745/jira-cli-toolkit/blob/main/docs/sprints/v2-upgrade/roadmap.md).
 

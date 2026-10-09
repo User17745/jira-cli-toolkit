@@ -95,6 +95,26 @@ jira project list
 
 Software operations require applicable boards and Jira permissions. Feature toggles are under `board feature enable/disable`. Sprint viewing/editing and required start/close inputs are implemented. Operations remain subject to board capabilities and Jira permissions. `view --web` and legacy `browse` require only a site URL and use the browser's session. Board URLs do not guess a project from local configuration.
 
+## Service desks and customer requests
+
+For Jira Service Management. Desks accept an ID, project key or name; queues accept an ID or name.
+
+```bash
+jira desk list
+jira desk queues HELP                      # queues with issue counts
+jira desk queue HELP "Waiting for support" # issues in a queue
+jira request list --desk HELP --status open
+jira request view HELP-12                  # status, participants, SLAs, fields
+jira request comment HELP-12 -m "Restarted the service; please retry."
+jira request comment HELP-12 -m "Root cause is the expired cert." --internal
+jira request transitions HELP-12
+jira request transition HELP-12 --to "Resolve this issue" -m "Fixed in 2.4."
+```
+
+- **Comments:** without `--internal`, the customer sees the comment and is notified. `--internal` adds a note only agents can see. The output says which kind was added.
+- **Who can do what:** queues and internal comments need an agent licence on that desk; customers can list and view their own requests and reply to them. Permission errors come back as `jira_error` with status 403.
+- **Output:** `--json` keeps the Service Management API's shapes; lists also support `--csv`, `--columns`, `--limit` and `--all`. `request transition` without `--to` lists the available transitions instead of guessing.
+
 ## Calling any REST endpoint
 
 `jira api` sends a request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.

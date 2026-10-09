@@ -49,11 +49,13 @@ jira request transitions KEY
 jira request transition KEY --to NAME|ID [--message TEXT]
 ```
 
-- [ ] Commands use the `/rest/servicedeskapi` endpoints with the existing identity resolver, retry rules, `--json`, `--csv` for lists, `--no-input` and redaction.
-- [ ] Customer-visible comments are the default only when stated in help; `--internal` adds an agent-only comment. Help and output say which one was made.
-- [ ] Desk and queue arguments accept an ID or an exact project key or name; ambiguous names fail with the candidates listed.
-- [ ] Fixture tests for every command, JSON/CSV shapes, pagination, permission errors and ambiguity; live read acceptance on the visible service desk. Writes (comments, transitions) are tested with fixtures only, because live writes notify customers.
-- [ ] Website command data regenerated; README and usage guide sections; sandbox sample data for at least `desk list` and `request view`.
+- [x] Commands use the `/rest/servicedeskapi` endpoints with the existing identity resolver, retry rules, `--json`, `--csv` for lists, `--no-input` and redaction.
+- [x] Customer-visible comments are the default only when stated in help; `--internal` adds an agent-only comment. Help and output say which one was made.
+- [x] Desk and queue arguments accept an ID or an exact project key or name; ambiguous names fail with the candidates listed.
+- [x] Fixture tests for every command, JSON/CSV shapes, pagination, permission errors and ambiguity; live read acceptance on the visible service desk. Writes (comments, transitions) are tested with fixtures only, because live writes notify customers.
+- [x] Website command data regenerated; README and usage guide sections; sandbox sample data for at least `desk list` and `request view`.
+
+Live, 9 October 2026: the `work` account is a customer on three desks (LDSUP, TS, VM), not an agent. `desk list`, `request list` (table and CSV), `request view` with participants and `request transitions` (none available to a customer on a closed request) were read live; `desk queues` returned the expected 403 with Jira's explanation, and an unknown desk listed the available ones. Queue listings, internal comments and transitions are covered by fixtures only; no live write was made, because comments and transitions notify customers.
 
 ## 4. An agent skill that ships with the CLI
 

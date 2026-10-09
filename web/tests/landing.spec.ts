@@ -340,6 +340,15 @@ test('first fold says the project is open source and links to GitHub and the lic
   await expect(line.getByRole('link', { name: 'AGPL-3.0 license' })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
 })
 
+test('sandbox shows service desk commands with sample data', async ({ page }) => {
+  await page.goto('./')
+  await run(page, 'jira desk list')
+  await expect(log(page).getByRole('table', { name: 'Service desks (2 fetched)' })).toBeVisible()
+  await run(page, 'jira request view HELP-12')
+  await expect(lastEntry(page)).toContainText('VPN drops every 10 minutes')
+  await expect(lastEntry(page)).toContainText('participants=Priya Shah')
+})
+
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', e => errors.push(e.message))
