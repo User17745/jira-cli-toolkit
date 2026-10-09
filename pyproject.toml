@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jira-cli-toolkit"
-version = "2.6.0rc1"
+version = "2.6.0"
 description = "General-purpose Jira Cloud CLI with a friendly terminal UI"
 readme = "README.md"
 license = "AGPL-3.0-only"
