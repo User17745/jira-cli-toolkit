@@ -25,14 +25,13 @@ jobs:
           gh release download $env:TAG --repo $env:GITHUB_REPOSITORY -p manifest.json -D release
           $date = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json publishedAt --jq '.publishedAt[0:10]'
           python scripts/release/winget.py release/manifest.json $date out
-      - name: Make sure winget is available
+      - name: Install the latest winget
+        # The runner image's winget can predate the manifest schema winget-pkgs requires.
         shell: pwsh
         run: |
-          if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-            Install-PackageProvider -Name NuGet -Force | Out-Null
-            Install-Module Microsoft.WinGet.Client -Force -Repository PSGallery | Out-Null
-            Repair-WinGetPackageManager -AllUsers -Latest
-          }
+          Install-PackageProvider -Name NuGet -Force | Out-Null
+          Install-Module Microsoft.WinGet.Client -Force -Repository PSGallery | Out-Null
+          Repair-WinGetPackageManager -AllUsers -Latest -Force
           winget --version
       - name: Validate, install and run
         shell: pwsh
@@ -44,6 +43,7 @@ jobs:
           winget install --manifest $dir --accept-package-agreements --accept-source-agreements --disable-interactivity
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $jira = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\jira.exe'
+          if (-not (Test-Path $jira)) { Get-ChildItem (Split-Path $jira); throw "winget did not create the jira link" }
           & $jira --version
           $info = & $jira update --info --json | ConvertFrom-Json
           "method: $($info.method)"

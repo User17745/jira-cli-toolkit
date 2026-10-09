@@ -36,6 +36,7 @@ ManifestVersion: {SCHEMA}
         f"{PACKAGE}.installer.yaml": header("installer") + f"""PackageIdentifier: {PACKAGE}
 PackageVersion: {version}
 InstallerType: portable
+# For a bare portable executable, winget names the PATH link after the first command.
 Commands:
 - jira
 ReleaseDate: {release_date}
@@ -43,8 +44,6 @@ Installers:
 - Architecture: x64
   InstallerUrl: {url}
   InstallerSha256: {binary['sha256'].upper()}
-  # Creates the `jira` link; `Commands` alone only describes the package.
-  PortableCommandAlias: jira
 ManifestType: installer
 ManifestVersion: {SCHEMA}
 """,
