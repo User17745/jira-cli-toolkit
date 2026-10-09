@@ -11,7 +11,9 @@ from pathlib import Path
 
 PACKAGE = "User17745.JiraCliToolkit"
 REPO = "User17745/jira-cli-toolkit"
-SCHEMA = "1.12.0"
+# 1.10.0 is accepted by winget-pkgs and understood by the winget on GitHub's Windows runners,
+# so the manifests submitted are the ones the winget workflow installs.
+SCHEMA = "1.10.0"
 
 
 def manifests(manifest: dict, release_date: str) -> dict[str, str]:

@@ -25,13 +25,9 @@ jobs:
           gh release download $env:TAG --repo $env:GITHUB_REPOSITORY -p manifest.json -D release
           $date = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json publishedAt --jq '.publishedAt[0:10]'
           python scripts/release/winget.py release/manifest.json $date out
-      - name: Install the latest winget
-        # The runner image's winget can predate the manifest schema winget-pkgs requires.
+      - name: Show the winget version
         shell: pwsh
-        run: |
-          Install-PSResource Microsoft.WinGet.Client -Repository PSGallery -TrustRepository -Quiet
-          Repair-WinGetPackageManager -AllUsers -Latest -Force
-          winget --version
+        run: winget --version
       - name: Validate, install and run
         shell: pwsh
         run: |
