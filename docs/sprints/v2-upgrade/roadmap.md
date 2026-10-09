@@ -395,12 +395,12 @@ Publication retry check: rerunning the publisher against the verified existing R
 
 ## Remaining work after v2.1
 
-- [ ] Complete the [v2.5 authenticated API/spec roadmap](../v2.5-api/roadmap.md), including request safety, spec freshness, agent documentation and acceptance/release checks.
+- [x] Complete the [v2.5 authenticated API/spec roadmap](../v2.5-api/roadmap.md), including request safety, spec freshness, agent documentation and acceptance/release checks. Released as v2.5.0 on 8 October 2026.
 - [x] Add AGPL-3.0-only with the complete unmodified license, project notice, README/website attribution and package metadata; retain third-party licenses.
-- [ ] Enable and verify release attestations, then assess client-side verification, macOS signing/notarization and Windows signing.
-- [ ] Verify interactive Windows Credential Manager and Linux wallet acceptance on user machines; current CI checks do not certify interactive prompts.
-- [ ] Prioritize package-registry/distribution publication (PyPI/Homebrew or equivalents), broader native OS support, Data Center/JSM APIs and optional convenience commands based on demand.
-- [ ] Remove the two previously authorized labeled BUG acceptance issues when an account with Delete Issues permission is available.
+- [x] Enable and verify release attestations (from v2.5.1; `gh attestation verify` passes for every asset and rejects a modified file). macOS signing/notarization and Windows signing: declined by the user on 8 October 2026.
+- [x] Interactive Windows Credential Manager and Linux wallet acceptance on user machines: declined by the user on 8 October 2026. CI coverage and the documented headless setup remain.
+- [x] Package-registry publication: PyPI as `jira-cli-toolkit` through trusted publishing (v2.5.1) and the `user17745/tap` Homebrew tap (v2.5.2). winget, service desk convenience commands and paginated API calls continue in the [v2.6 roadmap](../v2.6/roadmap.md).
+- [ ] Remove the two previously authorized labeled BUG acceptance issues when an account with Delete Issues permission is available. Tracked in the [v2.6 roadmap](../v2.6/roadmap.md#1-housekeeping).
 
 V2.1 release evidence: source milestone `d3f1ea9` passes [PR CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742016) and [native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574742210). Merged commit `0675d21` passes [main CI](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953579) and [main native builds](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574953839); its identical tested tree is tagged `v2.1.0`. The [tag pipeline](https://github.com/User17745/jira-cli-toolkit/actions/runs/37574959673) passes all ten required compatibility/native/package/publication jobs. Published hashes/sizes and manifest commit/version match; native update and package/docs checks use isolated homes and perform no Jira writes.
 
