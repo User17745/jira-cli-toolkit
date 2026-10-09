@@ -29,8 +29,7 @@ jobs:
         # The runner image's winget can predate the manifest schema winget-pkgs requires.
         shell: pwsh
         run: |
-          Install-PackageProvider -Name NuGet -Force | Out-Null
-          Install-Module Microsoft.WinGet.Client -Force -Repository PSGallery | Out-Null
+          Install-PSResource Microsoft.WinGet.Client -Repository PSGallery -TrustRepository -Quiet
           Repair-WinGetPackageManager -AllUsers -Latest -Force
           winget --version
       - name: Validate, install and run
