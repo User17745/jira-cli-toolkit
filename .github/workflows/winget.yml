@@ -1,0 +1,56 @@
+name: winget manifests
+# Generates winget manifests for a stable release and proves them on Windows: validate,
+# install, run `jira`, and check that `jira update` defers to winget. The manifests are
+# uploaded as an artifact for submission to microsoft/winget-pkgs.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Stable release tag, for example v2.6.0
+        required: true
+permissions:
+  contents: read
+jobs:
+  manifests:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Generate manifests
+        shell: pwsh
+        run: |
+          gh release download $env:TAG --repo $env:GITHUB_REPOSITORY -p manifest.json -D release
+          $date = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json publishedAt --jq '.publishedAt[0:10]'
+          python scripts/release/winget.py release/manifest.json $date out
+      - name: Make sure winget is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+            Install-PackageProvider -Name NuGet -Force | Out-Null
+            Install-Module Microsoft.WinGet.Client -Force -Repository PSGallery | Out-Null
+            Repair-WinGetPackageManager -AllUsers -Latest
+          }
+          winget --version
+      - name: Validate, install and run
+        shell: pwsh
+        run: |
+          $dir = (Get-ChildItem out/manifests -Recurse -Filter *.installer.yaml).DirectoryName
+          winget settings --enable LocalManifestFiles
+          winget validate --manifest $dir
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          winget install --manifest $dir --accept-package-agreements --accept-source-agreements --disable-interactivity
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $jira = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\jira.exe'
+          & $jira --version
+          $info = & $jira update --info --json | ConvertFrom-Json
+          "method: $($info.method)"
+          if ($info.method -ne 'winget') { throw "jira update did not recognize the winget installation" }
+          $advice = & $jira update --json | ConvertFrom-Json
+          "instructions: $($advice.instructions)"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: winget-manifests
+          path: out/manifests
