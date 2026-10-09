@@ -264,7 +264,12 @@ function AgentSetup({ onPlay, playing }: { onPlay: (id: ScenarioId) => void; pla
             <TabsTrigger value="repo" className="px-3">One repository</TabsTrigger>
           </TabsList>
           <TabsContent value="skill" className="space-y-3">
-            <p className="text-sm text-muted-foreground">Paste this prompt into your agent once. It writes a skill that triggers whenever a task involves Jira, so later sessions use <code className="inline-code">jira</code> without being told.</p>
+            <p className="text-sm text-muted-foreground">Install the skill that ships with the CLI. It matches your installed version and triggers whenever a task involves Jira. Claude Code loads it from <code className="inline-code">~/.claude/skills/jira</code>; for other agents, pass <code className="inline-code">--path</code> to their skills or rules folder.</p>
+            <div className="skill-command relative rounded-lg border border-[#262626] bg-[#0a0a0a] text-[#ededed]">
+              <pre tabIndex={0} data-prompt="$" aria-label="Command that installs the Jira skill" className="install-pre mr-10 overflow-x-auto py-3 pr-4 pl-3.5 font-mono text-[13px] leading-6"><code><span className="cmd-line">jira skill install</span></code></pre>
+              <CopyButton text="jira skill install" label="Copy the skill install command" />
+            </div>
+            <p className="text-sm text-muted-foreground">On a version before 2.6, or to have the agent write its own, paste this prompt into your agent once instead. It writes a skill that triggers whenever a task involves Jira, so later sessions use <code className="inline-code">jira</code> without being told.</p>
             <div className="code-file relative w-full">
               <p className="code-file-name" aria-hidden="true">prompt for your agent</p>
               <pre tabIndex={0} aria-label="Prompt that creates the Jira skill" className="dark-code agent-rules"><code>{skillPrompt}</code></pre>

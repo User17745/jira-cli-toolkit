@@ -95,9 +95,29 @@ jira project list
 
 Software operations require applicable boards and Jira permissions. Feature toggles are under `board feature enable/disable`. Sprint viewing/editing and required start/close inputs are implemented. Operations remain subject to board capabilities and Jira permissions. `view --web` and legacy `browse` require only a site URL and use the browser's session. Board URLs do not guess a project from local configuration.
 
+## Service desks and customer requests
+
+For Jira Service Management. Desks accept an ID, project key or name; queues accept an ID or name.
+
+```bash
+jira desk list
+jira desk queues HELP                      # queues with issue counts
+jira desk queue HELP "Waiting for support" # issues in a queue
+jira request list --desk HELP --status open
+jira request view HELP-12                  # status, participants, SLAs, fields
+jira request comment HELP-12 -m "Restarted the service; please retry."
+jira request comment HELP-12 -m "Root cause is the expired cert." --internal
+jira request transitions HELP-12
+jira request transition HELP-12 --to "Resolve this issue" -m "Fixed in 2.4."
+```
+
+- **Comments:** without `--internal`, the customer sees the comment and is notified. `--internal` adds a note only agents can see. The output says which kind was added.
+- **Who can do what:** queues and internal comments need an agent licence on that desk; customers can list and view their own requests and reply to them. Permission errors come back as `jira_error` with status 403.
+- **Output:** `--json` keeps the Service Management API's shapes; lists also support `--csv`, `--columns`, `--limit` and `--all`. `request transition` without `--to` lists the available transitions instead of guessing.
+
 ## Calling any REST endpoint
 
-`jira api` sends one request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
+`jira api` sends a request to a Jira Cloud REST path using the selected identity. The token never appears in the command, so agents and scripts can call endpoints that have no convenience command.
 
 ```bash
 jira api /rest/api/3/myself --profile work
@@ -115,6 +135,21 @@ jira api /rest/api/3/attachment/content/10001 --output proof.png
 - **Output:** the response body goes to stdout exactly as Jira returned it, whatever its JSON shape. On a terminal, JSON is indented and binary bodies are not printed; use `--output FILE` to save a body to a new file (it never overwrites). Empty, 204 and HEAD responses print nothing. `--include` prints the status and response headers to stderr, with cookies redacted.
 - **Errors:** every failure is a JSON object on stderr, so stdout stays clean for pipes: `{"error": {"code", "message", "status", "method", "path", "body"}}`. HTTP 4xx/5xx and redirects exit 1, as do network errors and unknown write outcomes. Input errors exit 2. Tokens and the derived Basic auth value are redacted from error output.
 - **Safety:** redirects are never followed. GET, HEAD and OPTIONS retry briefly on rate limits and transient errors. Other methods are sent once; if the connection drops during a write, the outcome is reported as unknown and is not replayed. An authentication failure never switches identity or prompts to replace the token.
+
+### Fetching every page
+
+Jira splits long results into pages, using three different protocols. `--paginate` follows whichever one the endpoint uses and prints a single merged JSON result.
+
+```bash
+jira api /rest/api/3/project/search --paginate
+jira api /rest/api/3/search/jql -X POST --data '{"jql":"project = ENG","fields":["summary"]}' --paginate --max-items 500
+jira api /rest/servicedeskapi/servicedesk --paginate
+```
+
+- **Protocols:** offset pages (`startAt`, `maxResults`, `total` or `isLast`), cursor pages (`nextPageToken`, used by issue search) and Service Management pages (`start`, `limit`, `isLastPage`). The items can be in `values`, `issues`, `comments` or `worklogs`.
+- **Result:** the first page's JSON object, with every item in its list, `fetched` set to the item count, and `isLast` (or `isLastPage`) false if `--max-items` stopped it early. Page size still comes from your own `--query maxResults=` (or `limit=`, or `maxResults` in the search body).
+- **Methods:** GET, and POST only for `/rest/api/3/search/jql`, where the cursor goes into the JSON body. `--output` and `--include` can't be combined with it.
+- **Limits:** `--max-items N` stops after N items. It also stops after 1,000 pages, and if a cursor repeats or the format changes between pages. A failure on any page prints nothing on stdout and names the page in the error.
 
 ### Looking up an endpoint before calling it
 
@@ -150,6 +185,18 @@ Agents and scripts run without a terminal. In that mode the CLI never opens a cr
 ```bash
 JIRA_PROFILE=work jira api /rest/api/3/myself --no-input
 ```
+
+### The bundled agent skill
+
+`jira skill install` writes a `SKILL.md` that teaches coding agents to use this CLI: check sign-in first, add `--json --no-input`, look before writing, use `--spec` and `--paginate` with `jira api`, and never handle tokens. It ships with each release, so it always describes the commands you have installed.
+
+```bash
+jira skill install                         # ~/.claude/skills/jira/SKILL.md, for Claude Code
+jira skill install --path ~/.codex/skills/jira
+jira skill show                            # print it, for example to paste into AGENTS.md
+```
+
+An existing `SKILL.md` that matches is left alone. One you've edited is never overwritten unless you pass `--force`; compare it with `jira skill show` first. Run `jira skill install` again after upgrading to pick up the new version.
 
 ### What keeping the token out of the command does and doesn't protect
 
@@ -215,7 +262,7 @@ A selected `--profile` owns its full site/account identity. Complete identity fl
 
 **Updating a 2.1.0 standalone binary:** run `jira update --yes --json`. Without `--json`, 2.1.0 replaces itself successfully but then crashes while printing the result (`zlib.error … incorrect header check`); the update has still completed, and `jira --version` shows the new version. From 2.5, the updater loads everything it needs before replacing the executable.
 
-The repository and release downloads are public. The updater works without GitHub login; an optional `GH_TOKEN` or authenticated `gh` account can raise API rate limits. Jira tokens are never used for GitHub. Homebrew installations (`brew install user17745/tap/jira-cli-toolkit`) are upgraded with `brew upgrade jira-cli-toolkit`; `jira update` says so instead of replacing files Homebrew owns. The tap checks for new GitHub releases daily. Package installations receive an exact-version command for their owning pipx, uv or Python environment, such as `pipx install --force 'jira-cli-toolkit==2.5.1'`; the updater does not overwrite manager shims. From 2.5.1 the package is on PyPI as `jira-cli-toolkit`, so `pipx upgrade jira-cli-toolkit` also works. Installations made before 2.5.1 use the package's old name, `jsup`; the updater says so and gives the one-time switch for pipx, uv or pip (uninstall `jsup`, then install `jira-cli-toolkit`), which keeps configuration and saved credentials. Don't install both side by side: they ship the same module. To install offline, download the release wheel, verify its manifest checksum, and pass its path to the same command. Version 0.2.0 needs this one-time bootstrap before it gains an update command.
+The repository and release downloads are public. The updater works without GitHub login; an optional `GH_TOKEN` or authenticated `gh` account can raise API rate limits. Jira tokens are never used for GitHub. winget installations are upgraded with `winget upgrade --id User17745.JiraCliToolkit --exact`, and `jira update --version X` gives the matching `winget install … --version X` command. Homebrew installations (`brew install user17745/tap/jira-cli-toolkit`) are upgraded with `brew upgrade jira-cli-toolkit`; `jira update` says so instead of replacing files Homebrew owns. The tap checks for new GitHub releases daily. Package installations receive an exact-version command for their owning pipx, uv or Python environment, such as `pipx install --force 'jira-cli-toolkit==2.5.1'`; the updater does not overwrite manager shims. From 2.5.1 the package is on PyPI as `jira-cli-toolkit`, so `pipx upgrade jira-cli-toolkit` also works. Installations made before 2.5.1 use the package's old name, `jsup`; the updater says so and gives the one-time switch for pipx, uv or pip (uninstall `jsup`, then install `jira-cli-toolkit`), which keeps configuration and saved credentials. Don't install both side by side: they ship the same module. To install offline, download the release wheel, verify its manifest checksum, and pass its path to the same command. Version 0.2.0 needs this one-time bootstrap before it gains an update command.
 
 If pipx’s uv backend refuses force installation because the venv exists, adding `--backend pip` does not switch that existing environment in pipx 1.14.0. Download and verify the wheel, run `pipx uninstall jsup`, then `pipx install --backend pip /path/to/jsup.whl`. The [migration guide](sprints/v2-upgrade/migration.md) explains this recovery and preservation of saved credentials. Manager detection uses installation receipts, including custom pipx/uv directories.
 

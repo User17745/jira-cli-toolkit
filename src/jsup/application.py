@@ -119,6 +119,9 @@ def _fetch(j: Jira, args, cfg: dict):
         pagination["limit"] = args.max
     if cmd == "dashboard":
         return _dashboard(j, args, cfg)
+    if cmd.startswith(("desk-", "request-")):
+        from .desk import handle
+        return handle(j, args, cfg)
     if cmd in ("issue-create", "intake"):
         if cmd == "issue-create" and not args.legacy:
             from .fields import create
@@ -186,6 +189,10 @@ def _fetch(j: Jira, args, cfg: dict):
 
 
 def _render(data, args, cfg: dict, prog: str) -> None:
+    if args.cmd.startswith(("desk-", "request-")):
+        from .desk import render
+        render(data, args)
+        return
     if args.csv:
         ui.csv_data(data, args.columns)
         return
@@ -230,7 +237,8 @@ def _render(data, args, cfg: dict, prog: str) -> None:
 def run(args, prog: str) -> None:
     if args.json and args.csv:
         raise CommandError("Choose --json or --csv, not both.")
-    if args.csv and args.cmd not in {"issue-list", "open", "board-list", "board-issues", "project-list", "comment-list", "sprint-list", "component-list", "project-types", "project-fields", "attachment-list"}:
+    if args.csv and args.cmd not in {"issue-list", "open", "board-list", "board-issues", "project-list", "comment-list", "sprint-list", "component-list", "project-types", "project-fields", "attachment-list",
+                                     "desk-list", "desk-queues", "desk-queue", "request-list", "request-transitions"}:
         raise CommandError("--csv is supported only for list commands.")
     if args.cmd == "completion":
         from .completion import script
@@ -288,6 +296,19 @@ def run(args, prog: str) -> None:
         require_input(args, "Pass --yes to confirm deletion when input is unavailable.")
         if not ui.confirm("Permanently delete the selected item?"):
             raise CommandError("Aborted.")
+    if args.cmd in {"skill-show", "skill-install"}:
+        # Local files only; no identity or network.
+        from . import skill
+        if args.cmd == "skill-show":
+            print(skill.text(), end="")
+            return
+        data = skill.install(args.path, args.force)
+        if args.json:
+            ui.dump_json(data)
+        else:
+            verb = "Already up to date" if data["status"] == "unchanged" else "Wrote"
+            ui.console.print(f"{verb}: {data['path']}", markup=False, soft_wrap=True)
+        return
     if args.cmd == "api":
         # No credential-replacement prompt or retried writes: the request is the caller's.
         from . import api

@@ -44,7 +44,7 @@ class Pipe(io.TextIOWrapper):
         return self.buffer.getvalue()
 
 
-class ApiCommandTests(unittest.TestCase):
+class ApiTestBase(unittest.TestCase):
     def setUp(self):
         self.cfg = dict(CFG)
         patcher = patch("jsup.config.resolve_config", side_effect=lambda *a, **k: dict(self.cfg))
@@ -70,6 +70,8 @@ class ApiCommandTests(unittest.TestCase):
     def error(self, stderr):
         return json.loads(stderr)["error"]
 
+
+class ApiCommandTests(ApiTestBase):
     # Requests and inputs
 
     def test_unwrapped_endpoint_is_called_with_saved_identity_and_no_token_in_arguments(self):
@@ -298,6 +300,127 @@ class ApiCommandTests(unittest.TestCase):
         self.assertIn("a%2Fb%3D", values)
         self.assertIn(base64.b64encode(f"{EMAIL}:a/b=".encode()).decode(), values)
         self.assertEqual(secret_values(EMAIL, ""), [])
+
+
+class ApiPaginateTests(ApiTestBase):
+    """--paginate follows Jira's page protocols and prints one merged result."""
+
+    def page(self, data):
+        return response(body=json.dumps(data).encode(), headers={"Content-Type": "application/json"})
+
+    def merged(self, out):
+        return json.loads(out)
+
+    def test_offset_pages_merge_until_total(self):
+        code, out, _, request = self.call("/rest/api/3/project/search", "--query", "maxResults=2", "--paginate", replies=[
+            self.page({"startAt": 0, "maxResults": 2, "total": 3, "isLast": False, "values": [{"id": 1}, {"id": 2}]}),
+            self.page({"startAt": 2, "maxResults": 2, "total": 3, "isLast": True, "values": [{"id": 3}]})])
+        self.assertEqual(code, 0)
+        result = self.merged(out)
+        self.assertEqual([v["id"] for v in result["values"]], [1, 2, 3])
+        self.assertEqual((result["fetched"], result["isLast"]), (3, True))
+        second = request.call_args_list[1].kwargs["params"]
+        self.assertIn(("startAt", "2"), second)
+        self.assertEqual([p for p in second if p[0] == "maxResults"], [("maxResults", "2")])
+
+    def test_offset_pages_without_total_stop_on_a_short_page(self):
+        code, out, _, request = self.call("/rest/agile/1.0/board/1/issue", "--paginate", replies=[
+            self.page({"startAt": 0, "maxResults": 2, "issues": [{"key": "A-1"}, {"key": "A-2"}]}),
+            self.page({"startAt": 2, "maxResults": 2, "issues": [{"key": "A-3"}]})])
+        self.assertEqual((code, self.merged(out)["fetched"], request.call_count), (0, 3, 2))
+
+    def test_cursor_pages_use_the_token_in_the_query_or_the_body(self):
+        code, out, _, request = self.call("/rest/api/3/search/jql", "--query", "jql=project = BUG", "--paginate", replies=[
+            self.page({"issues": [{"key": "B-2"}], "nextPageToken": "t1", "isLast": False}),
+            self.page({"issues": [{"key": "B-1"}], "isLast": True})])
+        self.assertEqual(code, 0)
+        self.assertIn(("nextPageToken", "t1"), request.call_args_list[1].kwargs["params"])
+        result = self.merged(out)
+        self.assertNotIn("nextPageToken", result)
+        self.assertEqual((result["fetched"], result["isLast"]), (2, True))
+        code, out, _, request = self.call("/rest/api/3/search/jql", "-X", "POST", "--data", '{"jql":"project = BUG"}',
+                                          "--paginate", replies=[
+            self.page({"issues": [{"key": "B-2"}], "nextPageToken": "t1"}),
+            self.page({"issues": [{"key": "B-1"}], "isLast": True})])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(request.call_args_list[1].kwargs["data"]), {"jql": "project = BUG", "nextPageToken": "t1"})
+
+    def test_service_desk_pages_use_start_and_is_last_page(self):
+        code, out, _, request = self.call("/rest/servicedeskapi/servicedesk", "--paginate", replies=[
+            self.page({"start": 0, "limit": 1, "size": 1, "isLastPage": False, "values": [{"id": "1"}]}),
+            self.page({"start": 1, "limit": 1, "size": 1, "isLastPage": True, "values": [{"id": "2"}]})])
+        self.assertEqual(code, 0)
+        self.assertIn(("start", "1"), request.call_args_list[1].kwargs["params"])
+        result = self.merged(out)
+        self.assertEqual((result["size"], result["isLastPage"], result["fetched"]), (2, True, 2))
+
+    def test_max_items_stops_early_and_marks_the_result_incomplete(self):
+        code, out, _, request = self.call("/rest/api/3/project/search", "--paginate", "--max-items", "3", replies=[
+            self.page({"startAt": 0, "maxResults": 2, "total": 10, "values": [{"id": 1}, {"id": 2}]}),
+            self.page({"startAt": 2, "maxResults": 2, "total": 10, "values": [{"id": 3}, {"id": 4}]})])
+        result = self.merged(out)
+        self.assertEqual((code, result["fetched"], result["isLast"], request.call_count), (0, 3, False, 2))
+
+    def test_loops_and_format_changes_fail_without_partial_output(self):
+        code, out, err, _ = self.call("/rest/api/3/search/jql", "--paginate", replies=[
+            self.page({"issues": [{"key": "A"}], "nextPageToken": "same"}),
+            self.page({"issues": [{"key": "B"}], "nextPageToken": "same"})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("repeated a cursor", self.error(err)["message"])
+        code, out, err, _ = self.call("/rest/api/3/project/search", "--paginate", replies=[
+            self.page({"startAt": 0, "maxResults": 1, "total": 2, "values": [{"id": 1}]}),
+            self.page({"start": 1, "isLastPage": True, "values": [{"id": 2}]})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("changed its paging format", self.error(err)["message"])
+
+    def test_cursor_page_without_token_but_not_last_fails(self):
+        code, out, err, _ = self.call("/rest/api/3/search/jql", "--paginate", replies=[
+            self.page({"issues": [{"key": "A"}], "isLast": False})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("gave no cursor", self.error(err)["message"])
+
+    def test_offset_that_does_not_advance_fails(self):
+        code, out, err, _ = self.call("/rest/api/3/project/search", "--paginate", "--max-items", "10", replies=[
+            self.page({"startAt": 0, "maxResults": 2, "total": 9, "values": [{"id": 1}, {"id": 2}]}),
+            self.page({"startAt": 0, "maxResults": 2, "total": 9, "values": [{"id": 1}, {"id": 2}]})])
+        self.assertEqual((code, out), (1, b""))
+        self.assertIn("started at 0 instead of 2", self.error(err)["message"])
+
+    def test_errors_on_a_later_page_name_the_page(self):
+        code, out, err, _ = self.call("/rest/api/3/project/search", "--paginate", replies=[
+            self.page({"startAt": 0, "maxResults": 1, "total": 2, "values": [{"id": 1}]}),
+            response(403, b'{"errorMessages":["no"]}', {"Content-Type": "application/json"})])
+        error = self.error(err)
+        self.assertEqual((code, out, error["page"], error["status"]), (1, b"", 2, 403))
+        self.assertTrue(error["message"].startswith("Page 2: "))
+
+    def test_page_limit_stops_runaway_offsets(self):
+        endless = [self.page({"startAt": i, "maxResults": 1, "values": [{"id": i}]}) for i in range(4)]
+        # Offsets advance correctly here, so only the page limit stops it.
+        with patch("jsup.api.MAX_PAGES", 3):
+            code, out, err, request = self.call("/rest/api/3/project/search", "--paginate", replies=endless)
+        self.assertEqual((code, out, request.call_count), (1, b"", 3))
+        self.assertIn("Stopped after 3 pages", self.error(err)["message"])
+
+    def test_unpaged_responses_and_unsupported_combinations_are_rejected(self):
+        code, _, err, _ = self.call("/rest/api/3/myself", "--paginate", replies=[self.page({"accountId": "x"})])
+        self.assertEqual((code, self.error(err)["code"]), (2, "invalid_input"))
+        with tempfile.TemporaryDirectory() as folder:
+            for argv in (["-X", "POST", "--data", "{}"], ["--output", str(Path(folder, "out.json"))], ["--include"],
+                         ["--max-items", "5"]):
+                path = "/rest/api/3/issue" if "POST" in argv else "/rest/api/3/project/search"
+                flags = argv if argv == ["--max-items", "5"] else [*argv, "--paginate"]
+                code, out, err, request = self.call(path, *flags)
+                self.assertEqual((code, out), (2, b""), argv)
+                request.assert_not_called()
+        code, _, _, request = self.call("/rest/api/3/search/jql", "-X", "POST", "--data", "[1]", "--paginate")
+        self.assertEqual(code, 2)
+        request.assert_not_called()
+
+    def test_merged_json_is_indented_on_a_terminal(self):
+        _, out, _, _ = self.call("/rest/servicedeskapi/servicedesk", "--paginate", tty=True, replies=[
+            self.page({"start": 0, "isLastPage": True, "values": [{"id": "1"}]})])
+        self.assertTrue(out.startswith(b"{\n  "))
 
 
 class ApiIdentityTests(unittest.TestCase):

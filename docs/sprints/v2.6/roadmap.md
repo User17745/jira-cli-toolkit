@@ -25,12 +25,14 @@ jira api /rest/servicedeskapi/servicedesk --paginate        # start / limit / is
 jira api /rest/api/3/project/search --paginate --max-items 200
 ```
 
-- [ ] Detect the protocol from the first response: Jira offset pages (`startAt`, `maxResults`, `total` or `isLast`, with `values`, `issues`, `comments` or `worklogs`), cursor pages (`nextPageToken`, with `issues`), and Service Management pages (`start`, `limit`, `isLastPage`, with `values`).
-- [ ] Merge into one JSON object of the first page's shape: the item array holds every item, paging fields describe the merged result, and `fetched` gives the count. A response that is not a recognized page fails with `invalid_input` instead of guessing.
-- [ ] Allowed for GET, and for POST only on `/rest/api/3/search/jql` (where the cursor goes in the JSON body). Other methods and bodies fail before sending.
-- [ ] Bounds: `--max-items` (optional) and a hard limit of 1,000 pages; a repeated cursor or offset that doesn't advance fails as `jira_error` instead of looping. Each page request keeps the existing retry rules (GET retries, POST never does).
-- [ ] Not combinable with `--output`, `--include` or `--spec`. Errors on a later page report the page number; no partial output is printed.
-- [ ] Tests for every protocol, the limits, non-advancing pages, mid-run errors and rejected combinations; live read acceptance on BUG, board 1523 and the service desk endpoint.
+- [x] Detect the protocol from the first response: Jira offset pages (`startAt`, `maxResults`, `total` or `isLast`, with `values`, `issues`, `comments` or `worklogs`), cursor pages (`nextPageToken`, with `issues`), and Service Management pages (`start`, `limit`, `isLastPage`, with `values`).
+- [x] Merge into one JSON object of the first page's shape: the item array holds every item, paging fields describe the merged result, and `fetched` gives the count. A response that is not a recognized page fails with `invalid_input` instead of guessing.
+- [x] Allowed for GET, and for POST only on `/rest/api/3/search/jql` (where the cursor goes in the JSON body). Other methods and bodies fail before sending.
+- [x] Bounds: `--max-items` (optional) and a hard limit of 1,000 pages; a repeated cursor or offset that doesn't advance fails as `jira_error` instead of looping. Each page request keeps the existing retry rules (GET retries, POST never does).
+- [x] Not combinable with `--output`, `--include` or `--spec`. Errors on a later page report the page number; no partial output is printed.
+- [x] Tests for every protocol, the limits, non-advancing pages, mid-run errors and rejected combinations; live read acceptance on BUG, board 1523 and the service desk endpoint.
+
+Live, 9 October 2026 (`work` profile): project search over 2 offset pages (9 projects), POST and GET issue search over 5 cursor pages (30 and 10 unique issues, stopped by `--max-items`), and service desks over 3 pages of 1. Board 1523 has a single sprint, so its offset run stopped after one page as expected.
 
 ## 3. Service desk commands
 
@@ -47,11 +49,13 @@ jira request transitions KEY
 jira request transition KEY --to NAME|ID [--message TEXT]
 ```
 
-- [ ] Commands use the `/rest/servicedeskapi` endpoints with the existing identity resolver, retry rules, `--json`, `--csv` for lists, `--no-input` and redaction.
-- [ ] Customer-visible comments are the default only when stated in help; `--internal` adds an agent-only comment. Help and output say which one was made.
-- [ ] Desk and queue arguments accept an ID or an exact project key or name; ambiguous names fail with the candidates listed.
-- [ ] Fixture tests for every command, JSON/CSV shapes, pagination, permission errors and ambiguity; live read acceptance on the visible service desk. Writes (comments, transitions) are tested with fixtures only, because live writes notify customers.
-- [ ] Website command data regenerated; README and usage guide sections; sandbox sample data for at least `desk list` and `request view`.
+- [x] Commands use the `/rest/servicedeskapi` endpoints with the existing identity resolver, retry rules, `--json`, `--csv` for lists, `--no-input` and redaction.
+- [x] Customer-visible comments are the default only when stated in help; `--internal` adds an agent-only comment. Help and output say which one was made.
+- [x] Desk and queue arguments accept an ID or an exact project key or name; ambiguous names fail with the candidates listed.
+- [x] Fixture tests for every command, JSON/CSV shapes, pagination, permission errors and ambiguity; live read acceptance on the visible service desk. Writes (comments, transitions) are tested with fixtures only, because live writes notify customers.
+- [x] Website command data regenerated; README and usage guide sections; sandbox sample data for at least `desk list` and `request view`.
+
+Live, 9 October 2026: the `work` account is a customer on three desks (LDSUP, TS, VM), not an agent. `desk list`, `request list` (table and CSV), `request view` with participants and `request transitions` (none available to a customer on a closed request) were read live; `desk queues` returned the expected 403 with Jira's explanation, and an unknown desk listed the available ones. Queue listings, internal comments and transitions are covered by fixtures only; no live write was made, because comments and transitions notify customers.
 
 ## 4. An agent skill that ships with the CLI
 
@@ -63,21 +67,21 @@ jira skill install                 # write ~/.claude/skills/jira/SKILL.md
 jira skill install --path DIR      # any agent's skills or rules folder
 ```
 
-- [ ] `SKILL.md` covers when to use `jira` versus `jira api`, `--spec` before building a payload, `--json --no-input`, exit codes and the error object, pagination, the trust boundary, and safe defaults (no writes without the user asking, never print tokens).
-- [ ] Installed as package data, so pipx, Homebrew and the native binaries all carry it. `install` refuses to overwrite a changed file without `--force` and reports the path it wrote.
-- [ ] Tests check that every command the skill mentions exists in the parser, so the skill can't drift from the CLI.
-- [ ] Website setup step offers `jira skill install` next to the existing prompt.
+- [x] `SKILL.md` covers when to use `jira` versus `jira api`, `--spec` before building a payload, `--json --no-input`, exit codes and the error object, pagination, the trust boundary, and safe defaults (no writes without the user asking, never print tokens).
+- [x] Installed as package data, so pipx, Homebrew and the native binaries all carry it. `install` refuses to overwrite a changed file without `--force` and reports the path it wrote.
+- [x] Tests check that every command the skill mentions exists in the parser, so the skill can't drift from the CLI.
+- [x] Website setup step offers `jira skill install` next to the existing prompt.
 
 ## 5. Windows Package Manager (winget)
 
-- [ ] Manifests for `User17745.JiraCliToolkit` (portable installer, command alias `jira`), using the release's Windows binary URL and SHA-256 from the manifest.
+- [x] Manifests for `User17745.JiraCliToolkit` (portable installer, command alias `jira`), using the release's Windows binary URL and SHA-256 from the manifest. Generated by `scripts/release/winget.py` (schema 1.12.0).
 - [ ] Submit to `microsoft/winget-pkgs` from a fork, following its contribution rules. Microsoft's validation and review decide acceptance; note that the binary is not code-signed.
-- [ ] `jira update` detects a winget installation and points to `winget upgrade` instead of replacing the file.
+- [x] `jira update` detects a winget installation and points to `winget upgrade` instead of replacing the file.
 - [ ] Document `winget install User17745.JiraCliToolkit` once the package is accepted.
 
 ## 6. Learning from real usage
 
-- [ ] GitHub issue templates for bug reports (with `jira update --info --json` output, which contains no secrets) and feature requests.
+- [x] GitHub issue templates for bug reports (with `jira update --info --json` output, which contains no secrets) and feature requests.
 - [ ] Record download counts (PyPI, GitHub releases, Homebrew tap) at each release in this roadmap, and let reported issues set the priorities after v2.6.
 
 ## 7. Release

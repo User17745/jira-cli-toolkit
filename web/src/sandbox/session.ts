@@ -1,7 +1,7 @@
 // Runs parsed commands against the sample site and formats results the way jira prints them.
 import { help, usage } from './help.ts'
 import { parse, tokenize, type Values } from './parse.ts'
-import { boards, initialIssues, initialSprints, issueTypes, me, profile, projects, site, statuses, users, type Issue } from './sample.ts'
+import { boards, desks, requests, initialIssues, initialSprints, issueTypes, me, profile, projects, site, statuses, users, type Issue } from './sample.ts'
 import { child, root, type Node } from './tree.ts'
 
 export type Tone = 'new' | 'indeterminate' | 'done' | 'active' | 'future' | 'closed' | 'bold'
@@ -18,7 +18,7 @@ export type Block =
   | { kind: 'tool'; name: 'Bash' | 'Write' | 'Edit'; input: string; output: Block[] | null; exit: number }
 export type Result = { blocks: Block[]; exit: number | null }
 
-const LIST_COMMANDS = new Set(['issue list', 'board list', 'board issues', 'project list', 'issue comment list', 'sprint list', 'component list', 'project issue-types', 'project fields', 'issue attachment list'])
+const LIST_COMMANDS = new Set(['issue list', 'board list', 'board issues', 'project list', 'issue comment list', 'sprint list', 'component list', 'project issue-types', 'project fields', 'issue attachment list', 'desk list', 'request list'])
 const PRIORITY = ['Highest', 'High', 'Medium', 'Low', 'Lowest']
 const DEFAULT_FIELDS = ['summary', 'status', 'assignee', 'priority', 'updated', 'components', 'labels']
 const TODAY = '2026-10-07'
@@ -124,6 +124,15 @@ export class Session {
       case 'issue create': return this.create(opts)
       case 'issue edit': return this.edit(args.key as string, opts)
       case 'api': return this.api(args.path as string, args.spec_action as string | undefined, opts)
+      // --json mirrors the Service Management page shape that the CLI prints; tables and CSV use flat rows.
+      case 'desk list': return opts.json
+        ? json(deskPage(desks))
+        : this.table(opts, 'Service desks (2 fetched)', ['id', 'key', 'name'], desks.map(d => ({ id: d.id, key: d.projectKey, name: d.projectName })))
+      case 'request list': return opts.json
+        ? json(deskPage(requests.map(r => ({ issueKey: r.key, summary: r.summary, serviceDeskId: r.desk, currentStatus: { status: r.status },
+          reporter: { displayName: r.reporter }, createdDate: { iso8601: `${r.created}T09:00:00+0000` } }))))
+        : this.table(opts, `Requests (${requests.length} fetched)`, ['key', 'status', 'summary', 'reporter', 'created', 'desk'], requests.map(({ key, status, summary, reporter, created, desk }) => ({ key, status, summary, reporter, created, desk })))
+      case 'request view': return this.requestView(args.key as string, opts)
       case 'project list': return this.table(opts, 'Projects', ['key', 'name'], projects)
       case 'board list': return opts.json
         ? json({ maxResults: 50, startAt: 0, isLast: true, values: boards.map(b => ({ id: b.id, name: b.name, type: b.type })), fetched: boards.length })
@@ -193,6 +202,20 @@ export class Session {
       note: 'Sample excerpt. The real output includes every parameter and the full response schema.',
     })
     return { blocks: [{ kind: 'note', text: `The sandbox has sample specs only for POST /rest/api/3/issue and GET or DELETE /rest/api/3/issue/KEY. In your terminal, --spec looks up ${method} ${path} in the cached official OpenAPI documents.` }], exit: null }
+  }
+
+  private requestView(key: string, opts: Values): Result {
+    const request = requests.find(r => r.key === key.toUpperCase())
+    if (!request) throw jiraError('GET', `/rest/servicedeskapi/request/${key}`, 404, { errorMessage: 'Request does not exist or you do not have permission to see it.' })
+    if (opts.json) return json({ issueKey: request.key, summary: request.summary, serviceDeskId: request.desk, currentStatus: { status: request.status }, reporter: { displayName: request.reporter } })
+    return {
+      blocks: [{
+        kind: 'panel', title: 'Request', subtitle: `participants: ${request.participants.length}`, heading: [request.key, request.summary],
+        lines: [`status=${request.status}  desk=${request.desk}  reporter=${request.reporter}  created=${request.created}`,
+          ...(request.participants.length ? [`participants=${request.participants.join(', ')}`] : []),
+          `SLA ${request.sla}`, '', 'Description:', request.description],
+      }], exit: 0,
+    }
   }
 
   private help(path: string[] = []) {
@@ -441,6 +464,10 @@ export class Session {
     if (opts.csv) return out([columns.join(','), ...rows.map(r => columns.map(c => csvCell(r[c])).join(','))].join('\n'))
     return table(title, columns, rows.map(r => columns.map(c => ({ text: r[c] }))))
   }
+}
+
+function deskPage<T>(values: T[]) {
+  return { size: values.length, start: 0, limit: 50, isLastPage: true, values, fetched: values.length }
 }
 
 function out(text: string): Result {

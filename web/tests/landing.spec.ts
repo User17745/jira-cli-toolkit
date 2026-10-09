@@ -340,6 +340,27 @@ test('first fold says the project is open source and links to GitHub and the lic
   await expect(line.getByRole('link', { name: 'AGPL-3.0 license' })).toHaveAttribute('href', 'https://github.com/User17745/jira-cli-toolkit/blob/main/LICENSE')
 })
 
+test('sandbox shows service desk commands with sample data', async ({ page }) => {
+  await page.goto('./')
+  await run(page, 'jira desk list')
+  await expect(log(page).getByRole('table', { name: 'Service desks (2 fetched)' })).toBeVisible()
+  await run(page, 'jira request view HELP-12')
+  await expect(lastEntry(page)).toContainText('VPN drops every 10 minutes')
+  await expect(lastEntry(page)).toContainText('participants=Priya Shah')
+  await run(page, 'jira desk list --csv')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('id,key,name')
+  await run(page, 'jira request list --json')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"issueKey": "HELP-12"')
+  await expect(lastEntry(page).locator('.t-out')).toContainText('"isLastPage": true')
+})
+
+test('agent setup offers the bundled skill install command', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Copy the skill install command' }).click()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('jira skill install')
+})
+
 test('first fold contains installation, assets load and narrow layouts do not overflow', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', e => errors.push(e.message))

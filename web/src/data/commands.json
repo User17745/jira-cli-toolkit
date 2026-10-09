@@ -2667,6 +2667,34 @@
      "help": "save the response body to a new file"
     },
     {
+     "flag": "--paginate",
+     "names": [
+      "--paginate"
+     ],
+     "takesValue": false,
+     "nargs": 0,
+     "metavar": "PAGINATE",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": null,
+     "help": "follow every page and print one merged JSON result"
+    },
+    {
+     "flag": "--max-items",
+     "names": [
+      "--max-items"
+     ],
+     "takesValue": true,
+     "nargs": null,
+     "metavar": "N",
+     "required": false,
+     "choices": [],
+     "repeat": false,
+     "type": "positive_int",
+     "help": "stop --paginate after N items"
+    },
+    {
      "flag": "--spec",
      "names": [
       "--spec"
@@ -2681,9 +2709,408 @@
      "help": "describe the operation from cached official specs; sends no request"
     }
    ]
+  },
+  {
+   "name": "skill",
+   "help": "agent skill that teaches coding agents to use jira",
+   "description": null,
+   "shared": true,
+   "dest": "skill_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "show",
+     "help": "print the bundled SKILL.md",
+     "description": null,
+     "shared": true,
+     "options": []
+    },
+    {
+     "name": "install",
+     "help": "write SKILL.md where an agent loads skills",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--path",
+       "names": [
+        "--path"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DIR",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "folder to write SKILL.md into (default ~/.claude/skills/jira)"
+      },
+      {
+       "flag": "--force",
+       "names": [
+        "--force"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "FORCE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "replace a SKILL.md that has been changed"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "desk",
+   "help": "Jira Service Management desks and queues",
+   "description": null,
+   "shared": true,
+   "dest": "desk_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list service desks you can see",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "queues",
+     "help": "list a desk's queues with issue counts",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "positional": "desk",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "service desk ID, project key or name"
+      }
+     ]
+    },
+    {
+     "name": "queue",
+     "help": "list the issues in a queue",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "positional": "desk",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "service desk ID, project key or name"
+      },
+      {
+       "positional": "queue",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "queue ID or name"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "request",
+   "help": "Jira Service Management customer requests",
+   "description": null,
+   "shared": true,
+   "dest": "request_action",
+   "title": "positional arguments",
+   "commands": [
+    {
+     "name": "list",
+     "help": "list requests you can see, open by default",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "flag": "--all",
+       "names": [
+        "--all"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "ALL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "fetch every page; overrides --limit"
+      },
+      {
+       "flag": "--limit",
+       "names": [
+        "--limit",
+        "--max"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MAX",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": "positive_int",
+       "help": ""
+      },
+      {
+       "flag": "--desk",
+       "names": [
+        "--desk"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "DESK",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "only this service desk (ID, project key or name)"
+      },
+      {
+       "flag": "--status",
+       "names": [
+        "--status"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "STATUS",
+       "required": false,
+       "choices": [
+        "open",
+        "closed",
+        "all"
+       ],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      }
+     ]
+    },
+    {
+     "name": "view",
+     "help": "show a request with status, participants and SLAs",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "request key, for example HELP-12"
+      }
+     ]
+    },
+    {
+     "name": "comment",
+     "help": "reply to the customer, or add an internal note",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "request key, for example HELP-12"
+      },
+      {
+       "flag": "--message",
+       "names": [
+        "--message",
+        "-m"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MESSAGE",
+       "required": true,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": ""
+      },
+      {
+       "flag": "--internal",
+       "names": [
+        "--internal"
+       ],
+       "takesValue": false,
+       "nargs": 0,
+       "metavar": "INTERNAL",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "visible to agents only; without it the customer sees the comment"
+      }
+     ]
+    },
+    {
+     "name": "transitions",
+     "help": "list a request's available transitions",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "request key, for example HELP-12"
+      }
+     ]
+    },
+    {
+     "name": "transition",
+     "help": "move a request, optionally with a comment",
+     "description": null,
+     "shared": true,
+     "options": [
+      {
+       "positional": "key",
+       "metavar": null,
+       "nargs": null,
+       "choices": [],
+       "type": null,
+       "help": "request key, for example HELP-12"
+      },
+      {
+       "flag": "--to",
+       "names": [
+        "--to"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "TO",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "transition name or ID"
+      },
+      {
+       "flag": "--message",
+       "names": [
+        "--message",
+        "-m"
+       ],
+       "takesValue": true,
+       "nargs": null,
+       "metavar": "MESSAGE",
+       "required": false,
+       "choices": [],
+       "repeat": false,
+       "type": null,
+       "help": "comment added with the transition, visible to the customer"
+      }
+     ]
+    }
+   ]
   }
  ],
- "version": "2.5.2",
+ "version": "2.6.0",
  "epilog": "Examples: jira issue list -p ENG --open; jira help issue create",
  "legacy": [
   {
