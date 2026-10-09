@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in the jira command doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please **don't paste API tokens, cookies or private Jira content**. `jira` redacts tokens from its own errors, but check anything you paste.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran, what you expected, and what happened instead.
+      placeholder: |
+        jira issue list --open --json --no-input
+        Expected …, got …
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Error output
+      description: The JSON error object or message, with any site names or keys you'd rather not share removed.
+      render: text
+  - type: textarea
+    id: info
+    attributes:
+      label: Installation details
+      description: Output of `jira update --info --json`. It lists the version, install method, OS and Python, and contains no secrets.
+      render: json
+    validations:
+      required: true
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Jira product
+      options: [Jira Cloud (Software or Work Management), Jira Service Management, Not sure]

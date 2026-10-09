@@ -28,6 +28,7 @@ class UpdateError(ValueError):
 
 
 DISTRIBUTION='jira-cli-toolkit'
+WINGET_ID='User17745.JiraCliToolkit'
 
 
 def _distribution():
@@ -45,7 +46,10 @@ def _distribution():
 def installation():
     if getattr(sys,'frozen',False):
         # Homebrew owns files under its Cellar; replacing them would break `brew upgrade`.
-        method='homebrew' if '/Cellar/' in str(Path(sys.executable).resolve()).replace('\\','/') else 'standalone'
+        location=str(Path(sys.executable).resolve()).replace('\\','/')
+        # Package managers own these files; replacing them would break their own upgrades.
+        method=('homebrew' if '/Cellar/' in location else
+                'winget' if '/Microsoft/WinGet/Packages/' in location else 'standalone')
     else:
         prefix=Path(sys.prefix)
         executable=str(Path(sys.executable).absolute()).replace('\\','/')
@@ -56,7 +60,7 @@ def installation():
         else:
             method='python'
     arch={'amd64':'x86_64','x86_64':'x86_64','aarch64':'arm64','arm64':'arm64'}.get(platform.machine().lower(),platform.machine().lower())
-    return dict(version=__version__,method=method,distribution=None if method in ('standalone','homebrew') else _distribution(),os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
+    return dict(version=__version__,method=method,distribution=None if method in ('standalone','homebrew','winget') else _distribution(),os={'Darwin':'macos','Linux':'linux','Windows':'windows'}.get(platform.system(),'unsupported'),
                 arch=arch,executable=str(Path(sys.executable).resolve()),python=sys.version.split()[0])
 
 
@@ -262,6 +266,12 @@ def apply_windows_update(values):
 def handle(args):
     installed=installation()
     if args.info: return installed
+    if installed['method']=='winget':
+        # winget can install a specific published version itself.
+        target=f" --version {args.version.removeprefix('v')}" if args.version else ''
+        command=(f'winget install --id {WINGET_ID} --exact{target} --force' if target else f'winget upgrade --id {WINGET_ID} --exact')
+        return {**installed,'updated':False,'instructions':command,
+                'note':'winget manages this installation, so jira does not replace its own file.'}
     if args.version and installed['method']=='homebrew':
         # The tap only offers its latest stable release; brew can't install another one.
         raise UpdateError(f'Homebrew installs follow the tap\'s latest stable release; run brew upgrade {DISTRIBUTION}. '

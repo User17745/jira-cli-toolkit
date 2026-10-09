@@ -433,7 +433,7 @@ wheels = [
 
 [[package]]
 name = "jira-cli-toolkit"
-version = "2.5.2"
+version = "2.6.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "keyring" },

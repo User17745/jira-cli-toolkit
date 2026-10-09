@@ -37,3 +37,22 @@ class ReleaseContractTests(unittest.TestCase):
                 os.chdir(temp)
                 with self.assertRaisesRegex(SystemExit,'disagree'): runpy.run_path(str(ROOT/'scripts/release/manifest.py'))
             finally: os.chdir(original)
+
+
+class WingetManifestTests(unittest.TestCase):
+    def test_manifests_use_the_release_windows_binary(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("winget", Path(__file__).resolve().parents[1] / "scripts" / "release" / "winget.py")
+        winget = importlib.util.module_from_spec(spec); spec.loader.exec_module(winget)
+        manifest = {"repository": "User17745/jira-cli-toolkit", "channel": "stable", "version": "2.6.0", "tag": "v2.6.0",
+                    "artifacts": [{"name": "jira-cli-toolkit-windows-x86_64.exe", "kind": "binary", "os": "windows", "arch": "x86_64", "sha256": "ab" * 32},
+                                  {"name": "jira-cli-toolkit-linux-x86_64", "kind": "binary", "os": "linux", "arch": "x86_64", "sha256": "cd" * 32}]}
+        files = winget.manifests(manifest, "2026-10-09")
+        installer = files["User17745.JiraCliToolkit.installer.yaml"]
+        self.assertIn("InstallerUrl: https://github.com/User17745/jira-cli-toolkit/releases/download/v2.6.0/jira-cli-toolkit-windows-x86_64.exe", installer)
+        self.assertIn("InstallerSha256: " + "AB" * 32, installer)
+        self.assertIn("Commands:\n- jira\n", installer)
+        self.assertIn("PackageVersion: 2.6.0", files["User17745.JiraCliToolkit.yaml"])
+        self.assertIn("not affiliated with or endorsed by Atlassian", files["User17745.JiraCliToolkit.locale.en-US.yaml"])
+        with self.assertRaises(SystemExit):
+            winget.manifests({**manifest, "channel": "prerelease"}, "2026-10-09")
